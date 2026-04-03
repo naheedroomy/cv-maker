@@ -2,13 +2,13 @@
 # Phase 1 success criteria verification.
 # DATA-01: BaseCV loads from YAML and validates; invalid fields caught with clear errors.
 # DATA-02: JobRequirements is importable, instantiable as a plain string wrapper.
-import pytest
 from pathlib import Path
+
+import pytest
 from pydantic import ValidationError
 
-from cv_maker.models import BaseCV, JobRequirements, TailoredCV
 from cv_maker.data import load_base_cv
-
+from cv_maker.models import BaseCV, JobRequirements, TailoredCV
 
 MINIMAL_CV = {
     "contact": {"name": "Test User", "email": "test@example.com"},
@@ -83,7 +83,8 @@ def test_load_base_cv_invalid_yaml_raises_runtime_error(tmp_path):
     bad_yaml = tmp_path / "bad_cv.yaml"
     # Missing required 'name' field in contact
     bad_yaml.write_text(
-        "contact:\n  email: test@example.com\nsummary: test\nexperience: []\nskills: []\neducation: []\n"
+        "contact:\n  email: test@example.com\n"
+        "summary: test\nexperience: []\nskills: []\neducation: []\n"
     )
     with pytest.raises(RuntimeError) as exc_info:
         load_base_cv(bad_yaml)

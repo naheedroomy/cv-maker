@@ -1,0 +1,62 @@
+# base_cv.yaml
+# The user's complete CV — edit this file to add all experience, skills, and tools.
+# All fields marked with (optional) can be removed if not applicable.
+# Date format: "YYYY-MM" (quoted strings — bare dates cause YAML type conversion bugs)
+
+contact:
+  name: "Jane Smith"
+  email: "jane@example.com"
+  linkedin: "linkedin.com/in/janesmith"   # (optional)
+  github: "github.com/janesmith"          # (optional)
+  location: "London, UK"                  # (optional)
+
+summary: >
+  Senior software engineer with 8 years of experience building distributed systems
+  and data pipelines. Strong background in Python, Go, and cloud infrastructure.
+
+experience:
+  - company: "Acme Corp"
+    title: "Senior Software Engineer"
+    start: "2021-03"
+    end: null         # null = current role
+    bullets:
+      - "Led migration of monolithic application to microservices, reducing deployment time by 60%"
+      - "Built real-time data pipeline processing 500k events/day using Kafka and Python"
+      - "Mentored 3 junior engineers through structured code review and pairing sessions"
+    technologies: ["Python", "Kafka", "Kubernetes", "PostgreSQL", "Go"]
+
+  - company: "Beta Ltd"
+    title: "Software Engineer"
+    start: "2018-06"
+    end: "2021-02"
+    bullets:
+      - "Developed REST APIs serving 2M requests/day using Django and PostgreSQL"
+      - "Reduced API p95 latency from 800ms to 120ms by introducing Redis caching layer"
+    technologies: ["Python", "Django", "Redis", "AWS", "PostgreSQL"]
+
+skills:
+  - Python
+  - Go
+  - Kubernetes
+  - PostgreSQL
+  - Redis
+  - Kafka
+  - AWS
+  - Docker
+  - Terraform
+  - Django
+
+education:
+  - institution: "University of Edinburgh"
+    degree: "BSc"
+    field: "Computer Science"   # (optional)
+    year: 2018                  # (optional)
+
+projects:                       # (optional section — remove if not applicable)
+  - name: "cv-maker"
+    description: "AI-powered CV tailoring pipeline using Claude Code CLI and LaTeX"
+    technologies: ["Python", "LaTeX", "Streamlit", "Pydantic"]
+    url: "github.com/janesmith/cv-maker"   # (optional)
+
+certifications:                 # (optional section — remove if not applicable)
+  - "AWS Certified Solutions Architect — Associate (2023)"
