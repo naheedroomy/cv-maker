@@ -112,7 +112,7 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md — Install dependencies, scaffold backend package, create db.py (SQLite + WAL) and pipeline_runner.py (asyncio.to_thread wrappers)
-- [ ] 05-02-PLAN.md — Create main.py (FastAPI app with lifespan, CORS, logging, health check, task registry) and integration tests
+- [x] 05-02-PLAN.md — Create main.py (FastAPI app with lifespan, CORS, logging, health check, task registry) and integration tests
 
 ### Phase 6: Job Queue & API
 **Goal**: Users can submit a CV generation job via HTTP, the job runs concurrently in the background, and all job lifecycle endpoints return correct status and results
@@ -124,7 +124,12 @@ Plans:
   3. `GET /api/jobs` returns a list of all submitted jobs with their current status
   4. `DELETE /api/jobs/:id` cancels an in-progress job and subsequent status calls reflect cancellation
   5. An SSE client connected to the SSE endpoint receives real-time status push events as the job progresses
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [x] 06-01-PLAN.md — Pydantic request/response schemas and background job worker coroutine with semaphore and SSE queue system
+- [x] 06-02-PLAN.md — Jobs router with all six endpoints (CRUD, SSE, PDF) wired into FastAPI app
+- [x] 06-03-PLAN.md — Integration tests for worker and all router endpoints
 
 ### Phase 7: Vue Frontend
 **Goal**: Users can submit a job, watch it progress in real time, browse past sessions, preview the tailored CV, and download the PDF — all without leaving the browser
@@ -136,8 +141,13 @@ Plans:
   3. The sidebar shows all past sessions as clickable entries; clicking one navigates to that session's results
   4. On a completed job, the user can read the tailored CV sections and gap diff directly in the browser
   5. User can download the generated PDF from the job detail view; the PDF is also auto-saved to `output/{company}/`
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+- [x] 07-01-PLAN.md — Scaffold Vue 3 project, Vite proxy, TypeScript types, Pinia store with SSE lifecycle, Vue Router, App.vue shell
+- [ ] 07-02-PLAN.md — Sidebar with session list and polling, StatusBadge, SessionEntry, ErrorBanner, LoadingSpinner, JobFormView with validation
+- [ ] 07-03-PLAN.md — JobDetailView with SSE, CvPreview, GapDiffTable, SkeletonSection, PDF download, Cancel Job, and human-verify checkpoint
 
 ### Phase 8: Production Wiring
 **Goal**: A single `uvicorn` command serves both the API and the Vue SPA; Streamlit and its dependencies are removed; direct URL navigation works correctly
@@ -160,7 +170,7 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 2. LaTeX Renderer | v1.0 | 2/2 | Complete | 2026-04-04 |
 | 3. AI Pipeline | v1.0 | 3/3 | Complete | 2026-04-04 |
 | 4. Streamlit UI | v1.0 | 2/2 | Complete | 2026-04-04 |
-| 5. Backend Foundation | v2.0 | 1/2 | In Progress|  |
-| 6. Job Queue & API | v2.0 | 0/TBD | Not started | - |
-| 7. Vue Frontend | v2.0 | 0/TBD | Not started | - |
+| 5. Backend Foundation | v2.0 | 2/2 | Complete |  |
+| 6. Job Queue & API | v2.0 | 2/3 | In Progress|  |
+| 7. Vue Frontend | v2.0 | 1/3 | In Progress | - |
 | 8. Production Wiring | v2.0 | 0/TBD | Not started | - |

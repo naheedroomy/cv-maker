@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Full-Stack Rebuild
 status: executing
-stopped_at: Completed 05-01-PLAN.md — backend dependencies, db.py, pipeline_runner.py
-last_updated: "2026-04-04T06:24:13.245Z"
-last_activity: 2026-04-04
+stopped_at: Completed 05-02-PLAN.md — FastAPI app entry point, CORS, lifespan, health check, task registry
+last_updated: "2026-04-04T14:18:13.614Z"
+last_activity: 2026-04-04 -- Phase 07 execution started
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 2
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 8
+  completed_plans: 5
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 05 — backend-foundation
+**Current focus:** Phase 07 — vue-frontend
 
 ## Current Position
 
-Phase: 05 (backend-foundation) — EXECUTING
-Plan: 2 of 2
-Status: Ready to execute
-Last activity: 2026-04-04
+Phase: 07 (vue-frontend) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 07
+Last activity: 2026-04-04 -- Phase 07 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 05 P01 | 174s | 3 tasks | 8 files |
+| Phase 05 P02 | 90 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Recent decisions affecting current work:
 - [Phase 05]: asyncio.to_thread wraps both run_pipeline and render_pdf in backend/pipeline_runner.py — prevents event loop blocking from subprocess.run calls
 - [Phase 05]: db_path parameter added to init_db and get_db for test isolation via pytest tmp_path fixture
 - [Phase 05]: Tests use asyncio.run() in sync functions instead of pytest-asyncio — avoids extra dev dependency
+- [Phase 05]: asyncio.create_task + module-level set registry (_background_tasks) with done_callback discard — GC-safe task references for Phase 6 job queue
+- [Phase 05]: CORSMiddleware with explicit allow_origins=['http://localhost:5173'] (not wildcard) for security during development
+- [Phase 05]: lifespan async context manager pattern (not deprecated @app.on_event) for FastAPI startup/shutdown
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T06:24:13.243Z
-Stopped at: Completed 05-01-PLAN.md — backend dependencies, db.py, pipeline_runner.py
+Last session: 2026-04-04T06:28:43.092Z
+Stopped at: Completed 05-02-PLAN.md — FastAPI app entry point, CORS, lifespan, health check, task registry
 Resume file: None
