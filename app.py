@@ -1,0 +1,145 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
+
+from cv_maker.data import load_base_cv
+from cv_maker.models import GapItem, TailoredCV
+from cv_maker.pipeline import run_pipeline
+from cv_maker.renderer import render_latex, render_pdf
+
+st.set_page_config(page_title="CV Maker", layout="centered")
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+HISTORY_DIR = Path.home() / ".cv-maker" / "history"
+
+# ---------------------------------------------------------------------------
+# Base CV loading — cached; stop on failure
+# ---------------------------------------------------------------------------
+
+
+@st.cache_data
+def _load_cv():
+    try:
+        return load_base_cv()
+    except (FileNotFoundError, RuntimeError) as exc:
+        st.error(str(exc))
+        st.stop()
+
+
+base_cv = _load_cv()
+
+# ---------------------------------------------------------------------------
+# Session state initialisation (before any widgets)
+# ---------------------------------------------------------------------------
+
+if "result" not in st.session_state:
+    st.session_state["result"] = None
+if "pdf_bytes" not in st.session_state:
+    st.session_state["pdf_bytes"] = None
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _render_gap_table(gap_diff: list[GapItem]) -> None:
+    st.subheader("Gap Analysis")
+    rows = [
+        {
+            "Requirement": g.requirement,
+            "Present": "Yes" if g.present else "No",
+            "Evidence": g.evidence or "—",
+        }
+        for g in gap_diff
+    ]
+    df = pd.DataFrame(rows)
+
+    def _color_row(row):
+        color = "#d4edda" if row["Present"] == "Yes" else "#f8d7da"
+        return [f"background-color: {color}"] * len(row)
+
+    st.dataframe(df.style.apply(_color_row, axis=1), use_container_width=True, hide_index=True)
+
+
+def _render_cv_preview(cv: TailoredCV) -> None:
+    st.subheader("Tailored CV Preview")
+    st.markdown(f"**{cv.contact.name}** | {cv.contact.email}")
+    if cv.contact.linkedin:
+        st.markdown(f"LinkedIn: {cv.contact.linkedin}")
+    if cv.contact.location:
+        st.markdown(f"Location: {cv.contact.location}")
+    st.markdown("---")
+    st.markdown("### Summary")
+    st.write(cv.summary)
+    st.markdown("### Experience")
+    for exp in cv.experience:
+        end_str = exp.end or "Present"
+        st.markdown(f"**{exp.title}** at {exp.company} ({exp.start} – {end_str})")
+        for bullet in exp.bullets:
+            st.markdown(f"- {bullet}")
+        if exp.technologies:
+            st.caption(f"Technologies: {', '.join(exp.technologies)}")
+    st.markdown("### Skills")
+    st.write(", ".join(cv.skills))
+    if cv.highlighted_technologies:
+        st.markdown("### Highlighted Technologies")
+        st.write(", ".join(cv.highlighted_technologies))
+    if cv.education:
+        st.markdown("### Education")
+        for edu in cv.education:
+            field_str = f", {edu.field}" if edu.field else ""
+            year_str = f" ({edu.year})" if edu.year else ""
+            st.markdown(f"**{edu.degree}{field_str}** — {edu.institution}{year_str}")
+    if cv.certifications:
+        st.markdown("### Certifications")
+        for cert in cv.certifications:
+            st.markdown(f"- {cert}")
+
+
+# ---------------------------------------------------------------------------
+# Main page
+# ---------------------------------------------------------------------------
+
+st.title("CV Maker")
+st.caption("Paste a job listing and click Generate to tailor your CV.")
+
+job_text = st.text_area("Job Listing", height=300, placeholder="Paste the job listing here...")
+
+if st.button("Generate Tailored CV", type="primary"):
+    if not job_text.strip():
+        st.warning("Please paste a job listing before generating.")
+    else:
+        try:
+            with st.spinner("Analysing job listing and tailoring CV...", show_time=True):
+                tailored_cv, gap_diff = run_pipeline(base_cv, job_text)
+            with st.spinner("Compiling PDF...", show_time=True):
+                pdf_bytes = render_pdf(render_latex(tailored_cv))
+            st.session_state["result"] = {"tailored_cv": tailored_cv, "gap_diff": gap_diff}
+            st.session_state["pdf_bytes"] = pdf_bytes
+        except RuntimeError as exc:
+            st.error(f"Generation failed: {exc}")
+
+# ---------------------------------------------------------------------------
+# Results section — reads only from session_state, never calls pipeline
+# ---------------------------------------------------------------------------
+
+if st.session_state["result"] is not None:
+    result = st.session_state["result"]
+    _render_gap_table(result["gap_diff"])
+    st.divider()
+    _render_cv_preview(result["tailored_cv"])
+    st.divider()
+    if st.session_state["pdf_bytes"]:
+        role = result["tailored_cv"].contact.name.lower().replace(" ", "-")
+        st.download_button(
+            label="Download PDF",
+            data=st.session_state["pdf_bytes"],
+            file_name=f"cv-{role}.pdf",
+            mime="application/pdf",
+        )
