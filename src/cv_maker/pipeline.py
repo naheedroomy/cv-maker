@@ -26,7 +26,8 @@ def _invoke_claude(prompt: str, timeout: int = 300) -> str:
     t0 = time.monotonic()
     try:
         result = subprocess.run(  # noqa: S603
-            ["claude", "-p", "--model", "sonnet", "--no-session-persistence", prompt],  # noqa: S607
+            ["claude", "-p", "--model", "haiku", "--no-session-persistence"],  # noqa: S607
+            input=prompt,
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -130,6 +131,9 @@ Only mention certifications the candidate already holds. Do NOT mention expected
    - Keep entries in reverse chronological order (most recent first). Do NOT reorder by relevance.
    - Rewrite bullets to sound natural and professional. Do NOT write bullets that read like they were \
 written specifically to match a job listing. They should sound like real accomplishments, not keyword-stuffed responses.
+   - You are NOT limited to the same number of bullets as the base CV. Add additional bullets where \
+relevant to highlight experience that aligns with the job requirements. For highly relevant roles, \
+5-7 bullets is fine. For less relevant roles, 2-3 is enough. Use your judgement.
    - **BOLD key technologies and tools** in each bullet by wrapping them in **double asterisks**. \
 For example: "Built a CI/CD pipeline using **AWS CodePipeline** and **CodeBuild**, reducing deployment time by 50%."
    - You MAY adjust job titles slightly to better align with the target role. For example, \
