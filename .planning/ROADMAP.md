@@ -77,7 +77,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Install streamlit + pandas, implement app.py with session_state guard, gap table, CV preview, PDF download
+- [x] 04-01-PLAN.md — Install streamlit + pandas, implement app.py with session_state guard, gap table, CV preview, PDF download
 - [ ] 04-02-PLAN.md — Add history save/load and sidebar browser to app.py; human smoke test checkpoint
 
 ## Progress
@@ -90,4 +90,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Data Foundation | 1/1 | Complete   | 2026-04-03 |
 | 2. LaTeX Renderer | 1/2 | In Progress|  |
 | 3. AI Pipeline | 1/3 | In Progress|  |
-| 4. Streamlit UI | 0/2 | Not started | - |
+| 4. Streamlit UI | 1/2 | In Progress|  |
