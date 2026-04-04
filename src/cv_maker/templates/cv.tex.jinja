@@ -1,0 +1,88 @@
+%# cv.tex.jinja — Jinja2 LaTeX template for TailoredCV
+%# Delimiters: \VAR{expr}, \BLOCK{stmt}, %% line-statement, %# line-comment
+%# Every user string MUST use the |e filter to escape LaTeX special characters.
+\documentclass[11pt,a4paper]{moderncv}
+\moderncvstyle{classic}
+\moderncvcolor{blue}
+\usepackage[scale=0.85]{geometry}
+\usepackage[utf8]{inputenc}
+
+%# Contact info
+\name{\VAR{cv.contact.name|e}}{}
+\email{\VAR{cv.contact.email|e}}
+\BLOCK{if cv.contact.phone}
+\phone[mobile]{\VAR{cv.contact.phone|e}}
+\BLOCK{endif}
+\BLOCK{if cv.contact.linkedin}
+\social[linkedin]{\VAR{cv.contact.linkedin|e}}
+\BLOCK{endif}
+\BLOCK{if cv.contact.github}
+\social[github]{\VAR{cv.contact.github|e}}
+\BLOCK{endif}
+\BLOCK{if cv.contact.location}
+\address{\VAR{cv.contact.location|e}}{}{}
+\BLOCK{endif}
+
+\begin{document}
+\makecvtitle
+
+\section{Summary}
+\VAR{cv.summary|e}
+
+\section{Experience}
+\BLOCK{for exp in cv.experience}
+\cventry
+    {\VAR{exp.start}--\VAR{exp.end if exp.end else "Present"}}
+    {\VAR{exp.title|e}}
+    {\VAR{exp.company|e}}
+    {}{}
+    {\begin{itemize}
+\BLOCK{for bullet in exp.bullets}
+        \item \VAR{bullet|e}
+\BLOCK{endfor}
+    \end{itemize}}
+\BLOCK{endfor}
+
+\BLOCK{if cv.skills}
+\section{Skills}
+\VAR{", ".join(cv.skills)|e}
+\BLOCK{endif}
+
+\BLOCK{if cv.highlighted_technologies}
+\section{Technologies}
+\VAR{", ".join(cv.highlighted_technologies)|e}
+\BLOCK{endif}
+
+\section{Education}
+\BLOCK{for edu in cv.education}
+\cventry
+    {\VAR{edu.year if edu.year else ""}}
+    {\VAR{edu.degree|e}}
+    {\VAR{edu.institution|e}}
+    {\VAR{edu.field|e if edu.field else ""}}{}{}
+\BLOCK{endfor}
+
+\BLOCK{if cv.projects}
+\section{Projects}
+\BLOCK{for proj in cv.projects}
+\cvitem{\VAR{proj.name|e}}{\VAR{proj.description|e}%
+\BLOCK{if proj.technologies}
+ \textit{(\VAR{", ".join(proj.technologies)|e})}%
+\BLOCK{endif}
+\BLOCK{if proj.url}
+ \href{\VAR{proj.url}}{}%
+\BLOCK{endif}
+}
+\BLOCK{endfor}
+\BLOCK{endif}
+
+\BLOCK{if cv.certifications}
+\section{Certifications}
+\begin{itemize}
+\BLOCK{for cert in cv.certifications}
+    \item \VAR{cert|e}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+
+\end{document}
