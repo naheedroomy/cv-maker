@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useJobStore } from '@/stores/jobStore'
 import SessionEntry from './SessionEntry.vue'
@@ -32,6 +33,7 @@ onUnmounted(() => {
   <aside class="sidebar">
     <div class="sidebar-header">
       <button class="new-job-btn" @click="router.push('/')">New Job</button>
+      <RouterLink to="/convert" class="import-cv-link">Import CV</RouterLink>
     </div>
     <nav aria-label="Job sessions">
       <template v-if="sortedJobs.length > 0">
@@ -78,6 +80,19 @@ onUnmounted(() => {
 }
 .new-job-btn:hover {
   background: #1d4ed8;
+}
+.import-cv-link {
+  display: block;
+  margin-top: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+.import-cv-link:hover {
+  color: #111827;
 }
 .empty-state {
   padding: 16px;
