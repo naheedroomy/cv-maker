@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from cv_maker.models import TailoredCV
+from cv_maker.models import BaseCV, TailoredCV
 
 MINIMAL_CV = {
     "contact": {"name": "Test User", "email": "test@example.com"},
@@ -65,3 +65,40 @@ def tailored_cv_with_special_chars() -> TailoredCV:
         "education": [{"institution": "MIT", "degree": "BSc"}],
     }
     return TailoredCV.model_validate(data)
+
+
+@pytest.fixture
+def base_cv() -> BaseCV:
+    """Minimal BaseCV instance for pipeline tests — no filesystem dependency."""
+    return BaseCV.model_validate({
+        "contact": {"name": "Jane Smith", "email": "jane@example.com", "github": "github.com/jane"},
+        "summary": "Experienced Python engineer with 8 years in backend development.",
+        "experience": [
+            {
+                "company": "TechCorp",
+                "title": "Senior Software Engineer",
+                "start": "2019-03",
+                "end": "2024-01",
+                "bullets": [
+                    "Built REST APIs serving 10M requests/day using Python and FastAPI",
+                    "Reduced database query latency by 40% via query optimization",
+                ],
+                "technologies": ["Python", "FastAPI", "PostgreSQL", "Redis"],
+            }
+        ],
+        "skills": ["Python", "FastAPI", "PostgreSQL", "Redis", "Docker", "Kubernetes"],
+        "education": [
+            {"institution": "State University", "degree": "BSc", "field": "Computer Science", "year": 2016}
+        ],
+    })
+
+
+@pytest.fixture
+def sample_job_text() -> str:
+    """Simulated job listing string for pipeline tests."""
+    return (
+        "We are looking for a Senior Backend Engineer to join our platform team. "
+        "The ideal candidate has strong experience with Python, FastAPI, and PostgreSQL. "
+        "You will design and build high-performance REST APIs and optimize database queries. "
+        "Experience with Docker and Kubernetes is a plus."
+    )
