@@ -35,6 +35,7 @@ def _row_to_response(row) -> JobResponse:
     return JobResponse(
         id=row["id"],
         company_name=row["company_name"],
+        job_link=row["job_link"],
         status=row["status"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],

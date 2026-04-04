@@ -162,7 +162,7 @@ def render_pdf(latex_source: str) -> bytes:
         result = subprocess.run(  # noqa: S603
             [
                 latexmk_bin,
-                "-pdf",
+                "-xelatex",
                 "-interaction=nonstopmode",
                 "-halt-on-error",
                 "cv.tex",

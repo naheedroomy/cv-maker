@@ -17,6 +17,7 @@ class JobResponse(BaseModel):
 
     id: str
     company_name: str
+    job_link: str | None = None
     status: str  # one of: pending, running, complete, failed, cancelled
     created_at: str  # ISO 8601 timestamp
     updated_at: str  # ISO 8601 timestamp

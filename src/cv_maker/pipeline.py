@@ -138,7 +138,9 @@ relevant to highlight experience that aligns with the job requirements. For high
 For example: "Built a CI/CD pipeline using **AWS CodePipeline** and **CodeBuild**, reducing deployment time by 50%."
    - You MAY adjust job titles slightly to better align with the target role. For example, \
 if the base CV says "Software Engineer" but the job listing is for a DevOps role, you can adjust \
-to "Software & DevOps Engineer" or similar — keep it honest but optimize for relevance.
+to "Software & DevOps Engineer" or similar — keep it honest but optimize for relevance. \
+However, NEVER inflate seniority level. Do NOT add "Senior", "Lead", "Staff", "Principal", or \
+similar seniority prefixes that are not in the original title.
    - If the job listing requires technologies the candidate hasn't explicitly listed, you MAY \
 weave them naturally into existing bullet points as supplementary mentions, or add a small new \
 bullet point that lightly claims familiarity. Keep additions inside the experience bullets. \

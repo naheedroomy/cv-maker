@@ -52,6 +52,7 @@ export type JobStatus = 'pending' | 'running' | 'complete' | 'failed' | 'cancell
 export interface JobResponse {
   id: string
   company_name: string
+  job_link: string | null
   status: JobStatus
   created_at: string
   updated_at: string
