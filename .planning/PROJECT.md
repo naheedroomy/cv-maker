@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An AI-powered CV tailoring pipeline that takes a structured base CV and a job listing, then uses Google Gemini 2.5 Flash Lite to produce a tailored CV. The system emphasizes and surfaces relevant skills and experience without fabricating anything — it can take liberties in highlighting tools and technologies the user actually knows. Output is rendered via LaTeX templates to PDF, with a simple Streamlit UI.
+An AI-powered CV tailoring pipeline that takes a structured base CV and a job listing, then uses Claude Code CLI (non-interactive mode) to produce a tailored CV. The system emphasizes and surfaces relevant skills and experience without fabricating anything — it can take liberties in highlighting tools and technologies the user actually knows. Output is rendered via LaTeX templates to PDF, with a simple Streamlit UI.
 
 ## Core Value
 
@@ -12,13 +12,12 @@ Given a job listing and a base CV, produce a tailored CV that honestly highlight
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ User can define a structured base CV containing all experience, skills, and tools — Phase 1
 
 ### Active
 
-- [ ] User can define a structured base CV containing all experience, skills, and tools
 - [ ] User can paste a job listing into the UI
-- [ ] System uses Gemini 2.5 Flash Lite to analyze the job listing and tailor the CV
+- [ ] System uses Claude Code CLI to analyze the job listing and tailor the CV
 - [ ] AI emphasizes relevant skills/tools without fabricating experience
 - [ ] AI can surface tools/technologies the user knows but didn't prominently feature
 - [ ] Output is rendered to PDF via LaTeX templates
@@ -35,14 +34,14 @@ Given a job listing and a base CV, produce a tailored CV that honestly highlight
 ## Context
 
 - Personal tool for the user to tailor their CV when applying to jobs
-- Google Gemini 2.5 Flash Lite chosen for cost-efficiency and speed
+- Claude Code CLI chosen as AI backend — free with existing Claude subscription, invoked via `claude -p` in non-interactive mode with JSON output
 - LaTeX chosen for flexible, professional-quality PDF output
 - Streamlit chosen for rapid UI development with minimal frontend work
 - The "base CV" is a complete inventory — everything the user has ever done, all skills, all tools — so the AI has maximum material to work with
 
 ## Constraints
 
-- **AI Provider**: Google Gemini 2.5 Flash Lite — cost-effective, fast inference
+- **AI Provider**: Claude Code CLI (`claude -p`) — free with existing subscription, JSON output with parse-retry
 - **UI Framework**: Streamlit — simple, Python-native
 - **Output Format**: LaTeX → PDF — professional quality, flexible templates
 - **Honesty**: AI must never fabricate experience or skills — only reframe, emphasize, and surface existing ones
@@ -51,7 +50,7 @@ Given a job listing and a base CV, produce a tailored CV that honestly highlight
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Gemini 2.5 Flash Lite over other LLMs | Cost-efficient, fast, good enough for CV tailoring | — Pending |
+| Claude Code CLI over Gemini API | Free with existing subscription, high quality output, JSON output via prompt instruction + parse-retry | — Pending |
 | LaTeX for output | Professional typesetting, flexible templates, clean PDF output | — Pending |
 | Streamlit for UI | Minimal frontend effort, Python-native, good enough for personal tool | — Pending |
 | Structured base CV as input | Gives AI maximum material to work with when tailoring | — Pending |
@@ -74,4 +73,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after initialization*
+*Last updated: 2026-04-04 after Phase 1 completion*
