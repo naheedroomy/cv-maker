@@ -19,6 +19,7 @@ st.set_page_config(page_title="CV Maker", layout="centered")
 # ---------------------------------------------------------------------------
 
 HISTORY_DIR = Path.home() / ".cv-maker" / "history"
+OUTPUT_DIR = Path("output")
 
 
 # ---------------------------------------------------------------------------
@@ -27,7 +28,12 @@ HISTORY_DIR = Path.home() / ".cv-maker" / "history"
 
 
 def _save_history(
-    job_text: str, role_title: str, tailored_cv: TailoredCV, gap_diff: list[GapItem]
+    job_text: str,
+    role_title: str,
+    tailored_cv: TailoredCV,
+    gap_diff: list[GapItem],
+    company_name: str = "",
+    job_link: str = "",
 ) -> None:
     """Persist a completed run to ~/.cv-maker/history/ as a timestamped JSON file."""
     HISTORY_DIR.mkdir(parents=True, exist_ok=True)
@@ -37,6 +43,8 @@ def _save_history(
     record = {
         "timestamp": ts,
         "role_title": role_title,
+        "company_name": company_name,
+        "job_link": job_link,
         "job_text": job_text,
         "tailored_cv": tailored_cv.model_dump(),
         "gap_diff": [g.model_dump() for g in gap_diff],
@@ -83,6 +91,8 @@ if "result" not in st.session_state:
     st.session_state["result"] = None
 if "pdf_bytes" not in st.session_state:
     st.session_state["pdf_bytes"] = None
+if "pdf_path" not in st.session_state:
+    st.session_state["pdf_path"] = None
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -182,19 +192,31 @@ with st.sidebar:
 st.title("CV Maker")
 st.caption("Paste a job listing and click Generate to tailor your CV.")
 
+company_name = st.text_input("Company Name", placeholder="e.g. Acme Corp")
+job_link = st.text_input("Job Listing URL (optional)", placeholder="https://...")
 job_text = st.text_area("Job Listing", height=300, placeholder="Paste the job listing here...")
 
 if st.button("Generate Tailored CV", type="primary"):
-    if not job_text.strip():
-        st.warning("Please paste a job listing before generating.")
+    if not job_text.strip() or not company_name.strip():
+        st.warning("Please enter a company name and paste a job listing before generating.")
     else:
         try:
             with st.spinner("Analysing job listing and tailoring CV...", show_time=True):
                 tailored_cv, gap_diff = run_pipeline(base_cv, job_text)
             with st.spinner("Compiling PDF...", show_time=True):
                 pdf_bytes = render_pdf(render_latex(tailored_cv))
+            # Auto-save PDF to output/{company_slug}/CV-{ApplicantName}.pdf
+            company_slug = "".join(
+                c if c.isalnum() or c in " -_" else "" for c in company_name
+            ).strip().replace(" ", "-")
+            applicant_name = tailored_cv.contact.name.replace(" ", "")
+            pdf_dir = OUTPUT_DIR / company_slug
+            pdf_dir.mkdir(parents=True, exist_ok=True)
+            pdf_path = pdf_dir / f"CV-{applicant_name}.pdf"
+            pdf_path.write_bytes(pdf_bytes)
             st.session_state["result"] = {"tailored_cv": tailored_cv, "gap_diff": gap_diff}
-            st.session_state["pdf_bytes"] = pdf_bytes
+            st.session_state["pdf_bytes"] = None
+            st.session_state["pdf_path"] = str(pdf_path)
             role_label = (
                 job_text.strip().splitlines()[0][:40] if job_text.strip() else "Unknown Role"
             )
@@ -203,6 +225,8 @@ if st.button("Generate Tailored CV", type="primary"):
                 role_title=role_label,
                 tailored_cv=tailored_cv,
                 gap_diff=gap_diff,
+                company_name=company_name,
+                job_link=job_link,
             )
         except RuntimeError as exc:
             st.error(f"Generation failed: {exc}")
@@ -217,11 +241,5 @@ if st.session_state["result"] is not None:
     st.divider()
     _render_cv_preview(result["tailored_cv"])
     st.divider()
-    if st.session_state["pdf_bytes"]:
-        role = result["tailored_cv"].contact.name.lower().replace(" ", "-")
-        st.download_button(
-            label="Download PDF",
-            data=st.session_state["pdf_bytes"],
-            file_name=f"cv-{role}.pdf",
-            mime="application/pdf",
-        )
+    if st.session_state.get("pdf_path"):
+        st.success(f"PDF saved to: {st.session_state['pdf_path']}")
