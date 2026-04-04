@@ -112,3 +112,34 @@ class TailoredCV(BaseModel):
     certifications: list[str] = []
     # AI-surfaced tools user knows but did not lead with in their base CV (AI-04)
     highlighted_technologies: list[str] = []
+
+
+# ---------------------------------------------------------------------------
+# AI Pipeline models (Phase 3) — step 1 output from Claude Code CLI
+# ---------------------------------------------------------------------------
+
+
+class GapItem(BaseModel):
+    """One entry in the gap diff: a job requirement with presence check.
+
+    DATA-03: Structured for UI display in Phase 4.
+    - present=True: base CV contains evidence of this requirement
+    - present=False: base CV does not demonstrate this requirement
+    """
+
+    requirement: str
+    present: bool
+    evidence: str  # Quote or reference from base CV; empty string when present=False
+
+
+class JobAnalysis(BaseModel):
+    """Structured output from Claude step 1: job listing analysis.
+
+    AI-01: Extracted from job listing by claude -p invocation.
+    Consumed by step 2 (tailor_cv) to guide section-by-section rewriting.
+    """
+
+    role_title: str
+    key_requirements: list[str]
+    required_technologies: list[str]
+    gap_diff: list[GapItem]
