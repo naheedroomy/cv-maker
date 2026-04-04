@@ -96,16 +96,17 @@ class TailoredSection(BaseModel):
 
 
 class GapItem(BaseModel):
-    """One entry in the gap diff: a job requirement with presence check.
+    """One entry in the gap diff: a job requirement with match level.
 
     DATA-03: Structured for UI display.
-    - present=True: base CV contains evidence of this requirement
-    - present=False: base CV does not demonstrate this requirement
+    - match_level="strong": base CV clearly demonstrates this requirement
+    - match_level="partial": base CV has related/implicit evidence
+    - match_level="missing": base CV does not demonstrate this requirement
     """
 
     requirement: str
-    present: bool
-    evidence: str  # Quote or reference from base CV; empty string when present=False
+    match_level: str  # "strong", "partial", or "missing"
+    evidence: str  # Quote or reference from base CV; empty string when missing
 
 
 class TailoredCV(BaseModel):

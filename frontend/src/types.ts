@@ -41,9 +41,11 @@ export interface TailoredCV {
   tailoring_notes: string[]
 }
 
+export type MatchLevel = 'strong' | 'partial' | 'missing'
+
 export interface GapItem {
   requirement: string
-  present: boolean
+  match_level: MatchLevel
   evidence: string
 }
 

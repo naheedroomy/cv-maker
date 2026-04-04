@@ -123,15 +123,27 @@ Instructions:
 
 GAP ANALYSIS:
 - Extract key requirements and technologies from the job listing.
-- For each requirement, check whether the base CV provides evidence. Include this as "gap_diff" in the output.
+- For each requirement, evaluate the base CV for evidence. Consider both explicit mentions AND \
+implicit signals. For example: observability work implies SRE practices; Kubernetes platform work \
+implies Helm, GitOps, or deployment standardization; MTTD/MTTR work implies incident response maturity.
+- Assign a match_level for each requirement: "strong" (clear, direct evidence), "partial" \
+(related or implicit evidence), or "missing" (no evidence found).
+- Include this as "gap_diff" in the output.
 
 CV TAILORING — address each section:
-1. SUMMARY: Rewrite to emphasize the experience most relevant to this role. \
+1. SUMMARY: Position the candidate to match the role's core identity (e.g., Platform Engineer, SRE, DevOps). \
+Reflect seniority signals such as ownership, system design, and cross-team impact. \
+Prioritize the top 3 themes from the job description. \
 Only mention certifications the candidate already holds. Do NOT mention expected/upcoming/in-progress certifications in the summary.
 2. EXPERIENCE:
    - Keep entries in reverse chronological order (most recent first). Do NOT reorder by relevance.
    - Rewrite bullets to sound natural and professional. Do NOT write bullets that read like they were \
-written specifically to match a job listing. They should sound like real accomplishments, not keyword-stuffed responses.
+written specifically to match a job listing. They should sound like real accomplishments, not keyword-stuffed responses. \
+Avoid directly reusing phrases from the job listing. Prefer paraphrasing into natural, experience-driven language.
+   - When rewriting bullets, ensure each claim can be traced back to explicit or implicit evidence \
+from the base CV. Do not introduce responsibilities, scope, or technologies that cannot be justified by the base CV.
+   - Preserve the level of ownership indicated in the base CV. Do not upgrade action verbs \
+(e.g., "worked on" to "led", "contributed to" to "architected") unless clearly supported by the original bullet.
    - You are NOT limited to the same number of bullets as the base CV. Add additional bullets where \
 relevant to highlight experience that aligns with the job requirements. For highly relevant roles, \
 5-7 bullets is fine. For less relevant roles, 2-3 is enough. Use your judgement.
@@ -146,6 +158,8 @@ similar seniority prefixes that are not in the original title.
 weave them naturally into existing bullet points as supplementary mentions, or add a small new \
 bullet point that lightly claims familiarity. Keep additions inside the experience bullets. \
 For example, if they use Kubernetes heavily, mentioning Helm in a bullet is fine.
+   - The "technologies" field for each experience entry must only include tools explicitly referenced \
+in the bullets for that role. Do not introduce new technologies in this field that aren't mentioned in the bullets.
    - Avoid overusing em dashes (—). Use commas, periods, or semicolons for variety. One or two em dashes \
 across the entire CV is fine, but they should not appear in every bullet.
 3. SKILLS: Filter and reorder skills to lead with those most relevant to this role. \
@@ -160,6 +174,11 @@ knows but did not lead with. Technologies you wove into experience bullets may a
    - Technologies you added that weren't in the base CV and why they're reasonable
    - Key bullet rewrites and what job requirement they target
    - Any strategic decisions (e.g., emphasizing certain experience over others)
+
+CLOSED-LOOP REASONING — use the gap_diff to guide CV tailoring:
+- Emphasize "strong" matches prominently in bullets and summary.
+- Expand and reframe "partial" matches using implicit evidence from the base CV.
+- Do NOT attempt to compensate for "missing" requirements beyond honest representation.
 
 Return ONLY a valid JSON object matching this exact schema — no markdown fences, no commentary:
 
@@ -188,12 +207,17 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
   "gap_diff": [
     {{
       "requirement": "<requirement from job listing>",
-      "present": true,
+      "match_level": "strong",
       "evidence": "<quote or reference from base CV>"
     }},
     {{
+      "requirement": "<partially matched requirement>",
+      "match_level": "partial",
+      "evidence": "<implicit or related evidence from base CV>"
+    }},
+    {{
       "requirement": "<missing requirement>",
-      "present": false,
+      "match_level": "missing",
       "evidence": ""
     }}
   ]
