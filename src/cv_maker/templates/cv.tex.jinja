@@ -2,7 +2,7 @@
 %# Delimiters: \VAR{expr}, \BLOCK{stmt}, %% line-statement, %# line-comment
 %# Every user string MUST use the |e filter to escape LaTeX special characters.
 \documentclass[11pt,a4paper]{moderncv}
-\moderncvstyle{classic}
+\moderncvstyle{banking}
 \moderncvcolor{blue}
 \usepackage[scale=0.85]{geometry}
 \usepackage[utf8]{inputenc}
@@ -32,10 +32,11 @@
 \section{Experience}
 \BLOCK{for exp in cv.experience}
 \cventry
-    {\VAR{exp.start}--\VAR{exp.end if exp.end else "Present"}}
+    {\VAR{exp.start} -- \VAR{exp.end if exp.end else "Present"}}
     {\VAR{exp.title|e}}
     {\VAR{exp.company|e}}
-    {}{}
+    {}
+    {}
     {\begin{itemize}
 \BLOCK{for bullet in exp.bullets}
         \item \VAR{bullet|e}

@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: verifying
 stopped_at: Completed 04-streamlit-ui 04-02-PLAN.md
-last_updated: "2026-04-04T04:38:32.818Z"
+last_updated: "2026-04-04T05:15:30Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 ## Current Position
 
-Phase: 04 (streamlit-ui) — EXECUTING
-Plan: 2 of 2
+Phase: 04
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-04
 
@@ -82,6 +82,8 @@ Recent decisions affecting current work:
 - [Phase 04-streamlit-ui]: session_state guard: run_pipeline() called only inside st.button() block; results stored in session_state to prevent re-execution on widget reruns
 - [Phase 04-streamlit-ui]: pdf_bytes excluded from history JSON — large, not JSON-serialisable, omitted from history; restored runs lack Download PDF button by design
 - [Phase 04-streamlit-ui]: role_label derived from first line of job_text (max 40 chars) — human-readable sidebar label without extra user input
+- [260404-euc]: PDF auto-saved to output/{company_slug}/CV-{ApplicantName}.pdf; company slug strips non-alnum chars, replaces spaces with hyphens
+- [260404-euc]: Sidebar selectbox replaced with per-session st.button entries and a "+ New" button; active session tracked via active_history_path in session_state
 
 ### Pending Todos
 
@@ -93,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T04:38:32.815Z
-Stopped at: Completed 04-streamlit-ui 04-02-PLAN.md
+Last session: 2026-04-04T05:15:30Z
+Stopped at: Completed quick task 260404-euc (QOL updates — company name, link fields, chat sidebar)
 Resume file: None

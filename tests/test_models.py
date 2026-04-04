@@ -73,7 +73,7 @@ def test_load_base_cv_file_not_found():
 def test_load_base_cv_success():
     """DATA-01: load_base_cv() loads base_cv.yaml and returns a valid BaseCV instance."""
     cv = load_base_cv(Path("base_cv.yaml"))
-    assert cv.contact.name == "Jane Smith"
+    assert cv.contact.name == "Naheed Roomy"
     assert "Python" in cv.skills
     assert len(cv.experience) >= 1
 
