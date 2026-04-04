@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Full-Stack Rebuild
 status: executing
-stopped_at: Completed 05-02-PLAN.md — FastAPI app entry point, CORS, lifespan, health check, task registry
-last_updated: "2026-04-04T14:18:13.614Z"
-last_activity: 2026-04-04 -- Phase 07 execution started
+stopped_at: Completed 07-02-PLAN.md — AppSidebar, JobFormView, StatusBadge, ErrorBanner, LoadingSpinner, SessionEntry
+last_updated: "2026-04-04T14:31:42.686Z"
+last_activity: 2026-04-04
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 7
   percent: 0
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 07 (vue-frontend) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 07
-Last activity: 2026-04-04 -- Phase 07 execution started
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 05 P01 | 174s | 3 tasks | 8 files |
 | Phase 05 P02 | 90 | 2 tasks | 5 files |
+| Phase 07 P02 | 420 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - [Phase 05]: asyncio.create_task + module-level set registry (_background_tasks) with done_callback discard — GC-safe task references for Phase 6 job queue
 - [Phase 05]: CORSMiddleware with explicit allow_origins=['http://localhost:5173'] (not wildcard) for security during development
 - [Phase 05]: lifespan async context manager pattern (not deprecated @app.on_event) for FastAPI startup/shutdown
+- [Phase 07]: 30s polling owned by AppSidebar.vue lifecycle (not store.startSidebarPolling) — matches RESEARCH.md Pattern 6, component lifecycle owns the interval
+- [Phase 07]: storeToRefs pattern used in AppSidebar for reactive destructuring — prevents reactivity loss when destructuring Pinia setup stores
 
 ### Pending Todos
 
@@ -88,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T06:28:43.092Z
-Stopped at: Completed 05-02-PLAN.md — FastAPI app entry point, CORS, lifespan, health check, task registry
+Last session: 2026-04-04T14:31:42.683Z
+Stopped at: Completed 07-02-PLAN.md — AppSidebar, JobFormView, StatusBadge, ErrorBanner, LoadingSpinner, SessionEntry
 Resume file: None

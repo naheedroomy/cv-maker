@@ -146,7 +146,7 @@ Plans:
 
 Plans:
 - [x] 07-01-PLAN.md — Scaffold Vue 3 project, Vite proxy, TypeScript types, Pinia store with SSE lifecycle, Vue Router, App.vue shell
-- [ ] 07-02-PLAN.md — Sidebar with session list and polling, StatusBadge, SessionEntry, ErrorBanner, LoadingSpinner, JobFormView with validation
+- [x] 07-02-PLAN.md — Sidebar with session list and polling, StatusBadge, SessionEntry, ErrorBanner, LoadingSpinner, JobFormView with validation
 - [ ] 07-03-PLAN.md — JobDetailView with SSE, CvPreview, GapDiffTable, SkeletonSection, PDF download, Cancel Job, and human-verify checkpoint
 
 ### Phase 8: Production Wiring
@@ -172,5 +172,5 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 4. Streamlit UI | v1.0 | 2/2 | Complete | 2026-04-04 |
 | 5. Backend Foundation | v2.0 | 2/2 | Complete |  |
 | 6. Job Queue & API | v2.0 | 2/3 | In Progress|  |
-| 7. Vue Frontend | v2.0 | 1/3 | In Progress | - |
+| 7. Vue Frontend | v2.0 | 2/3 | In Progress|  |
 | 8. Production Wiring | v2.0 | 0/TBD | Not started | - |
