@@ -63,7 +63,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — Extend models.py with GapItem and JobAnalysis Pydantic models
 - [x] 03-02-PLAN.md — Implement pipeline.py with two-step Claude invocation, retry loop, and no-fabrication enforcement
-- [ ] 03-03-PLAN.md — Write test_pipeline.py with monkeypatched subprocess tests
+- [x] 03-03-PLAN.md — Write test_pipeline.py with monkeypatched subprocess tests
 
 ### Phase 4: Streamlit UI
 **Goal**: Users can run the full pipeline — paste a job listing, generate a tailored CV, preview it, download the PDF, and revisit past runs — entirely through a browser UI
@@ -74,8 +74,11 @@ Plans:
   2. Interacting with Streamlit widgets (scrolling, clicking non-Generate buttons) does not re-trigger Claude Code CLI calls
   3. User can preview the tailored CV content in the UI before downloading the PDF
   4. Past (job listing, tailored CV) pairs are stored locally and the user can browse and open any previous run
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Install streamlit + pandas, implement app.py with session_state guard, gap table, CV preview, PDF download
+- [ ] 04-02-PLAN.md — Add history save/load and sidebar browser to app.py; human smoke test checkpoint
 
 ## Progress
 
@@ -87,4 +90,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Data Foundation | 1/1 | Complete   | 2026-04-03 |
 | 2. LaTeX Renderer | 1/2 | In Progress|  |
 | 3. AI Pipeline | 1/3 | In Progress|  |
-| 4. Streamlit UI | 0/? | Not started | - |
+| 4. Streamlit UI | 0/2 | Not started | - |
