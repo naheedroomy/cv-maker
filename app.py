@@ -154,36 +154,50 @@ def _render_cv_preview(cv: TailoredCV) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Sidebar — history browser
+# Sidebar — session list
 # ---------------------------------------------------------------------------
 
 with st.sidebar:
-    st.header("Past Runs")
+    st.header("Sessions")
+
+    # New button — clears current session state to start fresh
+    if st.button("+ New", use_container_width=True):
+        st.session_state["result"] = None
+        st.session_state["pdf_bytes"] = None
+        st.session_state["pdf_path"] = None
+        st.session_state.pop("active_history_path", None)
+        st.rerun()
+
+    st.divider()
+
     history = _load_history_index()
     if history:
-        labels = ["(current run)"] + [h["label"] for h in history]
+        active_path = st.session_state.get("active_history_path")
+        for h in history:
+            # Label: use company_name if present in record, else fall back to role_title
+            record = h["data"]
+            company = record.get("company_name", "")
+            role = record.get("role_title", "Unknown")
+            label = f"{company} — {role}" if company else role
+            ts = record.get("timestamp", "")
+            # Truncate timestamp to readable date portion
+            date_str = f"{ts[:4]}-{ts[4:6]}-{ts[6:8]}" if len(ts) >= 8 else ts
 
-        def _on_history_change() -> None:
-            selected_label = st.session_state["history_select"]
-            if selected_label == "(current run)":
-                return
-            idx = labels.index(selected_label) - 1
-            chosen = history[idx]["data"]
-            st.session_state["result"] = {
-                "tailored_cv": TailoredCV.model_validate(chosen["tailored_cv"]),
-                "gap_diff": [GapItem.model_validate(g) for g in chosen["gap_diff"]],
-            }
-            # pdf_bytes not stored in history — clear so Download button is absent
-            st.session_state["pdf_bytes"] = None
+            is_active = (h["path"] == active_path)
+            btn_label = f"**{label}**\n{date_str}" if is_active else f"{label}\n{date_str}"
 
-        st.selectbox(
-            "Past runs",
-            options=labels,
-            key="history_select",
-            on_change=_on_history_change,
-        )
+            if st.button(btn_label, key=h["path"], use_container_width=True):
+                chosen = h["data"]
+                st.session_state["result"] = {
+                    "tailored_cv": TailoredCV.model_validate(chosen["tailored_cv"]),
+                    "gap_diff": [GapItem.model_validate(g) for g in chosen["gap_diff"]],
+                }
+                st.session_state["pdf_bytes"] = None
+                st.session_state["pdf_path"] = None
+                st.session_state["active_history_path"] = h["path"]
+                st.rerun()
     else:
-        st.caption("No past runs yet.")
+        st.caption("No past sessions yet.")
 
 # ---------------------------------------------------------------------------
 # Main page
