@@ -23,3 +23,17 @@ class JobResponse(BaseModel):
     tailored_cv: dict | None = None  # populated on complete (from tailored_cv_json column)
     gap_diff: list | None = None  # populated on complete (from gap_diff_json column)
     pdf_url: str | None = None  # populated on complete, format: /api/jobs/{id}/pdf
+
+
+class CvConvertRequest(BaseModel):
+    """Request body for POST /api/cv/convert."""
+
+    cv_text: str  # Plain-text content of the CV to parse
+
+
+class CvConvertResponse(BaseModel):
+    """Response model for POST /api/cv/convert."""
+
+    success: bool
+    message: str
+    contact_name: str | None = None  # Name parsed from the CV, for confirmation display
