@@ -41,9 +41,11 @@ export interface TailoredCV {
   tailoring_notes: string[]
 }
 
+export type MatchLevel = 'strong' | 'partial' | 'missing'
+
 export interface GapItem {
   requirement: string
-  present: boolean
+  match_level: MatchLevel
   evidence: string
 }
 
@@ -52,6 +54,7 @@ export type JobStatus = 'pending' | 'running' | 'complete' | 'failed' | 'cancell
 export interface JobResponse {
   id: string
   company_name: string
+  job_link: string | null
   status: JobStatus
   created_at: string
   updated_at: string

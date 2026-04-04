@@ -76,6 +76,13 @@ async function handleDownload() {
       <h2 class="company-heading">{{ currentJob.company_name }}</h2>
       <StatusBadge :status="currentJob.status" />
     </div>
+    <a
+      v-if="currentJob.job_link"
+      :href="currentJob.job_link"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="job-link"
+    >{{ currentJob.job_link }}</a>
 
     <!-- Action buttons -->
     <div class="action-buttons">
@@ -174,7 +181,20 @@ async function handleDownload() {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 4px;
+}
+
+.job-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #2563eb;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.job-link:hover {
+  text-decoration: underline;
 }
 
 .company-heading {

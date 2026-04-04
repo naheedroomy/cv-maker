@@ -5,7 +5,8 @@
 \moderncvstyle{banking}
 \moderncvcolor{blue}
 \usepackage[scale=0.85]{geometry}
-\usepackage[utf8]{inputenc}
+\usepackage{fontspec}
+\usepackage{needspace}
 
 %# Contact info
 \name{\VAR{cv.contact.name|e}}{}
@@ -29,8 +30,13 @@
 \section{Summary}
 \VAR{cv.summary|e}
 
+\bigskip
 \section{Experience}
 \BLOCK{for exp in cv.experience}
+\BLOCK{if not loop.first}
+\medskip
+\BLOCK{endif}
+\needspace{5\baselineskip}
 \cventry
     {\VAR{exp.start} -- \VAR{exp.end if exp.end else "Present"}}
     {\VAR{exp.title|e}}
@@ -45,6 +51,7 @@
 \BLOCK{endfor}
 
 \BLOCK{if cv.certifications}
+\bigskip
 \section{Certifications}
 \begin{itemize}
 \BLOCK{for cert in cv.certifications}
@@ -53,6 +60,7 @@
 \end{itemize}
 \BLOCK{endif}
 
+\bigskip
 \section{Education}
 \BLOCK{for edu in cv.education}
 \cventry
@@ -63,16 +71,19 @@
 \BLOCK{endfor}
 
 \BLOCK{if cv.skills}
+\bigskip
 \section{Skills}
 \VAR{", ".join(cv.skills)|e}
 \BLOCK{endif}
 
 \BLOCK{if cv.highlighted_technologies}
+\bigskip
 \section{Technologies}
 \VAR{", ".join(cv.highlighted_technologies)|e}
 \BLOCK{endif}
 
 \BLOCK{if cv.projects}
+\bigskip
 \section{Projects}
 \BLOCK{for proj in cv.projects}
 \cvitem{\VAR{proj.name|e}}{\VAR{proj.description|e}%

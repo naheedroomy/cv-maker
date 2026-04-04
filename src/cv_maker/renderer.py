@@ -3,6 +3,7 @@
 # Three public functions: escape_latex(), render_latex(), render_pdf().
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -103,11 +104,17 @@ def _find_latexmk() -> str:
     found = shutil.which("latexmk")
     if found:
         return found
+    # macOS: MacTeX default location
     mactex_path = "/Library/TeX/texbin/latexmk"
     if Path(mactex_path).exists():
         return mactex_path
+    # Windows: MiKTeX default location
+    miktex_path = r"C:\Program Files\MiKTeX\miktex\bin\x64\latexmk.exe"
+    if Path(miktex_path).exists():
+        return miktex_path
     raise FileNotFoundError(
-        "latexmk not found. Install MacTeX: brew install --cask mactex-no-gui"
+        "latexmk not found. Install MacTeX (macOS) or MiKTeX (Windows) "
+        "and ensure latexmk is on PATH."
     )
 
 
@@ -142,10 +149,20 @@ def render_pdf(latex_source: str) -> bytes:
         tex_path = Path(tmpdir) / "cv.tex"
         tex_path.write_text(latex_source, encoding="utf-8")
 
+        # Sanitize PATH: MiKTeX scans each PATH entry as a directory and crashes
+        # if it encounters a file (e.g. claude.exe). Keep only real directories.
+        env = os.environ.copy()
+        if os.name == "nt":
+            clean_path = os.pathsep.join(
+                p for p in env.get("PATH", "").split(os.pathsep)
+                if Path(p).is_dir()
+            )
+            env["PATH"] = clean_path
+
         result = subprocess.run(  # noqa: S603
             [
                 latexmk_bin,
-                "-pdf",
+                "-xelatex",
                 "-interaction=nonstopmode",
                 "-halt-on-error",
                 "cv.tex",
@@ -153,12 +170,15 @@ def render_pdf(latex_source: str) -> bytes:
             cwd=tmpdir,
             capture_output=True,
             timeout=60,
+            env=env,
         )
 
         if result.returncode != 0:
             log = result.stdout.decode(errors="replace")
-            lines = log.splitlines()
-            excerpt = "\n".join(lines[-50:]) if len(lines) > 50 else log
+            err = result.stderr.decode(errors="replace")
+            combined = log + "\n" + err
+            lines = combined.splitlines()
+            excerpt = "\n".join(lines[-50:]) if len(lines) > 50 else combined
             raise RuntimeError(f"LaTeX compilation failed:\n{excerpt}")
 
         return (Path(tmpdir) / "cv.pdf").read_bytes()

@@ -19,8 +19,8 @@ defineProps<{ items: GapItem[] }>()
             <span v-if="item.evidence" class="evidence-text">{{ item.evidence }}</span>
           </td>
           <td>
-            <span :class="['gap-badge', item.present ? 'gap-badge--met' : 'gap-badge--gap']">
-              {{ item.present ? 'Met' : 'Gap' }}
+            <span :class="['gap-badge', `gap-badge--${item.match_level}`]">
+              {{ item.match_level === 'strong' ? 'Strong' : item.match_level === 'partial' ? 'Partial' : 'Gap' }}
             </span>
           </td>
         </tr>
@@ -89,12 +89,17 @@ defineProps<{ items: GapItem[] }>()
   white-space: nowrap;
 }
 
-.gap-badge--met {
+.gap-badge--strong {
   background: #dcfce7;
   color: #14532d;
 }
 
-.gap-badge--gap {
+.gap-badge--partial {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.gap-badge--missing {
   background: #fee2e2;
   color: #991b1b;
 }
