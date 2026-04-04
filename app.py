@@ -38,7 +38,8 @@ def _save_history(
     """Persist a completed run to ~/.cv-maker/history/ as a timestamped JSON file."""
     HISTORY_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%dT%H%M%S")
-    slug = "".join(c if c.isalnum() else "-" for c in role_title.lower())[:40]
+    label = company_name if company_name else role_title
+    slug = "".join(c if c.isalnum() else "-" for c in label.lower())[:40]
     target = HISTORY_DIR / f"{ts}-{slug}.json"
     record = {
         "timestamp": ts,
@@ -231,9 +232,7 @@ if st.button("Generate Tailored CV", type="primary"):
             st.session_state["result"] = {"tailored_cv": tailored_cv, "gap_diff": gap_diff}
             st.session_state["pdf_bytes"] = None
             st.session_state["pdf_path"] = str(pdf_path)
-            role_label = (
-                job_text.strip().splitlines()[0][:40] if job_text.strip() else "Unknown Role"
-            )
+            role_label = company_name if company_name.strip() else "Unknown Company"
             _save_history(
                 job_text=job_text,
                 role_title=role_label,
