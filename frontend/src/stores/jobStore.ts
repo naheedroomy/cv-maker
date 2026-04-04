@@ -57,7 +57,7 @@ export const useJobStore = defineStore('jobs', () => {
       currentJob.value = { ...currentJob.value, status: 'cancelled' }
     }
     const idx = jobs.value.findIndex((j) => j.id === jobId)
-    if (idx !== -1) jobs.value[idx] = { ...jobs.value[idx], status: 'cancelled' }
+    if (idx !== -1) jobs.value[idx] = { ...jobs.value[idx], status: 'cancelled' } as JobResponse
     closeSSE()
   }
 

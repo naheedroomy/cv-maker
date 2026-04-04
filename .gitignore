@@ -8,6 +8,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+frontend/dist/
 
 # Backend database (created at runtime)
 backend/cv_maker.db
