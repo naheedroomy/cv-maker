@@ -95,34 +95,10 @@ class TailoredSection(BaseModel):
     content: str | list[str]  # str for summary; list[str] for bullets
 
 
-class TailoredCV(BaseModel):
-    """Structured AI output — intermediate layer between Claude and LaTeX renderer.
-
-    Defined in Phase 1 so all phases share a single import. Consumed in Phase 3.
-    Fields are designed conservatively: required fields are what Claude MUST return;
-    all others default so TailoredCV.model_validate() is tolerant of minor Claude output variance.
-    """
-
-    contact: ContactInfo  # Pass-through from BaseCV
-    summary: str
-    experience: list[ExperienceItem]  # Reordered and rewritten by AI
-    skills: list[str]  # Filtered and reordered by AI
-    education: list[EducationItem]  # Pass-through from BaseCV
-    projects: list[ProjectItem] = []
-    certifications: list[str] = []
-    # AI-surfaced tools user knows but did not lead with in their base CV (AI-04)
-    highlighted_technologies: list[str] = []
-
-
-# ---------------------------------------------------------------------------
-# AI Pipeline models (Phase 3) — step 1 output from Claude Code CLI
-# ---------------------------------------------------------------------------
-
-
 class GapItem(BaseModel):
     """One entry in the gap diff: a job requirement with presence check.
 
-    DATA-03: Structured for UI display in Phase 4.
+    DATA-03: Structured for UI display.
     - present=True: base CV contains evidence of this requirement
     - present=False: base CV does not demonstrate this requirement
     """
@@ -132,12 +108,36 @@ class GapItem(BaseModel):
     evidence: str  # Quote or reference from base CV; empty string when present=False
 
 
-class JobAnalysis(BaseModel):
-    """Structured output from Claude step 1: job listing analysis.
+class TailoredCV(BaseModel):
+    """Structured AI output — intermediate layer between Claude and LaTeX renderer.
 
-    AI-01: Extracted from job listing by claude -p invocation.
-    Consumed by step 2 (tailor_cv) to guide section-by-section rewriting.
+    Defined in Phase 1 so all phases share a single import.
+    Fields are designed conservatively: required fields are what Claude MUST return;
+    all others default so TailoredCV.model_validate() is tolerant of minor Claude output variance.
     """
+
+    contact: ContactInfo  # Pass-through from BaseCV
+    summary: str
+    experience: list[ExperienceItem]  # Rewritten by AI, reverse chronological
+    skills: list[str]  # Filtered and reordered by AI
+    education: list[EducationItem]  # Pass-through from BaseCV
+    projects: list[ProjectItem] = []
+    certifications: list[str] = []
+    # AI-surfaced tools user knows but did not lead with in their base CV
+    highlighted_technologies: list[str] = []
+    # AI reasoning: what was changed, why, and key decisions made during tailoring
+    tailoring_notes: list[str] = []
+    # Gap diff: job requirements vs base CV evidence
+    gap_diff: list[GapItem] = []
+
+
+# ---------------------------------------------------------------------------
+# AI Pipeline models (Phase 3) — kept for backwards compatibility
+# ---------------------------------------------------------------------------
+
+
+class JobAnalysis(BaseModel):
+    """Structured output from Claude step 1 (legacy — kept for test compatibility)."""
 
     role_title: str
     key_requirements: list[str]

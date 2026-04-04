@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -73,6 +74,7 @@ async def job_worker(job_id: str, company_name: str, job_text: str) -> None:
     Critical: each DB transaction opens a fresh connection and closes it immediately.
     Do NOT reuse a connection across the long pipeline run — it may go stale.
     """
+    job_start = time.monotonic()
     try:
         async with _semaphore:
             # ----------------------------------------------------------------
@@ -98,31 +100,43 @@ async def job_worker(job_id: str, company_name: str, job_text: str) -> None:
             # ----------------------------------------------------------------
             # Load base CV (sync disk read + YAML parse — run in thread pool)
             # ----------------------------------------------------------------
+            t0 = time.monotonic()
             base_cv = await asyncio.to_thread(load_base_cv)
+            logger.info("Job %s: [1/4] Base CV loaded (%.1fs)", job_id, time.monotonic() - t0)
 
             # ----------------------------------------------------------------
             # Run AI pipeline (Claude CLI via subprocess — async wrapper)
             # ----------------------------------------------------------------
+            t0 = time.monotonic()
+            logger.info("Job %s: [2/4] Starting Claude CLI pipeline...", job_id)
             tailored_cv, gap_diff = await run_pipeline_async(base_cv, job_text)
+            logger.info("Job %s: [2/4] Claude CLI pipeline done (%.1fs)", job_id, time.monotonic() - t0)
 
             # ----------------------------------------------------------------
             # Render LaTeX source (sync Jinja2 string templating — fast, no I/O)
             # ----------------------------------------------------------------
+            t0 = time.monotonic()
             latex_source = render_latex(tailored_cv)
+            logger.info("Job %s: [3/4] LaTeX rendered (%.1fs)", job_id, time.monotonic() - t0)
 
             # ----------------------------------------------------------------
             # Compile PDF (latexmk via subprocess — async wrapper)
             # ----------------------------------------------------------------
+            t0 = time.monotonic()
+            logger.info("Job %s: [4/4] Compiling PDF with latexmk...", job_id)
             pdf_bytes = await render_pdf_async(latex_source)
+            logger.info("Job %s: [4/4] PDF compiled (%.1fs, %d bytes)", job_id, time.monotonic() - t0, len(pdf_bytes))
 
             # ----------------------------------------------------------------
-            # Save PDF to disk
+            # Save outputs to disk
             # ----------------------------------------------------------------
             out_dir = Path("output") / company_name
             out_dir.mkdir(parents=True, exist_ok=True)
             pdf_path = out_dir / f"{job_id}.pdf"
             pdf_path.write_bytes(pdf_bytes)
-            logger.info("Job %s: PDF saved to %s", job_id, pdf_path)
+            tex_path = out_dir / f"{job_id}.tex"
+            tex_path.write_text(latex_source, encoding="utf-8")
+            logger.info("Job %s: Files saved to %s", job_id, out_dir)
 
             # ----------------------------------------------------------------
             # Transition: running -> complete; persist results
@@ -155,7 +169,8 @@ async def job_worker(job_id: str, company_name: str, job_text: str) -> None:
                 "pdf_url": f"/api/jobs/{job_id}/pdf",
             }
             await _push_event(job_id, "complete", full_result)
-            logger.info("Job %s complete", job_id)
+            total = time.monotonic() - job_start
+            logger.info("Job %s: COMPLETE in %.1fs total", job_id, total)
 
     except asyncio.CancelledError:
         logger.warning("Job %s cancelled", job_id)

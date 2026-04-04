@@ -71,6 +71,28 @@ def escape_latex(text: str) -> str:
 # Register as a Jinja2 filter so templates can call \VAR{value|e}
 _jinja_env.filters["e"] = escape_latex
 
+_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+
+
+def escape_latex_with_bold(text: str) -> str:
+    """Escape LaTeX special chars but convert **bold** to \\textbf{bold}.
+
+    Splits on **...** markers, escapes each segment, then wraps bold
+    segments in \\textbf{}.
+    """
+    parts = _BOLD_RE.split(text)
+    result = []
+    for i, part in enumerate(parts):
+        escaped = escape_latex(part)
+        if i % 2 == 1:  # odd indices are the captured bold groups
+            result.append(r"\textbf{" + escaped + "}")
+        else:
+            result.append(escaped)
+    return "".join(result)
+
+
+_jinja_env.filters["be"] = escape_latex_with_bold
+
 # ---------------------------------------------------------------------------
 # latexmk binary discovery (lazy — called only inside render_pdf)
 # ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import SkeletonSection from '@/components/SkeletonSection.vue'
 import CvPreview from '@/components/CvPreview.vue'
 import GapDiffTable from '@/components/GapDiffTable.vue'
+import TailoringNotes from '@/components/TailoringNotes.vue'
 
 const route = useRoute()
 const store = useJobStore()
@@ -143,6 +144,12 @@ async function handleDownload() {
       <h3 class="gap-heading">Gap Analysis</h3>
       <GapDiffTable :items="currentJob.gap_diff" />
     </section>
+
+    <!-- AI Tailoring Notes -->
+    <TailoringNotes
+      v-if="currentJob.tailored_cv && currentJob.tailored_cv.tailoring_notes && currentJob.tailored_cv.tailoring_notes.length > 0"
+      :notes="currentJob.tailored_cv.tailoring_notes"
+    />
   </div>
 </template>
 

@@ -30,10 +30,12 @@ defineProps<{ cv: TailoredCV }>()
       </div>
     </section>
 
-    <!-- Skills -->
-    <section v-if="cv.skills && cv.skills.length > 0" class="cv-section">
-      <h3 class="section-heading">Skills</h3>
-      <p class="body-text">{{ cv.skills.join(', ') }}</p>
+    <!-- Certifications -->
+    <section v-if="cv.certifications && cv.certifications.length > 0" class="cv-section">
+      <h3 class="section-heading">Certifications</h3>
+      <ul class="bullet-list">
+        <li v-for="(cert, i) in cv.certifications" :key="i">{{ cert }}</li>
+      </ul>
     </section>
 
     <!-- Education -->
@@ -49,6 +51,18 @@ defineProps<{ cv: TailoredCV }>()
           </span>
         </div>
       </div>
+    </section>
+
+    <!-- Skills -->
+    <section v-if="cv.skills && cv.skills.length > 0" class="cv-section">
+      <h3 class="section-heading">Skills</h3>
+      <p class="body-text">{{ cv.skills.join(', ') }}</p>
+    </section>
+
+    <!-- Highlighted Technologies -->
+    <section v-if="cv.highlighted_technologies && cv.highlighted_technologies.length > 0" class="cv-section">
+      <h3 class="section-heading">Technologies</h3>
+      <p class="body-text">{{ cv.highlighted_technologies.join(', ') }}</p>
     </section>
 
     <!-- Projects (optional) -->
@@ -70,20 +84,6 @@ defineProps<{ cv: TailoredCV }>()
           {{ project.technologies.join(', ') }}
         </p>
       </div>
-    </section>
-
-    <!-- Certifications (optional) -->
-    <section v-if="cv.certifications && cv.certifications.length > 0" class="cv-section">
-      <h3 class="section-heading">Certifications</h3>
-      <ul class="bullet-list">
-        <li v-for="(cert, i) in cv.certifications" :key="i">{{ cert }}</li>
-      </ul>
-    </section>
-
-    <!-- Highlighted Technologies (optional) -->
-    <section v-if="cv.highlighted_technologies && cv.highlighted_technologies.length > 0" class="cv-section">
-      <h3 class="section-heading">Technologies</h3>
-      <p class="body-text">{{ cv.highlighted_technologies.join(', ') }}</p>
     </section>
   </div>
 </template>

@@ -38,6 +38,7 @@ export interface TailoredCV {
   projects: ProjectItem[]
   certifications: string[]
   highlighted_technologies: string[]
+  tailoring_notes: string[]
 }
 
 export interface GapItem {

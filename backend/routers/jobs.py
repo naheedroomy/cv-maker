@@ -49,7 +49,7 @@ def _row_to_response(row) -> JobResponse:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/", response_model=JobResponse, status_code=201)
+@router.post("", response_model=JobResponse, status_code=201)
 async def create_job(body: JobCreate) -> JobResponse:
     """Submit a new CV tailoring job.
 
@@ -89,7 +89,7 @@ async def create_job(body: JobCreate) -> JobResponse:
 # ---------------------------------------------------------------------------
 
 
-@router.get("/", response_model=list[JobResponse])
+@router.get("", response_model=list[JobResponse])
 async def list_jobs() -> list[JobResponse]:
     """Return all jobs ordered by created_at descending."""
     db = await get_db()
@@ -191,14 +191,13 @@ async def get_pdf(job_id: str) -> Response:
 
 
 @router.get("/{job_id}/events", response_class=EventSourceResponse)
-async def job_events(job_id: str) -> EventSourceResponse:
+async def job_events(job_id: str) -> AsyncIterable[ServerSentEvent]:
     """Stream real-time job status updates via Server-Sent Events.
 
     If the job is already terminal, yields one event and closes the stream.
     Otherwise subscribes to the worker's SSE queue until a terminal event arrives.
-    Keep-alive is handled by 30s queue timeout (FastAPI also sends 15s ping).
     """
-    # Validate job existence BEFORE returning EventSourceResponse
+    # Validate job existence
     db = await get_db()
     try:
         cursor = await db.execute("SELECT * FROM jobs WHERE id=?", (job_id,))
@@ -209,46 +208,43 @@ async def job_events(job_id: str) -> EventSourceResponse:
     if row is None:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    async def event_generator() -> AsyncIterable[ServerSentEvent]:
-        # If job is already terminal, yield current state and close
-        if row["status"] in _TERMINAL_STATUSES:
+    # If job is already terminal, yield current state and close
+    if row["status"] in _TERMINAL_STATUSES:
+        yield ServerSentEvent(
+            event="status",
+            data=json.dumps(
+                {
+                    "id": job_id,
+                    "status": row["status"],
+                    "updated_at": row["updated_at"],
+                }
+            ),
+        )
+        return
+
+    # Subscribe to events from the background worker
+    q: asyncio.Queue = asyncio.Queue()
+    _sse_queues.setdefault(job_id, set()).add(q)
+
+    try:
+        while True:
+            try:
+                item = await asyncio.wait_for(q.get(), timeout=30.0)
+            except asyncio.TimeoutError:
+                # Keep-alive: continue waiting
+                continue
+
             yield ServerSentEvent(
-                event="status",
-                data=json.dumps(
-                    {
-                        "id": job_id,
-                        "status": row["status"],
-                        "updated_at": row["updated_at"],
-                    }
-                ),
+                event=item["event"],
+                data=json.dumps(item["data"]),
             )
-            return
 
-        # Subscribe to events from the background worker
-        q: asyncio.Queue = asyncio.Queue()
-        _sse_queues.setdefault(job_id, set()).add(q)
-
-        try:
-            while True:
-                try:
-                    item = await asyncio.wait_for(q.get(), timeout=30.0)
-                except asyncio.TimeoutError:
-                    # Keep-alive: continue waiting
-                    continue
-
-                yield ServerSentEvent(
-                    event=item["event"],
-                    data=json.dumps(item["data"]),
-                )
-
-                # Stop streaming when terminal event received
-                is_terminal = item["event"] == "complete" or item["data"].get(
-                    "status"
-                ) in _TERMINAL_STATUSES
-                if is_terminal:
-                    break
-        finally:
-            # Always remove queue to prevent memory leak on client disconnect
-            _sse_queues.get(job_id, set()).discard(q)
-
-    return EventSourceResponse(event_generator())
+            # Stop streaming when terminal event received
+            is_terminal = item["event"] == "complete" or item["data"].get(
+                "status"
+            ) in _TERMINAL_STATUSES
+            if is_terminal:
+                break
+    finally:
+        # Always remove queue to prevent memory leak on client disconnect
+        _sse_queues.get(job_id, set()).discard(q)

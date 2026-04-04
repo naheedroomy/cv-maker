@@ -39,9 +39,27 @@
     {}
     {\begin{itemize}
 \BLOCK{for bullet in exp.bullets}
-        \item \VAR{bullet|e}
+        \item \VAR{bullet|be}
 \BLOCK{endfor}
     \end{itemize}}
+\BLOCK{endfor}
+
+\BLOCK{if cv.certifications}
+\section{Certifications}
+\begin{itemize}
+\BLOCK{for cert in cv.certifications}
+    \item \VAR{cert|e}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+
+\section{Education}
+\BLOCK{for edu in cv.education}
+\cventry
+    {\VAR{edu.year if edu.year else ""}}
+    {\VAR{edu.degree|e}}
+    {\VAR{edu.institution|e}}
+    {\VAR{edu.field|e if edu.field else ""}}{}{}
 \BLOCK{endfor}
 
 \BLOCK{if cv.skills}
@@ -53,15 +71,6 @@
 \section{Technologies}
 \VAR{", ".join(cv.highlighted_technologies)|e}
 \BLOCK{endif}
-
-\section{Education}
-\BLOCK{for edu in cv.education}
-\cventry
-    {\VAR{edu.year if edu.year else ""}}
-    {\VAR{edu.degree|e}}
-    {\VAR{edu.institution|e}}
-    {\VAR{edu.field|e if edu.field else ""}}{}{}
-\BLOCK{endfor}
 
 \BLOCK{if cv.projects}
 \section{Projects}
@@ -75,15 +84,6 @@
 \BLOCK{endif}
 }
 \BLOCK{endfor}
-\BLOCK{endif}
-
-\BLOCK{if cv.certifications}
-\section{Certifications}
-\begin{itemize}
-\BLOCK{for cert in cv.certifications}
-    \item \VAR{cert|e}
-\BLOCK{endfor}
-\end{itemize}
 \BLOCK{endif}
 
 \end{document}
