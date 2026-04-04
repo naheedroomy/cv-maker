@@ -177,7 +177,12 @@ knows but did not lead with. Technologies you wove into experience bullets may a
 
 CLOSED-LOOP REASONING — use the gap_diff to guide CV tailoring:
 - Emphasize "strong" matches prominently in bullets and summary.
-- Expand and reframe "partial" matches using implicit evidence from the base CV.
+- Expand and reframe "partial" matches using implicit evidence from the base CV. \
+For partial matches, you MAY make reasonable inferences about responsibilities that are \
+clearly implied by the candidate's role and seniority. For example, if someone establishes \
+"incident response protocols", it is reasonable to infer they also perform root cause analysis \
+and take corrective actions to prevent recurrence. Surface these implied responsibilities \
+naturally in the bullets — do not present them as separate, unrelated claims.
 - Do NOT attempt to compensate for "missing" requirements beyond honest representation.
 
 Return ONLY a valid JSON object matching this exact schema — no markdown fences, no commentary:

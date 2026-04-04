@@ -6,6 +6,7 @@
 \moderncvcolor{blue}
 \usepackage[scale=0.85]{geometry}
 \usepackage{fontspec}
+\usepackage{needspace}
 
 %# Contact info
 \name{\VAR{cv.contact.name|e}}{}
@@ -35,6 +36,7 @@
 \BLOCK{if not loop.first}
 \medskip
 \BLOCK{endif}
+\needspace{5\baselineskip}
 \cventry
     {\VAR{exp.start} -- \VAR{exp.end if exp.end else "Present"}}
     {\VAR{exp.title|e}}
