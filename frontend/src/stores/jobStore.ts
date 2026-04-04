@@ -13,7 +13,7 @@ export const useJobStore = defineStore('jobs', () => {
   // SSE and polling references — plain let (not reactive, internal implementation details)
   let _sse: EventSource | null = null
   let _pollInterval: ReturnType<typeof setInterval> | null = null
-  let _sidebarInterval: ReturnType<typeof setInterval> | null = null
+
 
   // ── Fetch Actions ──────────────────────────────────────────────────────────
 
@@ -138,22 +138,6 @@ export const useJobStore = defineStore('jobs', () => {
     }
   }
 
-  // ── Sidebar Polling ────────────────────────────────────────────────────────
-
-  function startSidebarPolling(): void {
-    stopSidebarPolling()
-    _sidebarInterval = setInterval(() => {
-      fetchJobs().catch(() => {})
-    }, 30_000)
-  }
-
-  function stopSidebarPolling(): void {
-    if (_sidebarInterval) {
-      clearInterval(_sidebarInterval)
-      _sidebarInterval = null
-    }
-  }
-
   return {
     jobs,
     currentJob,
@@ -165,7 +149,5 @@ export const useJobStore = defineStore('jobs', () => {
     downloadPdf,
     openSSE,
     closeSSE,
-    startSidebarPolling,
-    stopSidebarPolling,
   }
 })

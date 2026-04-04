@@ -19,9 +19,8 @@ defineProps<{ cv: TailoredCV }>()
           <span class="company-name">{{ item.company }}</span>
           <span class="experience-meta">
             {{ item.title }}
-            <template v-if="item.location"> &middot; {{ item.location }}</template>
-            <template v-if="item.start_date">
-              &middot; {{ item.start_date }} &ndash; {{ item.end_date || 'Present' }}
+            <template v-if="item.start">
+              &middot; {{ item.start }} &ndash; {{ item.end || 'Present' }}
             </template>
           </span>
         </div>
@@ -45,12 +44,10 @@ defineProps<{ cv: TailoredCV }>()
           <span class="institution-name">{{ item.institution }}</span>
           <span class="education-meta">
             {{ item.degree }}
-            <template v-if="item.graduation_date"> &middot; {{ item.graduation_date }}</template>
+            <template v-if="item.field"> &middot; {{ item.field }}</template>
+            <template v-if="item.year"> &middot; {{ item.year }}</template>
           </span>
         </div>
-        <ul v-if="item.details && item.details.length > 0" class="bullet-list">
-          <li v-for="(detail, j) in item.details" :key="j">{{ detail }}</li>
-        </ul>
       </div>
     </section>
 

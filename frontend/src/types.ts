@@ -9,17 +9,17 @@ export interface ContactInfo {
 export interface ExperienceItem {
   company: string
   title: string
-  location: string
-  start_date: string
-  end_date: string
+  start: string
+  end: string | null
   bullets: string[]
+  technologies: string[]
 }
 
 export interface EducationItem {
   institution: string
   degree: string
-  graduation_date: string
-  details: string[]
+  field: string | null
+  year: number | null
 }
 
 export interface ProjectItem {
