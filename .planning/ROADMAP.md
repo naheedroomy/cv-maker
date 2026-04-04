@@ -62,7 +62,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Extend models.py with GapItem and JobAnalysis Pydantic models
-- [ ] 03-02-PLAN.md — Implement pipeline.py with two-step Claude invocation, retry loop, and no-fabrication enforcement
+- [x] 03-02-PLAN.md — Implement pipeline.py with two-step Claude invocation, retry loop, and no-fabrication enforcement
 - [ ] 03-03-PLAN.md — Write test_pipeline.py with monkeypatched subprocess tests
 
 ### Phase 4: Streamlit UI
