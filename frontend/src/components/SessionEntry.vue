@@ -5,7 +5,9 @@ import StatusBadge from './StatusBadge.vue'
 defineProps<{ job: JobResponse; active: boolean }>()
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  const d = new Date(iso)
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 }
 </script>
 
