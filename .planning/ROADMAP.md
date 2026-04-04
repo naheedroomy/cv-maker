@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Data Foundation** - Define the YAML base CV schema and Pydantic models that all downstream components share (completed 2026-04-03)
 - [ ] **Phase 2: LaTeX Renderer** - Build the Jinja2 + LaTeX + subprocess render pipeline in isolation before adding AI variability
 - [ ] **Phase 3: AI Pipeline** - Integrate Claude Code CLI for job analysis, CV tailoring, no-fabrication enforcement, and gap diff
-- [ ] **Phase 4: Streamlit UI** - Wire all components into a working Streamlit app with session state, history, and PDF download
+- [x] **Phase 4: Streamlit UI** - Wire all components into a working Streamlit app with session state, history, and PDF download (completed 2026-04-04)
 
 ## Phase Details
 
@@ -78,7 +78,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Install streamlit + pandas, implement app.py with session_state guard, gap table, CV preview, PDF download
-- [ ] 04-02-PLAN.md — Add history save/load and sidebar browser to app.py; human smoke test checkpoint
+- [x] 04-02-PLAN.md — Add history save/load and sidebar browser to app.py; human smoke test checkpoint
 
 ## Progress
 
@@ -90,4 +90,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Data Foundation | 1/1 | Complete   | 2026-04-03 |
 | 2. LaTeX Renderer | 1/2 | In Progress|  |
 | 3. AI Pipeline | 1/3 | In Progress|  |
-| 4. Streamlit UI | 1/2 | In Progress|  |
+| 4. Streamlit UI | 2/2 | Complete   | 2026-04-04 |
