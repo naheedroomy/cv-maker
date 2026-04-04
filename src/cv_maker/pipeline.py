@@ -30,6 +30,7 @@ def _invoke_claude(prompt: str, timeout: int = 300) -> str:
             input=prompt,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=timeout,
         )
     except subprocess.TimeoutExpired as exc:
