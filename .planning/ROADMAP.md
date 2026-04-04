@@ -61,7 +61,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Extend models.py with GapItem and JobAnalysis Pydantic models
+- [x] 03-01-PLAN.md — Extend models.py with GapItem and JobAnalysis Pydantic models
 - [ ] 03-02-PLAN.md — Implement pipeline.py with two-step Claude invocation, retry loop, and no-fabrication enforcement
 - [ ] 03-03-PLAN.md — Write test_pipeline.py with monkeypatched subprocess tests
 
@@ -86,5 +86,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 1/1 | Complete   | 2026-04-03 |
 | 2. LaTeX Renderer | 1/2 | In Progress|  |
-| 3. AI Pipeline | 0/3 | Not started | - |
+| 3. AI Pipeline | 1/3 | In Progress|  |
 | 4. Streamlit UI | 0/? | Not started | - |
