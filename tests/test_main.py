@@ -15,7 +15,8 @@ from unittest.mock import AsyncMock, patch
 
 from starlette.testclient import TestClient
 
-from backend.main import _background_tasks, app, schedule_background_task
+from backend.main import app
+from backend.tasks import _background_tasks, schedule_background_task
 
 
 def test_health_check_status_code():

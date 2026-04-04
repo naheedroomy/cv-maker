@@ -4,17 +4,15 @@ Run with: uvicorn backend.main:app --reload
 """
 from __future__ import annotations
 
-import asyncio
 import logging
-from collections.abc import Coroutine
 from contextlib import asynccontextmanager
-from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRouter
 
 from backend.db import init_db
+from backend.routers.jobs import router as jobs_router
 
 # ---------------------------------------------------------------------------
 # Logging — configure before app creation
@@ -26,26 +24,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%dT%H:%M:%S",
 )
 logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Background task registry — GC-safe strong references (Phase 6 uses this)
-# ---------------------------------------------------------------------------
-
-_background_tasks: set[asyncio.Task[Any]] = set()
-
-
-def schedule_background_task(coro: Coroutine[Any, Any, Any]) -> asyncio.Task[Any]:
-    """Schedule a coroutine as a background task with GC protection.
-
-    The task is stored in _background_tasks to prevent garbage collection.
-    On completion (success, failure, or cancellation), the reference is removed.
-    """
-    task = asyncio.create_task(coro)
-    _background_tasks.add(task)
-    task.add_done_callback(_background_tasks.discard)
-    logger.info("Background task scheduled: %s", task.get_name())
-    return task
-
 
 # ---------------------------------------------------------------------------
 # Lifespan — startup and shutdown
@@ -91,4 +69,5 @@ async def health_check():
     return {"status": "ok", "service": "cv-maker-backend"}
 
 
+api_router.include_router(jobs_router)
 app.include_router(api_router)

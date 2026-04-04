@@ -14,7 +14,7 @@ from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from backend.db import get_db
-from backend.main import schedule_background_task
+from backend.tasks import schedule_background_task
 from backend.schemas import JobCreate, JobResponse
 from backend.worker import _job_tasks, _sse_queues, job_worker
 
