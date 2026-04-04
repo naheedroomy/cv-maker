@@ -1,10 +1,14 @@
 # Roadmap: CV Maker
 
-## Overview
+## Milestones
 
-Build a linear pipeline that takes a structured YAML base CV and a pasted job listing, runs it through Claude Code CLI to produce a tailored CV, renders it to PDF via LaTeX, and wraps the whole thing in a Streamlit UI. The build order is deliberately bottom-up: data contracts first, then the renderer (isolated from AI), then the Claude Code CLI pipeline, then the UI that wires everything together. History and layout features ship with the UI phase since they depend on the full pipeline being in place.
+- **v1.0 MVP** - Phases 1-4 (shipped 2026-04-04)
+- **v2.0 Full-Stack Rebuild** - Phases 5-8 (in progress)
 
 ## Phases
+
+<details>
+<summary>v1.0 MVP (Phases 1-4) - SHIPPED 2026-04-04</summary>
 
 **Phase Numbering:**
 - Integer phases (1, 2, 3): Planned milestone work
@@ -13,11 +17,9 @@ Build a linear pipeline that takes a structured YAML base CV and a pasted job li
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Data Foundation** - Define the YAML base CV schema and Pydantic models that all downstream components share (completed 2026-04-03)
-- [ ] **Phase 2: LaTeX Renderer** - Build the Jinja2 + LaTeX + subprocess render pipeline in isolation before adding AI variability
-- [ ] **Phase 3: AI Pipeline** - Integrate Claude Code CLI for job analysis, CV tailoring, no-fabrication enforcement, and gap diff
+- [x] **Phase 2: LaTeX Renderer** - Build the Jinja2 + LaTeX + subprocess render pipeline in isolation before adding AI variability
+- [x] **Phase 3: AI Pipeline** - Integrate Claude Code CLI for job analysis, CV tailoring, no-fabrication enforcement, and gap diff
 - [x] **Phase 4: Streamlit UI** - Wire all components into a working Streamlit app with session state, history, and PDF download (completed 2026-04-04)
-
-## Phase Details
 
 ### Phase 1: Data Foundation
 **Goal**: The base CV schema and shared data models are defined, validated, and ready to be consumed by all downstream components
@@ -46,7 +48,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Install MacTeX + Jinja2, build renderer.py (escape_latex, render_latex, render_pdf) and cv.tex.jinja template
-- [ ] 02-02-PLAN.md — Write test_renderer.py and human checkpoint to verify PDF visual output
+- [x] 02-02-PLAN.md — Write test_renderer.py and human checkpoint to verify PDF visual output
 
 ### Phase 3: AI Pipeline
 **Goal**: Given a base CV and a job listing, Claude Code CLI produces a tailored CV JSON object and a gap diff — with no fabricated content
@@ -80,14 +82,85 @@ Plans:
 - [x] 04-01-PLAN.md — Install streamlit + pandas, implement app.py with session_state guard, gap table, CV preview, PDF download
 - [x] 04-02-PLAN.md — Add history save/load and sidebar browser to app.py; human smoke test checkpoint
 
+</details>
+
+---
+
+### v2.0 Full-Stack Rebuild (In Progress)
+
+**Milestone Goal:** Replace Streamlit with FastAPI backend + Vue.js SPA frontend, add SQLite persistence, and enable concurrent CV generation with real-time job status tracking.
+
+- [ ] **Phase 5: Backend Foundation** - FastAPI scaffold, async pipeline refactor, SQLite schema, CORS, and structured logging
+- [ ] **Phase 6: Job Queue & API** - In-process asyncio job queue, worker, and all API endpoints including SSE and job cancellation
+- [ ] **Phase 7: Vue Frontend** - Vue 3 SPA with Pinia state management, job submission, real-time status, CV preview, and PDF download
+- [ ] **Phase 8: Production Wiring** - Vite build served by FastAPI, Streamlit retirement, and end-to-end smoke test
+
+## Phase Details
+
+### Phase 5: Backend Foundation
+**Goal**: FastAPI serves the application, the existing cv_maker pipeline runs without blocking the event loop, SQLite is initialized, CORS is configured, and structured logging is visible in terminal
+**Depends on**: Phase 4
+**Requirements**: API-01, API-02, API-09, API-10, DB-01, DB-02, DB-03, DB-04
+**Success Criteria** (what must be TRUE):
+  1. `uvicorn backend.main:app` starts without error and `curl localhost:8000/api/` returns a response
+  2. The existing `run_pipeline()` and `render_pdf()` calls are wrapped in `asyncio.to_thread` — running them does not freeze other concurrent requests
+  3. SQLite database initializes on startup with WAL mode enabled; `backend/db.py` `init_db()` creates the jobs schema
+  4. A request from the Vue dev server origin (`localhost:5173`) is not rejected with a CORS error
+  5. Backend log lines (request received, job status change, errors) appear in the terminal where uvicorn runs
+**Plans**: 2 plans
+**UI hint**: no
+
+Plans:
+- [x] 05-01-PLAN.md — Install dependencies, scaffold backend package, create db.py (SQLite + WAL) and pipeline_runner.py (asyncio.to_thread wrappers)
+- [ ] 05-02-PLAN.md — Create main.py (FastAPI app with lifespan, CORS, logging, health check, task registry) and integration tests
+
+### Phase 6: Job Queue & API
+**Goal**: Users can submit a CV generation job via HTTP, the job runs concurrently in the background, and all job lifecycle endpoints return correct status and results
+**Depends on**: Phase 5
+**Requirements**: API-03, API-04, API-05, API-06, API-07, API-08
+**Success Criteria** (what must be TRUE):
+  1. `POST /api/jobs` returns a job ID immediately (before pipeline completes) and the job runs in the background
+  2. `GET /api/jobs/:id` returns the correct status (pending/running/complete/failed) at each stage of the pipeline
+  3. `GET /api/jobs` returns a list of all submitted jobs with their current status
+  4. `DELETE /api/jobs/:id` cancels an in-progress job and subsequent status calls reflect cancellation
+  5. An SSE client connected to the SSE endpoint receives real-time status push events as the job progresses
+**Plans**: TBD
+
+### Phase 7: Vue Frontend
+**Goal**: Users can submit a job, watch it progress in real time, browse past sessions, preview the tailored CV, and download the PDF — all without leaving the browser
+**Depends on**: Phase 6
+**Requirements**: FE-01, FE-02, FE-03, FE-04, FE-05, FE-06, FE-07, FE-08, FE-09
+**Success Criteria** (what must be TRUE):
+  1. User fills the job submission form (company name, job link, job text) and submits — the UI acknowledges immediately with a pending status
+  2. Job status updates appear in the UI in real time without manual refresh (via SSE or polling)
+  3. The sidebar shows all past sessions as clickable entries; clicking one navigates to that session's results
+  4. On a completed job, the user can read the tailored CV sections and gap diff directly in the browser
+  5. User can download the generated PDF from the job detail view; the PDF is also auto-saved to `output/{company}/`
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 8: Production Wiring
+**Goal**: A single `uvicorn` command serves both the API and the Vue SPA; Streamlit and its dependencies are removed; direct URL navigation works correctly
+**Depends on**: Phase 7
+**Requirements**: INT-01, INT-02, INT-03
+**Success Criteria** (what must be TRUE):
+  1. Running `vite build` and then `uvicorn backend.main:app` serves the full application — no separate Vite dev server needed
+  2. Navigating directly to a frontend route (e.g., `/jobs/abc-123`) loads the SPA correctly rather than returning a 404
+  3. `app.py`, `streamlit`, and `pandas` are removed from the project; the existing `cv_maker/` package is unchanged
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 5 → 6 → 7 → 8
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Data Foundation | 1/1 | Complete   | 2026-04-03 |
-| 2. LaTeX Renderer | 1/2 | In Progress|  |
-| 3. AI Pipeline | 1/3 | In Progress|  |
-| 4. Streamlit UI | 2/2 | Complete   | 2026-04-04 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Data Foundation | v1.0 | 1/1 | Complete | 2026-04-03 |
+| 2. LaTeX Renderer | v1.0 | 2/2 | Complete | 2026-04-04 |
+| 3. AI Pipeline | v1.0 | 3/3 | Complete | 2026-04-04 |
+| 4. Streamlit UI | v1.0 | 2/2 | Complete | 2026-04-04 |
+| 5. Backend Foundation | v2.0 | 1/2 | In Progress|  |
+| 6. Job Queue & API | v2.0 | 0/TBD | Not started | - |
+| 7. Vue Frontend | v2.0 | 0/TBD | Not started | - |
+| 8. Production Wiring | v2.0 | 0/TBD | Not started | - |

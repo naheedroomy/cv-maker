@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: verifying
-stopped_at: Completed 04-streamlit-ui 04-02-PLAN.md
-last_updated: "2026-04-04T05:15:30Z"
+milestone: v2.0
+milestone_name: Full-Stack Rebuild
+status: executing
+stopped_at: Completed 05-01-PLAN.md — backend dependencies, db.py, pipeline_runner.py
+last_updated: "2026-04-04T06:24:13.245Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
-  completed_phases: 4
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 04 — streamlit-ui
+**Current focus:** Phase 05 — backend-foundation
 
 ## Current Position
 
-Phase: 04
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 05 (backend-foundation) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -52,13 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
-| Phase 01-data-foundation P01 | 4 | 2 tasks | 10 files |
-| Phase 02-latex-renderer P01 | 11 | 3 tasks | 6 files |
-| Phase 03-ai-pipeline P01 | 1 | 1 tasks | 1 files |
-| Phase 03-ai-pipeline P02 | 2 | 1 tasks | 1 files |
-| Phase 03-ai-pipeline P03 | 2 | 2 tasks | 2 files |
-| Phase 04-streamlit-ui P01 | 1 | 2 tasks | 3 files |
-| Phase 04-streamlit-ui P02 | 1 | 2 tasks | 1 files |
+| Phase 05 P01 | 174s | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -67,23 +61,16 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Setup]: AI backend is Claude Code CLI (`claude -p`) in non-interactive mode with JSON output — not Gemini. Research summary references Gemini; disregard those stack recommendations in favour of PROJECT.md constraints.
-- [Setup]: Build order is bottom-up: data models → renderer → AI layer → UI. Debugging LaTeX and AI simultaneously is the primary pain point to avoid.
-- [Phase 01-data-foundation]: Pin Python 3.13 not 3.12: 3.12 download fails with SSL UnknownIssuer in this network; 3.13 satisfies >=3.12
-- [Phase 01-data-foundation]: ExperienceItem.start/end stored as strings with field_validator coercing PyYAML date objects to YYYY-MM
-- [Phase 01-data-foundation]: RuntimeError prefix base_cv.yaml failed validation: established for Phase 4 Streamlit error handler
-- [Phase 02-latex-renderer]: Single-pass regex escape_latex over iterative str.replace(): prevents cascading where backslash-to-textbackslash{} braces get re-escaped in subsequent iterations
-- [Phase 02-latex-renderer]: MacTeX deferred: brew install --cask mactex-no-gui requires interactive sudo; user must install manually before render_pdf() end-to-end tests in 02-02
-- [Phase 02-latex-renderer]: moderncv LaTeX class used in cv.tex.jinja; bundled with MacTeX, install via tlmgr if kpsewhich moderncv.cls returns empty
-- [Phase 03-ai-pipeline]: GapItem placed in models.py (not pipeline.py) so Phase 4 UI can import it directly without pipeline logic
-- [Phase 03-ai-pipeline]: noqa: S607 added alongside S603 — ruff flags partial executable path on command list, not just subprocess.run itself
-- [Phase 03-ai-pipeline]: Mock entire pipeline.subprocess module via types.SimpleNamespace rather than patching subprocess.run directly — avoids import-time binding issues
-- [Phase 03-ai-pipeline]: Pre-existing LaTeX PDF test failures (moderncv not installed) are out-of-scope; documented in deferred-items
-- [Phase 04-streamlit-ui]: session_state guard: run_pipeline() called only inside st.button() block; results stored in session_state to prevent re-execution on widget reruns
-- [Phase 04-streamlit-ui]: pdf_bytes excluded from history JSON — large, not JSON-serialisable, omitted from history; restored runs lack Download PDF button by design
-- [Phase 04-streamlit-ui]: role_label derived from first line of job_text (max 40 chars) — human-readable sidebar label without extra user input
-- [260404-euc]: PDF auto-saved to output/{company_slug}/CV-{ApplicantName}.pdf; company slug strips non-alnum chars, replaces spaces with hyphens
-- [260404-euc]: Sidebar selectbox replaced with per-session st.button entries and a "+ New" button; active session tracked via active_history_path in session_state
+- [v1.0]: AI backend is Claude Code CLI (`claude -p`) — not Gemini. Research SUMMARY.md references Gemini; disregard those SDK recommendations.
+- [v1.0/Phase 02]: Single-pass regex escape_latex prevents cascading re-escape of backslashes; must verify against real Claude output when Phase 6 worker calls render_pdf.
+- [v1.0/Phase 03]: GapItem lives in models.py so Phase 7 frontend API can import it without pipeline logic.
+- [v2.0]: Axios excluded permanently — confirmed supply chain attack (UNC1069, 2026-03-31); use native fetch everywhere.
+- [v2.0]: asyncio.to_thread wraps both subprocess.run calls (Claude CLI and latexmk) — must happen in Phase 5 before the job queue is built on top.
+- [v2.0]: asyncio.create_task + app-level job registry (not FastAPI BackgroundTasks) — BackgroundTasks has no status-tracking; store Task references to prevent GC.
+- [v2.0]: SQLite WAL mode + busy_timeout=5000 required from first write — standard BEGIN DEFERRED makes busy timeout ineffective under concurrent writes.
+- [Phase 05]: asyncio.to_thread wraps both run_pipeline and render_pdf in backend/pipeline_runner.py — prevents event loop blocking from subprocess.run calls
+- [Phase 05]: db_path parameter added to init_db and get_db for test isolation via pytest tmp_path fixture
+- [Phase 05]: Tests use asyncio.run() in sync functions instead of pytest-asyncio — avoids extra dev dependency
 
 ### Pending Todos
 
@@ -91,10 +78,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 3]: The research SUMMARY.md recommends Gemini (`google-genai` SDK) throughout. The actual constraint is Claude Code CLI. Prompt engineering patterns and schema strategies from the research still apply conceptually, but library-specific recommendations (google-genai, pydantic response_schema) do not apply.
+- [Phase 5 → 6]: asyncio.Task done-callback behavior under CancelledError and unhandled exceptions needs a verified implementation before Phase 6 relies on it for all job state updates.
+- [Phase 5 → 6]: aiosqlite connection management (per-operation vs single lifespan connection) should be validated with concurrent-write integration test before building the full job queue on top.
+- [Phase 5 → 6]: Claude CLI concurrent invocation semaphore value (2-3 max) needs empirical validation under real concurrent load during Phase 6.
 
 ## Session Continuity
 
-Last session: 2026-04-04T05:15:30Z
-Stopped at: Completed quick task 260404-euc (QOL updates — company name, link fields, chat sidebar)
+Last session: 2026-04-04T06:24:13.243Z
+Stopped at: Completed 05-01-PLAN.md — backend dependencies, db.py, pipeline_runner.py
 Resume file: None
