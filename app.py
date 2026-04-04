@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -17,6 +19,45 @@ st.set_page_config(page_title="CV Maker", layout="centered")
 # ---------------------------------------------------------------------------
 
 HISTORY_DIR = Path.home() / ".cv-maker" / "history"
+
+
+# ---------------------------------------------------------------------------
+# History helpers
+# ---------------------------------------------------------------------------
+
+
+def _save_history(
+    job_text: str, role_title: str, tailored_cv: TailoredCV, gap_diff: list[GapItem]
+) -> None:
+    """Persist a completed run to ~/.cv-maker/history/ as a timestamped JSON file."""
+    HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%dT%H%M%S")
+    slug = "".join(c if c.isalnum() else "-" for c in role_title.lower())[:40]
+    target = HISTORY_DIR / f"{ts}-{slug}.json"
+    record = {
+        "timestamp": ts,
+        "role_title": role_title,
+        "job_text": job_text,
+        "tailored_cv": tailored_cv.model_dump(),
+        "gap_diff": [g.model_dump() for g in gap_diff],
+    }
+    target.write_text(json.dumps(record, indent=2), encoding="utf-8")
+
+
+def _load_history_index() -> list[dict]:
+    """Return list of history records sorted newest-first. Corrupt files are skipped."""
+    if not HISTORY_DIR.exists():
+        return []
+    records = []
+    for f in sorted(HISTORY_DIR.glob("*.json"), reverse=True):
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            label = f"{data.get('role_title', 'Unknown')} — {data.get('timestamp', '')}"
+            records.append({"path": str(f), "label": label, "data": data})
+        except (json.JSONDecodeError, KeyError):
+            pass  # Skip corrupt files silently
+    return records
+
 
 # ---------------------------------------------------------------------------
 # Base CV loading — cached; stop on failure
@@ -103,6 +144,38 @@ def _render_cv_preview(cv: TailoredCV) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Sidebar — history browser
+# ---------------------------------------------------------------------------
+
+with st.sidebar:
+    st.header("Past Runs")
+    history = _load_history_index()
+    if history:
+        labels = ["(current run)"] + [h["label"] for h in history]
+
+        def _on_history_change() -> None:
+            selected_label = st.session_state["history_select"]
+            if selected_label == "(current run)":
+                return
+            idx = labels.index(selected_label) - 1
+            chosen = history[idx]["data"]
+            st.session_state["result"] = {
+                "tailored_cv": TailoredCV.model_validate(chosen["tailored_cv"]),
+                "gap_diff": [GapItem.model_validate(g) for g in chosen["gap_diff"]],
+            }
+            # pdf_bytes not stored in history — clear so Download button is absent
+            st.session_state["pdf_bytes"] = None
+
+        st.selectbox(
+            "Past runs",
+            options=labels,
+            key="history_select",
+            on_change=_on_history_change,
+        )
+    else:
+        st.caption("No past runs yet.")
+
+# ---------------------------------------------------------------------------
 # Main page
 # ---------------------------------------------------------------------------
 
@@ -122,6 +195,15 @@ if st.button("Generate Tailored CV", type="primary"):
                 pdf_bytes = render_pdf(render_latex(tailored_cv))
             st.session_state["result"] = {"tailored_cv": tailored_cv, "gap_diff": gap_diff}
             st.session_state["pdf_bytes"] = pdf_bytes
+            role_label = (
+                job_text.strip().splitlines()[0][:40] if job_text.strip() else "Unknown Role"
+            )
+            _save_history(
+                job_text=job_text,
+                role_title=role_label,
+                tailored_cv=tailored_cv,
+                gap_diff=gap_diff,
+            )
         except RuntimeError as exc:
             st.error(f"Generation failed: {exc}")
 
