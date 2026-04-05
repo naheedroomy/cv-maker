@@ -22,6 +22,7 @@ from backend.db import init_db
 from backend.routers.config import router as config_router
 from backend.routers.cv_convert import router as cv_convert_router
 from backend.routers.jobs import router as jobs_router
+from backend.routers.settings import router as settings_router
 
 # ---------------------------------------------------------------------------
 # Logging — configure before app creation
@@ -45,6 +46,8 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up - initializing database")
     await init_db()
     logger.info("Database ready")
+    from backend.settings_cache import load_settings
+    await load_settings()
     yield
     logger.info("Shutting down")
 
@@ -83,6 +86,7 @@ async def health_check():
 api_router.include_router(jobs_router)
 api_router.include_router(cv_convert_router)
 api_router.include_router(config_router)
+api_router.include_router(settings_router)
 app.include_router(api_router)
 
 # ---------------------------------------------------------------------------

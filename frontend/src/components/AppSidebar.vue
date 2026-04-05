@@ -33,7 +33,10 @@ onUnmounted(() => {
   <aside class="sidebar">
     <div class="sidebar-header">
       <button class="new-job-btn" @click="router.push('/')">New Job</button>
-      <RouterLink to="/convert" class="import-cv-link">Import CV</RouterLink>
+      <div class="header-links">
+        <RouterLink to="/convert" class="header-link">Import CV</RouterLink>
+        <RouterLink to="/settings" class="header-link">Settings</RouterLink>
+      </div>
     </div>
     <nav aria-label="Job sessions">
       <template v-if="sortedJobs.length > 0">
@@ -81,17 +84,20 @@ onUnmounted(() => {
 .new-job-btn:hover {
   background: #1d4ed8;
 }
-.import-cv-link {
-  display: block;
+.header-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
   margin-top: 8px;
-  text-align: center;
+}
+.header-link {
   font-size: 13px;
   font-weight: 500;
   color: #6b7280;
   text-decoration: none;
   transition: color 150ms ease;
 }
-.import-cv-link:hover {
+.header-link:hover {
   color: #111827;
 }
 .empty-state {

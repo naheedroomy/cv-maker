@@ -25,7 +25,8 @@ class GeminiProvider(BaseProvider):
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-        self._model = os.environ.get("GEMINI_MODEL") or self.DEFAULT_MODEL
+        from backend.settings_cache import get_setting
+        self._model = get_setting("gemini_model") or self.DEFAULT_MODEL
         self._client = genai.Client(api_key=api_key)
 
     def run(self, base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:

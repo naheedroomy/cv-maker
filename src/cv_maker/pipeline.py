@@ -21,13 +21,25 @@ from cv_maker.models import BaseCV, GapItem, TailoredCV
 # ---------------------------------------------------------------------------
 
 
+def _get_claude_cli_model() -> str:
+    """Get Claude CLI model from settings cache, env, or default."""
+    try:
+        from backend.settings_cache import get_setting
+        model = get_setting("claude_cli_model")
+        if model:
+            return model
+    except ImportError:
+        pass
+    return os.environ.get("CLAUDE_MODEL", "haiku")
+
+
 def _invoke_claude(prompt: str, timeout: int = 300) -> str:
     """Invoke claude -p and return raw stdout. Raises RuntimeError on failure."""
     logger.info("Claude CLI: invoking (timeout=%ds, prompt=%d chars)", timeout, len(prompt))
     t0 = time.monotonic()
     try:
         result = subprocess.run(  # noqa: S603
-            ["claude", "-p", "--model", os.environ.get("CLAUDE_MODEL", "haiku"), "--no-session-persistence"],  # noqa: S607
+            ["claude", "-p", "--model", _get_claude_cli_model(), "--no-session-persistence"],  # noqa: S607
             input=prompt,
             capture_output=True,
             text=True,

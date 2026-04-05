@@ -28,7 +28,12 @@ CREATE TABLE IF NOT EXISTS jobs (
     model            TEXT NOT NULL DEFAULT 'claude-haiku',
     created_at       TEXT NOT NULL,
     updated_at       TEXT NOT NULL
-)
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
 
 
@@ -43,7 +48,7 @@ async def init_db(db_path: Path | None = None) -> None:
     async with aiosqlite.connect(path) as db:
         await db.execute("PRAGMA journal_mode=WAL")
         await db.execute("PRAGMA busy_timeout=5000")
-        await db.execute(_SCHEMA)
+        await db.executescript(_SCHEMA)
         # Idempotent migration: add model column if absent
         cursor = await db.execute("PRAGMA table_info(jobs)")
         columns = {row[1] async for row in cursor}

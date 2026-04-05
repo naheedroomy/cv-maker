@@ -22,7 +22,8 @@ class ClaudeAPIProvider(BaseProvider):
         api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
             raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
-        self._model = os.environ.get("CLAUDE_API_MODEL") or self.DEFAULT_MODEL
+        from backend.settings_cache import get_setting
+        self._model = get_setting("claude_api_model") or self.DEFAULT_MODEL
         self._client = anthropic.Anthropic(api_key=api_key)
 
     def run(self, base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:

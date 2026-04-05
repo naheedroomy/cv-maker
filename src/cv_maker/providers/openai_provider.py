@@ -22,8 +22,9 @@ class OpenAIProvider(BaseProvider):
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY environment variable is not set")
-        base_url = os.environ.get("OPENAI_BASE_URL") or None
-        self._model = os.environ.get("OPENAI_MODEL") or "gpt-4o-mini"
+        from backend.settings_cache import get_setting
+        base_url = get_setting("openai_base_url") or None
+        self._model = get_setting("openai_model") or "gpt-4o-mini"
         kwargs: dict[str, str] = {"api_key": api_key}
         if base_url is not None:
             kwargs["base_url"] = base_url
