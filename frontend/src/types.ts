@@ -64,6 +64,7 @@ export interface JobResponse {
   job_link: string | null
   job_text: string | null
   model: string
+  applied: boolean
   status: JobStatus
   created_at: string
   updated_at: string

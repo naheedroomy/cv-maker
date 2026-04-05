@@ -38,6 +38,7 @@ def _row_to_response(row) -> JobResponse:
         job_link=row["job_link"],
         job_text=row["job_text"],
         model=row["model"],
+        applied=bool(row["applied"]),
         status=row["status"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],
@@ -203,6 +204,33 @@ async def delete_job(job_id: str) -> Response:
     _job_tasks.pop(job_id, None)
     logger.info("Job %s permanently deleted", job_id)
     return Response(status_code=204)
+
+
+# ---------------------------------------------------------------------------
+# Endpoint 4c: PATCH /{job_id}/applied — toggle applied status
+# ---------------------------------------------------------------------------
+
+
+@router.patch("/{job_id}/applied", response_model=JobResponse)
+async def toggle_applied(job_id: str) -> JobResponse:
+    """Toggle the applied status of a job."""
+    db = await get_db()
+    try:
+        cursor = await db.execute("SELECT applied FROM jobs WHERE id=?", (job_id,))
+        row = await cursor.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        new_val = 0 if row["applied"] else 1
+        await db.execute("UPDATE jobs SET applied=? WHERE id=?", (new_val, job_id))
+        await db.commit()
+
+        cursor = await db.execute("SELECT * FROM jobs WHERE id=?", (job_id,))
+        row = await cursor.fetchone()
+    finally:
+        await db.close()
+
+    return _row_to_response(row)
 
 
 # ---------------------------------------------------------------------------

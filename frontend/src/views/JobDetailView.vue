@@ -120,6 +120,11 @@ async function handleRegenerate(model?: string) {
       <h2 class="company-heading">{{ currentJob.company_name }}</h2>
       <StatusBadge :status="currentJob.status" />
       <span class="model-badge">{{ { 'claude-haiku': 'Claude CLI', 'claude-api': 'Claude API', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[currentJob.model] || currentJob.model }}</span>
+      <button
+        class="applied-toggle"
+        :class="{ 'applied-toggle--active': currentJob.applied }"
+        @click="store.toggleApplied(jobId)"
+      >{{ currentJob.applied ? 'Applied' : 'Not Applied' }}</button>
     </div>
     <a
       v-if="currentJob.job_link"
@@ -303,6 +308,27 @@ async function handleRegenerate(model?: string) {
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   padding: 2px 8px;
+}
+
+.applied-toggle {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.applied-toggle:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+.applied-toggle--active {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #16a34a;
 }
 
 .company-heading {

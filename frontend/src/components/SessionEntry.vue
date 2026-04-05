@@ -20,7 +20,10 @@ function formatDate(iso: string): string {
   >
     <div class="session-top">
       <span class="company-name">{{ job.company_name }}</span>
-      <StatusBadge :status="job.status" />
+      <div class="session-badges">
+        <span v-if="job.applied" class="applied-badge">Applied</span>
+        <StatusBadge :status="job.status" />
+      </div>
     </div>
     <span class="created-date">{{ formatDate(job.created_at) }}</span>
   </router-link>
@@ -57,6 +60,19 @@ function formatDate(iso: string): string {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.session-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.applied-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #16a34a;
+  background: #dcfce7;
+  border-radius: 3px;
+  padding: 1px 5px;
 }
 .created-date {
   font-size: 12px;

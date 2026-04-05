@@ -21,6 +21,7 @@ class JobResponse(BaseModel):
     job_link: str | None = None
     job_text: str | None = None
     model: str = "claude-haiku"
+    applied: bool = False
     status: str  # one of: pending, running, complete, failed, cancelled
     created_at: str  # ISO 8601 timestamp
     updated_at: str  # ISO 8601 timestamp

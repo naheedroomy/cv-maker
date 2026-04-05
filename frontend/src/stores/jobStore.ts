@@ -61,6 +61,17 @@ export const useJobStore = defineStore('jobs', () => {
     closeSSE()
   }
 
+  async function toggleApplied(jobId: string): Promise<void> {
+    const res = await fetch(`/api/jobs/${jobId}/applied`, { method: 'PATCH' })
+    if (!res.ok) throw new Error(`Toggle applied failed: ${res.status}`)
+    const updated: JobResponse = await res.json()
+    if (currentJob.value?.id === jobId) {
+      currentJob.value = updated
+    }
+    const idx = jobs.value.findIndex((j) => j.id === jobId)
+    if (idx !== -1) jobs.value[idx] = updated
+  }
+
   async function deleteJob(jobId: string): Promise<void> {
     const res = await fetch(`/api/jobs/${jobId}/remove`, { method: 'DELETE' })
     if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
@@ -173,6 +184,7 @@ export const useJobStore = defineStore('jobs', () => {
     fetchJob,
     submitJob,
     cancelJob,
+    toggleApplied,
     deleteJob,
     regenerateJob,
     downloadPdf,
