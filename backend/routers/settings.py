@@ -5,17 +5,9 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from backend.db import get_db
-from backend.settings_cache import update_cache
+from backend.settings_cache import _DEFAULTS, update_cache
 
 router = APIRouter(prefix="/settings", tags=["settings"])
-
-# Defaults — used when no DB value exists
-_DEFAULTS = {
-    "claude_api_model": "claude-haiku-4-5",
-    "gemini_model": "gemini-2.5-flash",
-    "openai_model": "gpt-4o-mini",
-    "openai_base_url": "",
-}
 
 
 class SettingsResponse(BaseModel):
