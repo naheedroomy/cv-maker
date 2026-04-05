@@ -64,7 +64,7 @@ def _fake_tailored_cv():
 def _fake_gap_items():
     from cv_maker.models import GapItem
 
-    return [GapItem(requirement="Python", present=True, evidence="5 years exp")]
+    return [GapItem(requirement="Python", match_level="strong", evidence="5 years exp")]
 
 
 # ---------------------------------------------------------------------------
@@ -147,7 +147,7 @@ def test_worker_completes_job_successfully(tmp_path: Path):
                 return_value=_fake_base_cv(),
             ),
             patch(
-                "backend.worker.run_pipeline_async",
+                "backend.worker.run_provider_async",
                 new_callable=AsyncMock,
                 return_value=(fake_tailored, fake_gaps),
             ),
@@ -211,7 +211,7 @@ def test_worker_sets_failed_on_pipeline_error(tmp_path: Path):
                 return_value=_fake_base_cv(),
             ),
             patch(
-                "backend.worker.run_pipeline_async",
+                "backend.worker.run_provider_async",
                 new_callable=AsyncMock,
                 side_effect=RuntimeError("Claude CLI failed"),
             ),
@@ -252,7 +252,7 @@ def test_worker_handles_cancellation(tmp_path: Path):
                 return_value=_fake_base_cv(),
             ),
             patch(
-                "backend.worker.run_pipeline_async",
+                "backend.worker.run_provider_async",
                 side_effect=slow_pipeline,
             ),
         ):
@@ -309,7 +309,7 @@ def test_worker_pushes_sse_events(tmp_path: Path):
                     return_value=_fake_base_cv(),
                 ),
                 patch(
-                    "backend.worker.run_pipeline_async",
+                    "backend.worker.run_provider_async",
                     new_callable=AsyncMock,
                     return_value=(_fake_tailored_cv(), _fake_gap_items()),
                 ),
