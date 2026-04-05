@@ -92,27 +92,16 @@ def _serialize_base_cv(cv: BaseCV) -> str:
     return yaml.dump(cv.model_dump(), default_flow_style=False, allow_unicode=True)
 
 
-def _build_prompt(base_cv: BaseCV, job_text: str) -> str:
-    """Build the CV tailoring prompt. Shared by all providers.
+def _build_system_prompt() -> str:
+    """Build the system prompt with instructions and output schema.
 
-    Returns:
-        The complete prompt string for use with any AI provider.
+    Used by chat-based providers (OpenAI, Gemini) as the system message.
+    Claude CLI concatenates this with the user prompt via _build_prompt().
     """
-    base_cv_yaml = _serialize_base_cv(base_cv)
-    return f"""\
+    return """\
 You are a CV tailoring expert. Given a candidate's base CV and a job listing, you will:
 1. Analyze the job requirements and compute a gap diff
 2. Produce a tailored CV optimized for the role
-
-BASE CV (YAML format — the candidate's complete experience):
----
-{base_cv_yaml}
----
-
-JOB LISTING:
----
-{job_text}
----
 
 Instructions:
 
@@ -182,46 +171,71 @@ naturally in the bullets — do not present them as separate, unrelated claims.
 
 Return ONLY a valid JSON object matching this exact schema — no markdown fences, no commentary:
 
-{{
-  "contact": {{"name": "<str>", "email": "<str>", "linkedin": "<str or null>",
-               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>"}},
+{
+  "contact": {"name": "<str>", "email": "<str>", "linkedin": "<str or null>",
+               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>"},
   "summary": "<tailored summary>",
   "experience": [
-    {{
+    {
       "company": "<str>",
       "title": "<str>",
       "start": "<YYYY-MM>",
       "end": "<YYYY-MM or null>",
       "bullets": ["<rewritten bullet>"],
       "technologies": ["<tech>"]
-    }}
+    }
   ],
   "skills": ["<most relevant first>"],
-  "education": [{{"institution": "<str>", "degree": "<str>",
-                   "field": "<str or null>", "year": "<int or null>"}}],
-  "projects": [{{"name": "<str>", "description": "<str>",
-                  "technologies": [], "url": "<str or null>"}}],
+  "education": [{"institution": "<str>", "degree": "<str>",
+                   "field": "<str or null>", "year": "<int or null>"}],
+  "projects": [{"name": "<str>", "description": "<str>",
+                  "technologies": [], "url": "<str or null>"}],
   "certifications": ["<str>"],
   "highlighted_technologies": ["<surfaced tech from base CV>"],
   "tailoring_notes": ["<note explaining what you changed and why>"],
   "gap_diff": [
-    {{
+    {
       "requirement": "<requirement from job listing>",
       "match_level": "strong",
       "evidence": "<quote or reference from base CV>"
-    }},
-    {{
+    },
+    {
       "requirement": "<partially matched requirement>",
       "match_level": "partial",
       "evidence": "<implicit or related evidence from base CV>"
-    }},
-    {{
+    },
+    {
       "requirement": "<missing requirement>",
       "match_level": "missing",
       "evidence": ""
-    }}
+    }
   ]
-}}"""
+}"""
+
+
+def _build_user_prompt(base_cv: BaseCV, job_text: str) -> str:
+    """Build the user prompt containing the CV and job listing data."""
+    base_cv_yaml = _serialize_base_cv(base_cv)
+    return f"""\
+BASE CV (YAML format — the candidate's complete experience):
+---
+{base_cv_yaml}
+---
+
+JOB LISTING:
+---
+{job_text}
+---
+
+Analyze the job listing, compute the gap diff, and produce the tailored CV as a single JSON object."""
+
+
+def _build_prompt(base_cv: BaseCV, job_text: str) -> str:
+    """Build combined prompt for Claude CLI (no system message support).
+
+    Concatenates system prompt + user prompt into a single string.
+    """
+    return _build_system_prompt() + "\n\n" + _build_user_prompt(base_cv, job_text)
 
 
 # ---------------------------------------------------------------------------

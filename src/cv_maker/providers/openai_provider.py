@@ -11,7 +11,7 @@ import os
 import openai
 
 from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.pipeline import _build_prompt, _extract_json
+from cv_maker.pipeline import _build_system_prompt, _build_user_prompt, _extract_json
 from cv_maker.providers.base import BaseProvider
 
 logger = logging.getLogger(__name__)
@@ -30,20 +30,24 @@ class OpenAIProvider(BaseProvider):
         self._client = openai.OpenAI(**kwargs)
 
     def run(self, base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:
-        prompt = _build_prompt(base_cv, job_text)
+        system_prompt = _build_system_prompt()
+        user_prompt = _build_user_prompt(base_cv, job_text)
         last_exc: Exception | None = None
         for attempt in range(3):
             logger.info("OpenAI attempt %d/3 for TailoredCV", attempt + 1)
-            effective_prompt = prompt
+            effective_user = user_prompt
             if attempt > 0:
                 logger.warning("Retrying — previous attempt failed: %s", last_exc)
-                effective_prompt = (
-                    prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
+                effective_user = (
+                    user_prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
                 )
             try:
                 response = self._client.chat.completions.create(
                     model=self._model,
-                    messages=[{"role": "user", "content": effective_prompt}],
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": effective_user},
+                    ],
                 )
                 text = response.choices[0].message.content
                 data = _extract_json(text)

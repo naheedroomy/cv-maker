@@ -9,8 +9,10 @@ import os
 from google import genai
 from google.genai import errors as genai_errors
 
+from google.genai import types as genai_types
+
 from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.pipeline import _build_prompt, _extract_json
+from cv_maker.pipeline import _build_system_prompt, _build_user_prompt, _extract_json
 from cv_maker.providers.base import BaseProvider
 
 logger = logging.getLogger(__name__)
@@ -26,20 +28,24 @@ class GeminiProvider(BaseProvider):
         self._client = genai.Client(api_key=api_key)
 
     def run(self, base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:
-        prompt = _build_prompt(base_cv, job_text)
+        system_prompt = _build_system_prompt()
+        user_prompt = _build_user_prompt(base_cv, job_text)
         last_exc: Exception | None = None
         for attempt in range(3):
             logger.info("Gemini attempt %d/3 for TailoredCV", attempt + 1)
-            effective_prompt = prompt
+            effective_user = user_prompt
             if attempt > 0:
                 logger.warning("Retrying — previous attempt failed: %s", last_exc)
-                effective_prompt = (
-                    prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
+                effective_user = (
+                    user_prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
                 )
             try:
                 response = self._client.models.generate_content(
                     model=self.MODEL_ID,
-                    contents=effective_prompt,
+                    contents=effective_user,
+                    config=genai_types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                    ),
                 )
                 data = _extract_json(response.text)
                 result = TailoredCV.model_validate(data)
