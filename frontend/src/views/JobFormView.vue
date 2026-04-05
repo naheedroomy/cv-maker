@@ -15,6 +15,7 @@ const jobText = ref('')
 const submitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const selectedModel = ref('claude-haiku')
+const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
 
@@ -27,11 +28,12 @@ onMounted(async () => {
     const res = await fetch('/api/config')
     if (res.ok) {
       const data = await res.json()
+      claudeApiAvailable.value = data.claude_api_available === true
       geminiAvailable.value = data.gemini_available === true
       openaiAvailable.value = data.openai_available === true
     }
   } catch {
-    // Fail safe: leave geminiAvailable as false
+    // Fail safe: leave all as false
   }
 })
 
@@ -113,6 +115,7 @@ function handleRetry(): void {
 
       <ModelSelector
         v-model="selectedModel"
+        :claude-api-available="claudeApiAvailable"
         :gemini-available="geminiAvailable"
         :openai-available="openaiAvailable"
         :disabled="submitting"

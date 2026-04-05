@@ -21,11 +21,13 @@ const cancelling = ref(false)
 const downloading = ref(false)
 const deleting = ref(false)
 const regenerating = ref<string | null>(null) // tracks which model is regenerating
+const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
 
 // Fetch provider availability
 fetch('/api/config').then(r => r.ok ? r.json() : {}).then(data => {
+  claudeApiAvailable.value = data.claude_api_available === true
   geminiAvailable.value = data.gemini_available === true
   openaiAvailable.value = data.openai_available === true
 }).catch(() => {})
@@ -117,7 +119,7 @@ async function handleRegenerate(model?: string) {
     <div class="job-header">
       <h2 class="company-heading">{{ currentJob.company_name }}</h2>
       <StatusBadge :status="currentJob.status" />
-      <span class="model-badge">{{ { 'claude-haiku': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[currentJob.model] || currentJob.model }}</span>
+      <span class="model-badge">{{ { 'claude-haiku': 'Claude CLI', 'claude-api': 'Claude API', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[currentJob.model] || currentJob.model }}</span>
     </div>
     <a
       v-if="currentJob.job_link"
@@ -157,7 +159,15 @@ async function handleRegenerate(model?: string) {
           :disabled="!!regenerating"
           @click="handleRegenerate('claude-haiku')"
         >
-          {{ regenerating === 'claude-haiku' ? 'Regenerating...' : 'Regenerate (Claude)' }}
+          {{ regenerating === 'claude-haiku' ? 'Regenerating...' : 'Regenerate (Claude CLI)' }}
+        </button>
+        <button
+          v-if="claudeApiAvailable"
+          class="btn-regenerate btn-regenerate--claude-api"
+          :disabled="!!regenerating"
+          @click="handleRegenerate('claude-api')"
+        >
+          {{ regenerating === 'claude-api' ? 'Regenerating...' : 'Regenerate (Claude API)' }}
         </button>
         <button
           v-if="geminiAvailable"
@@ -403,6 +413,12 @@ async function handleRegenerate(model?: string) {
 }
 .btn-regenerate:hover:not(:disabled) {
   background: #d97706;
+}
+.btn-regenerate--claude-api {
+  background: #d97706;
+}
+.btn-regenerate--claude-api:hover:not(:disabled) {
+  background: #b45309;
 }
 .btn-regenerate--gemini {
   background: #4285f4;
