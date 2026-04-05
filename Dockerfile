@@ -14,6 +14,7 @@ FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-xetex \
     texlive-fonts-recommended \
+    texlive-fonts-extra \
     texlive-latex-extra \
     latexmk \
     fonts-liberation \
