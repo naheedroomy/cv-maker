@@ -140,7 +140,8 @@ CV TAILORING — address each section:
 1. SUMMARY: Position the candidate to match the role's core identity (e.g., Platform Engineer, SRE, DevOps). \
 Reflect seniority signals such as ownership, system design, and cross-team impact. \
 Prioritize the top 3 themes from the job description. \
-Only mention certifications the candidate already holds. Do NOT mention expected/upcoming/in-progress certifications in the summary.
+Only mention certifications the candidate already holds. Do NOT mention expected/upcoming/in-progress certifications in the summary. \
+Do NOT use **bold** markers in the summary — bold formatting is only for experience bullets.
 2. EXPERIENCE:
    - Keep entries in reverse chronological order (most recent first). Do NOT reorder by relevance.
    - Rewrite bullets to sound natural and professional. Do NOT write bullets that read like they were \
