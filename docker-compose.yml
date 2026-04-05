@@ -6,9 +6,10 @@ services:
     env_file:
       - .env
     volumes:
-      # Persist database and generated PDFs across restarts
+      # Persist database across restarts
       - cv-data:/app/data
-      - output-data:/app/output
+      # PDFs accessible on host at ./output/
+      - ./output:/app/output
       # Mount base CV so you can edit without rebuilding
       - ./base_cv.yaml:/app/base_cv.yaml
     environment:
@@ -16,4 +17,3 @@ services:
 
 volumes:
   cv-data:
-  output-data:
