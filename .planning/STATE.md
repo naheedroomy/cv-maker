@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Full-Stack Rebuild
 status: executing
-stopped_at: Completed 09-01-PLAN.md (providers/ package + _build_prompt extraction)
-last_updated: "2026-04-05T05:40:42.632Z"
+stopped_at: Completed 09-02-PLAN.md (backend data layer + model field + config endpoint)
+last_updated: "2026-04-05T05:46:55.303Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 09 (add-gemini-2-5-flash-as-alternative-ai-provider-with-model-selector-in-vue-ui) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-05
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P02 | 90 | 2 tasks | 5 files |
 | Phase 07 P02 | 420 | 2 tasks | 6 files |
 | Phase 09 P01 | 480 | 2 tasks | 8 files |
+| Phase 09 P02 | 189 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 07]: storeToRefs pattern used in AppSidebar for reactive destructuring — prevents reactivity loss when destructuring Pinia setup stores
 - [Phase 09]: GeminiProvider instantiated lazily inside get_provider() — missing GEMINI_API_KEY only raises at call time, not server startup
 - [Phase 09]: Shared _build_prompt() helper extracted from run_pipeline() so both Claude and Gemini use the identical CV tailoring prompt
+- [Phase 09]: Idempotent migration guards ALTER TABLE with PRAGMA table_info check — no error on repeated startups
+- [Phase 09]: run_provider_async() added alongside run_pipeline_async() for backward compatibility — tests unchanged
+- [Phase 09]: GET /api/config uses os.environ.get with bool() cast — simple feature flag, no Pydantic Settings overhead
 
 ### Pending Todos
 
@@ -104,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T05:40:42.620Z
-Stopped at: Completed 09-01-PLAN.md (providers/ package + _build_prompt extraction)
+Last session: 2026-04-05T05:46:55.298Z
+Stopped at: Completed 09-02-PLAN.md (backend data layer + model field + config endpoint)
 Resume file: None
