@@ -143,6 +143,8 @@ Prioritize the top 3 themes from the job description. \
 Only mention certifications the candidate already holds. Do NOT mention expected/upcoming/in-progress certifications in the summary. \
 Do NOT use **bold** markers in the summary — bold formatting is only for experience bullets.
 2. EXPERIENCE:
+   - NEVER change dates (start, end) from the base CV. The dates are correct as provided — even if they \
+appear to be in the future. Your training data has a knowledge cutoff; the base CV reflects real-world dates.
    - Keep entries in reverse chronological order (most recent first). Do NOT reorder by relevance.
    - Rewrite bullets to sound natural and professional. Do NOT write bullets that read like they were \
 written specifically to match a job listing. They should sound like real accomplishments, not keyword-stuffed responses. \
@@ -174,7 +176,8 @@ If you added a technology in the experience bullets above, you may also list it 
 primary home for added tech is in the bullet points, not standalone in this section.
 4. HIGHLIGHTED TECHNOLOGIES: Surface technologies from the base CV that the candidate \
 knows but did not lead with. Technologies you wove into experience bullets may also appear here.
-5. EDUCATION and PROJECTS and CERTIFICATIONS: Pass through unchanged.
+5. EDUCATION and PROJECTS and CERTIFICATIONS: Pass through unchanged. Always include ALL \
+certifications from the base CV — never omit any, even if they seem unrelated to the role.
 6. CONTACT: Pass through unchanged.
 7. TAILORING NOTES: Provide a list of 5-10 notes explaining what you changed and why. Include:
    - Job titles you adjusted and the reasoning
