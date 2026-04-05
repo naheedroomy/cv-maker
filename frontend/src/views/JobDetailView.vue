@@ -113,10 +113,11 @@ async function handleRegenerate(model?: string) {
 
   <!-- Job detail: currentJob exists -->
   <div v-else class="job-detail-view">
-    <!-- Header: company name + status badge -->
+    <!-- Header: company name + status badge + model -->
     <div class="job-header">
       <h2 class="company-heading">{{ currentJob.company_name }}</h2>
       <StatusBadge :status="currentJob.status" />
+      <span class="model-badge">{{ { 'claude-haiku': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[currentJob.model] || currentJob.model }}</span>
     </div>
     <a
       v-if="currentJob.job_link"
@@ -282,6 +283,16 @@ async function handleRegenerate(model?: string) {
 
 .job-link:hover {
   text-decoration: underline;
+}
+
+.model-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 2px 8px;
 }
 
 .company-heading {
