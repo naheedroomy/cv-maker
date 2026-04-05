@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Full-Stack Rebuild
 status: executing
-stopped_at: Completed quick/260405-4j5 — Updated CLAUDE.md stack section to reflect actual v2.0 tech
-last_updated: "2026-04-04T21:50:58.810Z"
-last_activity: 2026-04-04
+stopped_at: Completed 09-01-PLAN.md (providers/ package + _build_prompt extraction)
+last_updated: "2026-04-05T05:40:42.632Z"
+last_activity: 2026-04-05
 progress:
-  total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 2
+  total_phases: 5
+  completed_phases: 4
+  total_plans: 13
+  completed_plans: 11
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 07 — vue-frontend
+**Current focus:** Phase 09 — add-gemini-2-5-flash-as-alternative-ai-provider-with-model-selector-in-vue-ui
 
 ## Current Position
 
-Phase: 07 (vue-frontend) — EXECUTING
+Phase: 09 (add-gemini-2-5-flash-as-alternative-ai-provider-with-model-selector-in-vue-ui) — EXECUTING
 Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-04-04
+Last activity: 2026-04-05
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P01 | 174s | 3 tasks | 8 files |
 | Phase 05 P02 | 90 | 2 tasks | 5 files |
 | Phase 07 P02 | 420 | 2 tasks | 6 files |
+| Phase 09 P01 | 480 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -78,10 +79,22 @@ Recent decisions affecting current work:
 - [Phase 05]: lifespan async context manager pattern (not deprecated @app.on_event) for FastAPI startup/shutdown
 - [Phase 07]: 30s polling owned by AppSidebar.vue lifecycle (not store.startSidebarPolling) — matches RESEARCH.md Pattern 6, component lifecycle owns the interval
 - [Phase 07]: storeToRefs pattern used in AppSidebar for reactive destructuring — prevents reactivity loss when destructuring Pinia setup stores
+- [Phase 09]: GeminiProvider instantiated lazily inside get_provider() — missing GEMINI_API_KEY only raises at call time, not server startup
+- [Phase 09]: Shared _build_prompt() helper extracted from run_pipeline() so both Claude and Gemini use the identical CV tailoring prompt
 
 ### Pending Todos
 
 None yet.
+
+### Roadmap Evolution
+
+- Phase 9 added: Add Gemini 2.5 Flash as alternative AI provider with model selector in Vue UI
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260405-4j5 | Fix stale CLAUDE.md recommended stack section | 2026-04-04 | d49d4bd | [260405-4j5-fix-stale-claude-md-recommended-stack-se](./quick/260405-4j5-fix-stale-claude-md-recommended-stack-se/) |
 
 ### Blockers/Concerns
 
@@ -91,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T21:50:58.807Z
-Stopped at: Completed quick/260405-4j5 — Updated CLAUDE.md stack section to reflect actual v2.0 tech
+Last session: 2026-04-05T05:40:42.620Z
+Stopped at: Completed 09-01-PLAN.md (providers/ package + _build_prompt extraction)
 Resume file: None
