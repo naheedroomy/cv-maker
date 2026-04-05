@@ -213,6 +213,38 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
 }"""
 
 
+_COT_PREAMBLE = """\
+IMPORTANT — think step-by-step before producing the JSON output:
+
+Step 1: Read the entire job listing carefully. Identify ALL requirements, technologies, \
+and responsibilities mentioned — aim for 10-15 distinct requirements. Do not stop at 3-5.
+
+Step 2: For EACH requirement, scan the ENTIRE base CV (all roles, all bullets) for evidence. \
+Check for both direct keyword matches AND implicit signals. For each match, note the specific \
+company, role, and bullet that provides evidence. Quote or paraphrase the evidence.
+
+Step 3: Assign match_level (strong/partial/missing) for each requirement. A "partial" match \
+must include an explanation of what implicit signal connects the evidence to the requirement.
+
+Step 4: Using your gap analysis, rewrite each experience section. For "strong" matches, \
+make the connection prominent. For "partial" matches, surface the implied experience. \
+For "missing" matches, do not fabricate.
+
+Step 5: Write 5-10 detailed tailoring notes. Each note should explain: what you changed, \
+which specific job requirement it targets, and why the change is justified by the base CV.
+
+Now produce the JSON output following all the instructions above.\n\n"""
+
+
+def _build_system_prompt_for_chat() -> str:
+    """Build system prompt with chain-of-thought preamble for chat-based providers.
+
+    OpenAI and Gemini need explicit step-by-step reasoning instructions
+    to produce exhaustive, detailed output comparable to Claude.
+    """
+    return _COT_PREAMBLE + _build_system_prompt()
+
+
 def _build_user_prompt(base_cv: BaseCV, job_text: str) -> str:
     """Build the user prompt containing the CV and job listing data."""
     base_cv_yaml = _serialize_base_cv(base_cv)
@@ -227,7 +259,9 @@ JOB LISTING:
 {job_text}
 ---
 
-Analyze the job listing, compute the gap diff, and produce the tailored CV as a single JSON object."""
+Analyze the job listing thoroughly. Extract ALL requirements (aim for 10-15). \
+For each requirement, cite specific evidence from specific roles in the base CV. \
+Then produce the tailored CV as a single JSON object."""
 
 
 def _build_prompt(base_cv: BaseCV, job_text: str) -> str:

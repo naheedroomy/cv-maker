@@ -11,7 +11,7 @@ import os
 import openai
 
 from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.pipeline import _build_system_prompt, _build_user_prompt, _extract_json
+from cv_maker.pipeline import _build_system_prompt_for_chat, _build_user_prompt, _extract_json
 from cv_maker.providers.base import BaseProvider
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class OpenAIProvider(BaseProvider):
         self._client = openai.OpenAI(**kwargs)
 
     def run(self, base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:
-        system_prompt = _build_system_prompt()
+        system_prompt = _build_system_prompt_for_chat()
         user_prompt = _build_user_prompt(base_cv, job_text)
         last_exc: Exception | None = None
         for attempt in range(3):
