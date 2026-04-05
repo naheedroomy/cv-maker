@@ -24,6 +24,8 @@ An AI-powered CV tailoring pipeline that takes a structured base CV and a job li
 |------------|---------|---------|-----|
 | Claude Code CLI (`claude -p`) | latest | AI backbone — generates tailored CV content via subprocess | Free with existing Claude subscription; `--model haiku` for speed; JSON output with parse-retry loop; no SDK or API key required. |
 | Model: `haiku` | latest | LLM for CV tailoring | Fastest Claude model; invoked via `claude -p --model haiku --no-session-persistence`; sufficient quality for CV rewriting tasks. |
+| `google-genai` | >=1.70.0 | Gemini SDK — secondary AI provider for CV tailoring | Strategy pattern abstraction; Gemini 3.1 Flash-Lite Preview as alternative to Claude CLI; requires GEMINI_API_KEY. |
+| Model: `gemini-3.1-flash-lite-preview` | latest | Secondary LLM for CV tailoring | Faster alternative via API; selected in frontend model dropdown; lazy API key loading. |
 
 ### Structured Data Layer (Base CV)
 | Technology | Version | Purpose | Why |
@@ -59,7 +61,8 @@ An AI-powered CV tailoring pipeline that takes a structured base CV and a job li
 ### Configuration / Secrets
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| Environment variables | — | Runtime configuration | Claude CLI uses existing subscription (no API key); minimal config needed. Standard `os.environ` or dotenv pattern when needed. |
+| `python-dotenv` | >=1.2.2 | Load `.env` file into environment at startup | Enables local GEMINI_API_KEY config without exporting in shell; `load_dotenv()` called in `backend/main.py` before FastAPI app initialization. |
+| Environment variables | — | Runtime configuration | `GEMINI_API_KEY` for Gemini provider (optional — graceful degradation). Claude CLI uses existing subscription (no key needed). |
 
 ### Developer Tooling
 | Technology | Version | Purpose | Why |
@@ -72,7 +75,7 @@ An AI-powered CV tailoring pipeline that takes a structured base CV and a job li
 ## Alternatives Considered
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| AI provider | Claude Code CLI | Gemini SDK (`google-genai`) | Claude CLI is free with existing subscription; no API key management; JSON output with parse-retry is reliable enough |
+| AI provider | Claude Code CLI (primary) | Gemini 3.1 Flash-Lite (secondary) | Both supported via strategy pattern; Claude is free with subscription, Gemini requires API key but is faster |
 | AI provider | Claude Code CLI | OpenAI API | Same reason — CLI approach avoids SDK dependencies and API key overhead |
 | UI framework | Vue 3 + Vite | Streamlit | Streamlit lacks component-level control, real routing, and state management needed for job queue UI with polling |
 | UI framework | Vue 3 + Vite | React + Vite | Vue's composition API and SFC model are simpler for a solo-dev project of this size |
@@ -109,6 +112,7 @@ which latexmk
 | Jinja2 + LaTeX delimiter reconfiguration pattern | MEDIUM | Multiple community sources; pattern is well-established but no single authoritative doc | Pattern is stable and widely used for CV/resume generation |
 | latexmk via subprocess + tempfile | MEDIUM | Multiple technical sources; latexmk is MacTeX bundled | Correct approach; latexmk must be verified installed on target machine |
 | `uv` as package manager | HIGH | Official Astral docs + widespread community adoption in 2025 | |
+| `google-genai` + Gemini 3.1 Flash-Lite | HIGH | pyproject.toml + working provider | Strategy pattern provider; lazy API key; parse-retry with Pydantic validation |
 
 ## Sources
 - [Claude Code CLI docs](https://docs.anthropic.com/en/docs/claude-code)
@@ -122,6 +126,7 @@ which latexmk
 - [LaTeX templates with Jinja2](https://13rac1.com/articles/2015/11/latex-templates-python-and-jinja2-generate-pdfs/)
 - [Generating reports with Jinja, LaTeX and Docker](https://www.leospairani.com/blog/2024/04/16/generating-reports-with-jinja-latex-and-docker/)
 - [uv documentation](https://docs.astral.sh/uv/)
+- [google-genai SDK](https://pypi.org/project/google-genai/)
 <!-- GSD:stack-end -->
 
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
