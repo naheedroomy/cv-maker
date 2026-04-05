@@ -12,6 +12,8 @@ services:
       - ./output:/app/output
       # Mount base CV so you can edit without rebuilding
       - ./base_cv.yaml:/app/base_cv.yaml
+      # Mount Claude CLI auth from host (run 'claude login' on host first)
+      - ~/.claude:/root/.claude:ro
     environment:
       - CV_MAKER_DB_PATH=/app/data/cv_maker.db
 
