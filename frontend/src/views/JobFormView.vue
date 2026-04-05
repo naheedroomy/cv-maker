@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useJobStore } from '@/stores/jobStore'
 import ErrorBanner from '@/components/ErrorBanner.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import ModelSelector from '@/components/ModelSelector.vue'
 
 const router = useRouter()
 const store = useJobStore()
@@ -13,10 +14,24 @@ const jobLink = ref('')
 const jobText = ref('')
 const submitting = ref(false)
 const errorMessage = ref<string | null>(null)
+const selectedModel = ref('claude-haiku')
+const geminiAvailable = ref(false)
 
 const canSubmit = computed(
   () => companyName.value.trim() !== '' && jobText.value.trim() !== '' && !submitting.value,
 )
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/config')
+    if (res.ok) {
+      const data = await res.json()
+      geminiAvailable.value = data.gemini_available === true
+    }
+  } catch {
+    // Fail safe: leave geminiAvailable as false
+  }
+})
 
 async function handleSubmit(): Promise<void> {
   if (!canSubmit.value) return
@@ -27,6 +42,7 @@ async function handleSubmit(): Promise<void> {
       company_name: companyName.value.trim(),
       job_link: jobLink.value.trim() || undefined,
       job_text: jobText.value.trim(),
+      model: selectedModel.value,
     })
     await router.push('/jobs/' + id)
   } catch (err) {
@@ -92,6 +108,12 @@ function handleRetry(): void {
           :disabled="submitting"
         ></textarea>
       </div>
+
+      <ModelSelector
+        v-model="selectedModel"
+        :gemini-available="geminiAvailable"
+        :disabled="submitting"
+      />
 
       <button
         type="submit"
