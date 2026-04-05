@@ -16,6 +16,7 @@ const submitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const selectedModel = ref('claude-haiku')
 const geminiAvailable = ref(false)
+const openaiAvailable = ref(false)
 
 const canSubmit = computed(
   () => companyName.value.trim() !== '' && jobText.value.trim() !== '' && !submitting.value,
@@ -27,6 +28,7 @@ onMounted(async () => {
     if (res.ok) {
       const data = await res.json()
       geminiAvailable.value = data.gemini_available === true
+      openaiAvailable.value = data.openai_available === true
     }
   } catch {
     // Fail safe: leave geminiAvailable as false
@@ -112,6 +114,7 @@ function handleRetry(): void {
       <ModelSelector
         v-model="selectedModel"
         :gemini-available="geminiAvailable"
+        :openai-available="openaiAvailable"
         :disabled="submitting"
       />
 

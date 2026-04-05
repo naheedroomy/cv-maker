@@ -2,6 +2,7 @@
 const props = defineProps<{
   modelValue: string
   geminiAvailable: boolean
+  openaiAvailable: boolean
   disabled: boolean
 }>()
 
@@ -12,11 +13,13 @@ const emit = defineEmits<{
 const options = [
   { value: 'claude-haiku', label: 'Claude Haiku', hint: 'Fast and free — uses your Claude subscription' },
   { value: 'gemini-flash', label: 'Gemini Flash-Lite', hint: 'Fast and cheap — requires a GEMINI_API_KEY' },
+  { value: 'openai', label: 'OpenAI', hint: 'Works with any OpenAI-compatible API endpoint (Groq, Together AI, Ollama, etc.)' },
 ] as const
 
 function select(model: string): void {
   if (props.disabled) return
   if (model === 'gemini-flash' && !props.geminiAvailable) return
+  if (model === 'openai' && !props.openaiAvailable) return
   emit('update:modelValue', model)
 }
 
@@ -24,12 +27,17 @@ function hintText(): string {
   if (props.modelValue === 'gemini-flash' && !props.geminiAvailable) {
     return 'Gemini requires a GEMINI_API_KEY — not configured.'
   }
+  if (props.modelValue === 'openai' && !props.openaiAvailable) {
+    return 'OpenAI requires OPENAI_API_KEY — not configured.'
+  }
   const opt = options.find(o => o.value === props.modelValue)
   return opt ? opt.hint : ''
 }
 
 function isDisabledOption(value: string): boolean {
-  return value === 'gemini-flash' && !props.geminiAvailable
+  if (value === 'gemini-flash' && !props.geminiAvailable) return true
+  if (value === 'openai' && !props.openaiAvailable) return true
+  return false
 }
 </script>
 
