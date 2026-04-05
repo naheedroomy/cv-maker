@@ -8,22 +8,12 @@ import types
 import pytest
 
 import cv_maker.pipeline as pipeline
-from cv_maker.models import BaseCV, GapItem, JobAnalysis, TailoredCV
-from cv_maker.pipeline import analyze_job, run_pipeline, tailor_cv
+from cv_maker.models import BaseCV, GapItem, TailoredCV
+from cv_maker.pipeline import _build_prompt, run_pipeline
 
 # ---------------------------------------------------------------------------
 # Module-level JSON fixtures — minimal valid payloads matching each schema
 # ---------------------------------------------------------------------------
-
-JOB_ANALYSIS_JSON = json.dumps({
-    "role_title": "Senior Backend Engineer",
-    "key_requirements": ["Python", "REST API design"],
-    "required_technologies": ["Python", "FastAPI", "PostgreSQL"],
-    "gap_diff": [
-        {"requirement": "Python", "present": True, "evidence": "8 years Python"},
-        {"requirement": "Kubernetes", "present": False, "evidence": ""},
-    ],
-})
 
 TAILORED_CV_JSON = json.dumps({
     "contact": {"name": "Jane Smith", "email": "jane@example.com"},
@@ -41,6 +31,10 @@ TAILORED_CV_JSON = json.dumps({
     "skills": ["Python", "FastAPI", "PostgreSQL"],
     "education": [{"institution": "State University", "degree": "BSc"}],
     "highlighted_technologies": ["Redis", "Docker"],
+    "gap_diff": [
+        {"requirement": "Python", "match_level": "strong", "evidence": "8 years Python"},
+        {"requirement": "Kubernetes", "match_level": "missing", "evidence": ""},
+    ],
 })
 
 
@@ -98,35 +92,78 @@ def test_extract_json_raises_on_no_json() -> None:
 
 
 # ---------------------------------------------------------------------------
-# analyze_job tests
+# _build_prompt — unit tests
 # ---------------------------------------------------------------------------
 
 
-def test_analyze_job_happy_path(monkeypatch, base_cv: BaseCV, sample_job_text: str) -> None:
-    """Happy path: subprocess returns clean JobAnalysis JSON, result is JobAnalysis."""
-    monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(
-        lambda cmd, **kw: _make_proc(JOB_ANALYSIS_JSON)
-    ))
-    result = analyze_job(base_cv, sample_job_text)
-    assert isinstance(result, JobAnalysis)
-    assert result.role_title == "Senior Backend Engineer"
-    assert "Python" in result.required_technologies
+def test_build_prompt_contains_base_cv_yaml(base_cv: BaseCV, sample_job_text: str) -> None:
+    """_build_prompt embeds the base CV name in the prompt."""
+    prompt = _build_prompt(base_cv, sample_job_text)
+    assert "Jane Smith" in prompt
 
 
-def test_analyze_job_handles_fenced_json(
+def test_build_prompt_contains_job_text(base_cv: BaseCV, sample_job_text: str) -> None:
+    """_build_prompt embeds the job listing text in the prompt."""
+    prompt = _build_prompt(base_cv, sample_job_text)
+    assert sample_job_text in prompt
+
+
+def test_build_prompt_returns_string(base_cv: BaseCV, sample_job_text: str) -> None:
+    """_build_prompt returns a non-empty string."""
+    prompt = _build_prompt(base_cv, sample_job_text)
+    assert isinstance(prompt, str)
+    assert len(prompt) > 100  # noqa: PLR2004
+
+
+# ---------------------------------------------------------------------------
+# run_pipeline tests
+# ---------------------------------------------------------------------------
+
+
+def test_run_pipeline_happy_path(
     monkeypatch, base_cv: BaseCV, sample_job_text: str
 ) -> None:
-    """Subprocess returns ```json...``` fenced output — still returns JobAnalysis."""
-    fenced = f"```json\n{JOB_ANALYSIS_JSON}\n```"
+    """Happy path: subprocess returns clean TailoredCV JSON, result is (TailoredCV, list[GapItem])."""
+    monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(
+        lambda cmd, **kw: _make_proc(TAILORED_CV_JSON)
+    ))
+    result = run_pipeline(base_cv, sample_job_text)
+    tailored, gap = result
+    assert isinstance(tailored, TailoredCV)
+    assert tailored.summary == "Python engineer with FastAPI expertise."
+    assert "Redis" in tailored.highlighted_technologies
+    assert isinstance(gap, list)
+    assert all(isinstance(g, GapItem) for g in gap)
+
+
+def test_run_pipeline_returns_tailored_cv_and_gap_diff(
+    monkeypatch, base_cv: BaseCV, sample_job_text: str
+) -> None:
+    """run_pipeline: single subprocess call returns (TailoredCV, list[GapItem])."""
+    monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(
+        lambda cmd, **kw: _make_proc(TAILORED_CV_JSON)
+    ))
+    tailored, gap = run_pipeline(base_cv, sample_job_text)
+    assert isinstance(tailored, TailoredCV)
+    assert isinstance(gap, list)
+    assert all(isinstance(g, GapItem) for g in gap)
+    assert len(gap) == 2
+
+
+def test_run_pipeline_handles_fenced_json(
+    monkeypatch, base_cv: BaseCV, sample_job_text: str
+) -> None:
+    """Subprocess returns ```json...``` fenced output — still returns (TailoredCV, list[GapItem])."""
+    fenced = f"```json\n{TAILORED_CV_JSON}\n```"
     monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(
         lambda cmd, **kw: _make_proc(fenced)
     ))
-    result = analyze_job(base_cv, sample_job_text)
-    assert isinstance(result, JobAnalysis)
-    assert result.role_title == "Senior Backend Engineer"
+    tailored, gap = run_pipeline(base_cv, sample_job_text)
+    assert isinstance(tailored, TailoredCV)
+    assert tailored.summary == "Python engineer with FastAPI expertise."
 
 
-def test_analyze_job_retries_on_bad_json(
+def test_run_pipeline_retries_on_bad_json(
     monkeypatch, base_cv: BaseCV, sample_job_text: str
 ) -> None:
     """Retry: subprocess returns invalid JSON on attempt 1, valid JSON on attempt 2."""
@@ -136,15 +173,15 @@ def test_analyze_job_retries_on_bad_json(
         call_count.append(1)
         if len(call_count) == 1:
             return _make_proc("not valid json at all")
-        return _make_proc(JOB_ANALYSIS_JSON)
+        return _make_proc(TAILORED_CV_JSON)
 
     monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(fake_run))
-    result = analyze_job(base_cv, sample_job_text)
-    assert isinstance(result, JobAnalysis)
+    tailored, gap = run_pipeline(base_cv, sample_job_text)
+    assert isinstance(tailored, TailoredCV)
     assert len(call_count) == 2  # failed once, succeeded on retry
 
 
-def test_analyze_job_exhausts_retries(
+def test_run_pipeline_exhausts_retries(
     monkeypatch, base_cv: BaseCV, sample_job_text: str
 ) -> None:
     """Exhausts retries: subprocess always returns garbage; RuntimeError with 3 attempts."""
@@ -156,11 +193,11 @@ def test_analyze_job_exhausts_retries(
 
     monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(fake_run))
     with pytest.raises(RuntimeError, match="3 attempts"):
-        analyze_job(base_cv, sample_job_text)
+        run_pipeline(base_cv, sample_job_text)
     assert len(call_count) == 3
 
 
-def test_analyze_job_raises_on_timeout(
+def test_run_pipeline_raises_on_timeout(
     monkeypatch, base_cv: BaseCV, sample_job_text: str
 ) -> None:
     """Timeout: subprocess raises TimeoutExpired; RuntimeError with 'timed out'."""
@@ -169,10 +206,10 @@ def test_analyze_job_raises_on_timeout(
 
     monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(fake_run))
     with pytest.raises(RuntimeError, match="timed out"):
-        analyze_job(base_cv, sample_job_text)
+        run_pipeline(base_cv, sample_job_text)
 
 
-def test_analyze_job_raises_on_nonzero_exit(
+def test_run_pipeline_raises_on_nonzero_exit(
     monkeypatch, base_cv: BaseCV, sample_job_text: str
 ) -> None:
     """Non-zero exit code: RuntimeError with exit code in message."""
@@ -180,46 +217,4 @@ def test_analyze_job_raises_on_nonzero_exit(
         lambda cmd, **kw: _make_proc("", returncode=1)
     ))
     with pytest.raises(RuntimeError, match="exit 1"):
-        analyze_job(base_cv, sample_job_text)
-
-
-# ---------------------------------------------------------------------------
-# tailor_cv tests
-# ---------------------------------------------------------------------------
-
-
-def test_tailor_cv_happy_path(monkeypatch, base_cv: BaseCV, sample_job_text: str) -> None:
-    """Happy path: subprocess returns clean TailoredCV JSON, result is TailoredCV."""
-    analysis = JobAnalysis.model_validate(json.loads(JOB_ANALYSIS_JSON))
-    monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(
-        lambda cmd, **kw: _make_proc(TAILORED_CV_JSON)
-    ))
-    result = tailor_cv(base_cv, analysis)
-    assert isinstance(result, TailoredCV)
-    assert result.summary == "Python engineer with FastAPI expertise."
-    assert "Redis" in result.highlighted_technologies
-
-
-# ---------------------------------------------------------------------------
-# run_pipeline tests
-# ---------------------------------------------------------------------------
-
-
-def test_run_pipeline_returns_tailored_cv_and_gap_diff(
-    monkeypatch, base_cv: BaseCV, sample_job_text: str
-) -> None:
-    """run_pipeline: two sequential subprocess calls return (TailoredCV, list[GapItem])."""
-    responses = [JOB_ANALYSIS_JSON, TAILORED_CV_JSON]
-    call_idx = [0]
-
-    def fake_run(cmd, **kwargs):
-        resp = responses[call_idx[0]]
-        call_idx[0] += 1
-        return _make_proc(resp)
-
-    monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(fake_run))
-    tailored, gap = run_pipeline(base_cv, sample_job_text)
-    assert isinstance(tailored, TailoredCV)
-    assert isinstance(gap, list)
-    assert all(isinstance(g, GapItem) for g in gap)
-    assert len(gap) == 2
+        run_pipeline(base_cv, sample_job_text)

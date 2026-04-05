@@ -92,19 +92,14 @@ def _serialize_base_cv(cv: BaseCV) -> str:
     return yaml.dump(cv.model_dump(), default_flow_style=False, allow_unicode=True)
 
 
-# ---------------------------------------------------------------------------
-# Public entry point — single combined Claude call
-# ---------------------------------------------------------------------------
-
-
-def run_pipeline(base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:
-    """Full AI pipeline: analyze job + tailor CV in a single Claude call.
+def _build_prompt(base_cv: BaseCV, job_text: str) -> str:
+    """Build the CV tailoring prompt. Shared by all providers.
 
     Returns:
-        (tailored_cv, gap_diff) where gap_diff is extracted from the combined response.
+        The complete prompt string for use with any AI provider.
     """
     base_cv_yaml = _serialize_base_cv(base_cv)
-    prompt = f"""\
+    return f"""\
 You are a CV tailoring expert. Given a candidate's base CV and a job listing, you will:
 1. Analyze the job requirements and compute a gap diff
 2. Produce a tailored CV optimized for the role
@@ -227,5 +222,19 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
     }}
   ]
 }}"""
+
+
+# ---------------------------------------------------------------------------
+# Public entry point — single combined Claude call
+# ---------------------------------------------------------------------------
+
+
+def run_pipeline(base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:
+    """Full AI pipeline: analyze job + tailor CV in a single Claude call.
+
+    Returns:
+        (tailored_cv, gap_diff) where gap_diff is extracted from the combined response.
+    """
+    prompt = _build_prompt(base_cv, job_text)
     result = _invoke_with_retry(prompt, TailoredCV)
     return result, result.gap_diff
