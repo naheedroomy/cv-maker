@@ -57,9 +57,10 @@ Archived to PROJECT.md Key Decisions table.
 |---|-------------|------|--------|-----------|
 | 260405-4j5 | Fix stale CLAUDE.md recommended stack section | 2026-04-04 | d49d4bd | [260405-4j5-fix-stale-claude-md-recommended-stack-se](./quick/260405-4j5-fix-stale-claude-md-recommended-stack-se/) |
 | 260405-o4h | Fix v2.0 milestone tech debt: SSE payload, dead export, REQUIREMENTS.md | 2026-04-05 | 0d20b72 | [260405-o4h-fix-v2-0-milestone-tech-debt](./quick/260405-o4h-fix-v2-0-milestone-tech-debt/) |
+| 260405-q36 | Update CLAUDE.md and PROJECT.md to reflect Gemini 3.1 Flash-Lite and python-dotenv | 2026-04-05 | 0e94ea3 | [260405-q36-update-claude-md-and-project-md-to-refle](./quick/260405-q36-update-claude-md-and-project-md-to-refle/) |
 
 ## Session Continuity
 
 Last session: 2026-04-05
-Stopped at: Milestone v2.0 archived
+Stopped at: Completed quick-260405-q36
 Resume file: None
