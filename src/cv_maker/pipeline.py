@@ -53,13 +53,22 @@ def _extract_json(text: str) -> dict:
     """Extract JSON from claude stdout, stripping markdown fences if present."""
     text = text.strip()
     try:
-        return json.loads(text)
+        data = json.loads(text)
     except json.JSONDecodeError:
-        pass
-    m = re.search(r"```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```", text, re.DOTALL)
-    if m:
-        return json.loads(m.group(1))
-    raise ValueError(f"No JSON object found in claude output: {text[:300]!r}")
+        m = re.search(r"```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```", text, re.DOTALL)
+        if m:
+            data = json.loads(m.group(1))
+        else:
+            raise ValueError(f"No JSON object found in claude output: {text[:300]!r}")
+
+    # Normalize tailoring_notes: some models return dicts instead of strings
+    if "tailoring_notes" in data and isinstance(data["tailoring_notes"], list):
+        data["tailoring_notes"] = [
+            " ".join(str(v) for v in note.values()) if isinstance(note, dict) else str(note)
+            for note in data["tailoring_notes"]
+        ]
+
+    return data
 
 
 def _invoke_with_retry(prompt: str, schema_cls, max_attempts: int = 3):
