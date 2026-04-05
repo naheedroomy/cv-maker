@@ -109,6 +109,15 @@ class GapItem(BaseModel):
     evidence: str  # Quote or reference from base CV; empty string when missing
 
 
+class TailoringNote(BaseModel):
+    """One structured tailoring note — what was changed, why, and what it targets."""
+
+    section: str  # Which CV section was changed (e.g., "Summary", "SyscoLabs experience")
+    change: str  # What was changed
+    reason: str  # Why it was changed — which job requirement it targets
+    action: str  # "modified", "added", "removed", "reordered", or "unchanged"
+
+
 class TailoredCV(BaseModel):
     """Structured AI output — intermediate layer between Claude and LaTeX renderer.
 
@@ -126,8 +135,8 @@ class TailoredCV(BaseModel):
     certifications: list[str] = []
     # AI-surfaced tools user knows but did not lead with in their base CV
     highlighted_technologies: list[str] = []
-    # AI reasoning: what was changed, why, and key decisions made during tailoring
-    tailoring_notes: list[str] = []
+    # AI reasoning: structured notes on what was changed and why
+    tailoring_notes: list[TailoringNote] = []
     # Gap diff: job requirements vs base CV evidence
     gap_diff: list[GapItem] = []
 

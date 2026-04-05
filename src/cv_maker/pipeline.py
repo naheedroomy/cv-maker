@@ -73,12 +73,33 @@ def _extract_json(text: str) -> dict:
         else:
             raise ValueError(f"No JSON object found in claude output: {text[:300]!r}")
 
-    # Normalize tailoring_notes: some models return dicts instead of strings
+    # Normalize tailoring_notes: convert plain strings to structured dicts
     if "tailoring_notes" in data and isinstance(data["tailoring_notes"], list):
-        data["tailoring_notes"] = [
-            " ".join(str(v) for v in note.values()) if isinstance(note, dict) else str(note)
-            for note in data["tailoring_notes"]
-        ]
+        normalized = []
+        for note in data["tailoring_notes"]:
+            if isinstance(note, str):
+                normalized.append({
+                    "section": "General",
+                    "change": note,
+                    "reason": "",
+                    "action": "modified",
+                })
+            elif isinstance(note, dict):
+                # Ensure all required fields exist
+                normalized.append({
+                    "section": note.get("section", "General"),
+                    "change": note.get("change", str(note)),
+                    "reason": note.get("reason", ""),
+                    "action": note.get("action", "modified"),
+                })
+            else:
+                normalized.append({
+                    "section": "General",
+                    "change": str(note),
+                    "reason": "",
+                    "action": "modified",
+                })
+        data["tailoring_notes"] = normalized
 
     return data
 
@@ -179,11 +200,11 @@ knows but did not lead with. Technologies you wove into experience bullets may a
 5. EDUCATION and PROJECTS and CERTIFICATIONS: Pass through unchanged. Always include ALL \
 certifications from the base CV — never omit any, even if they seem unrelated to the role.
 6. CONTACT: Pass through unchanged.
-7. TAILORING NOTES: Provide a list of 5-10 notes explaining what you changed and why. Include:
-   - Job titles you adjusted and the reasoning
-   - Technologies you added that weren't in the base CV and why they're reasonable
-   - Key bullet rewrites and what job requirement they target
-   - Any strategic decisions (e.g., emphasizing certain experience over others)
+7. TAILORING NOTES: Provide a list of 5-10 structured notes. Each note must include:
+   - "section": which part of the CV was changed (e.g., "Summary", "SyscoLabs experience", "Skills")
+   - "change": what specifically was changed
+   - "reason": why — which job requirement or strategic goal it targets
+   - "action": one of "modified", "added", "removed", "reordered", or "unchanged"
 
 CLOSED-LOOP REASONING — use the gap_diff to guide CV tailoring:
 - Emphasize "strong" matches prominently in bullets and summary.
@@ -218,7 +239,14 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
                   "technologies": [], "url": "<str or null>"}],
   "certifications": ["<str>"],
   "highlighted_technologies": ["<surfaced tech from base CV>"],
-  "tailoring_notes": ["<note explaining what you changed and why>"],
+  "tailoring_notes": [
+    {
+      "section": "<CV section>",
+      "change": "<what was changed>",
+      "reason": "<why — which job requirement it targets>",
+      "action": "modified"
+    }
+  ],
   "gap_diff": [
     {
       "requirement": "<requirement from job listing>",

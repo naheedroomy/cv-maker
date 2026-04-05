@@ -29,6 +29,13 @@ export interface ProjectItem {
   url: string
 }
 
+export interface TailoringNote {
+  section: string
+  change: string
+  reason: string
+  action: 'modified' | 'added' | 'removed' | 'reordered' | 'unchanged'
+}
+
 export interface TailoredCV {
   contact: ContactInfo
   summary: string
@@ -38,7 +45,7 @@ export interface TailoredCV {
   projects: ProjectItem[]
   certifications: string[]
   highlighted_technologies: string[]
-  tailoring_notes: string[]
+  tailoring_notes: TailoringNote[]
 }
 
 export type MatchLevel = 'strong' | 'partial' | 'missing'
