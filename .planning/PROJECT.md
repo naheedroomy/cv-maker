@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An AI-powered CV tailoring pipeline that takes a structured base CV and a job listing, then uses AI (Claude Code CLI or Gemini 2.5 Flash) to produce a tailored CV. The system emphasizes and surfaces relevant skills and experience without fabricating anything. Output is rendered via LaTeX templates to PDF, with a Vue 3 SPA frontend and FastAPI backend supporting concurrent job generation with real-time status tracking.
+An AI-powered CV tailoring pipeline that takes a structured base CV and a job listing, then uses AI (Claude Code CLI or Gemini 3.1 Flash-Lite Preview) to produce a tailored CV. The system emphasizes and surfaces relevant skills and experience without fabricating anything. Output is rendered via LaTeX templates to PDF, with a Vue 3 SPA frontend and FastAPI backend supporting concurrent job generation with real-time status tracking.
 
 ## Core Value
 
@@ -25,7 +25,7 @@ Given a job listing and a base CV, produce a tailored CV that honestly highlight
 - ✓ CV preview and gap diff display in browser — v2.0 Phase 7
 - ✓ Single uvicorn command serves API + SPA — v2.0 Phase 8
 - ✓ Structured backend logging visible in terminal — v2.0 Phase 5
-- ✓ Gemini 2.5 Flash as alternative AI provider with model selector — v2.0 Phase 9
+- ✓ Gemini 3.1 Flash-Lite Preview as alternative AI provider with model selector — v2.0 Phase 9
 - ✓ Strategy pattern provider abstraction (BaseProvider, ClaudeProvider, GeminiProvider) — v2.0 Phase 9
 - ✓ Capability detection via /api/config endpoint — v2.0 Phase 9
 
@@ -48,13 +48,13 @@ Given a job listing and a base CV, produce a tailored CV that honestly highlight
 - Personal tool for the user to tailor their CV when applying to jobs
 - v1.0: Streamlit prototype with Claude Code CLI AI backend (shipped 2026-04-04)
 - v2.0: Full-stack rebuild — Vue 3 + FastAPI + SQLite + Gemini provider (shipped 2026-04-05)
-- Tech stack: Python 3.12 (FastAPI, aiosqlite, Pydantic v2, google-genai) + Vue 3 (Vite, Pinia, Vue Router, TypeScript)
+- Tech stack: Python 3.12 (FastAPI, aiosqlite, Pydantic v2, google-genai, python-dotenv) + Vue 3 (Vite, Pinia, Vue Router, TypeScript)
 - 3,159 Python LOC + 1,947 Vue/TS LOC across 59 files
-- Two AI providers: Claude Code CLI (free with subscription) and Gemini 2.5 Flash (API key)
+- Two AI providers: Claude Code CLI (free with subscription) and Gemini 3.1 Flash-Lite Preview (API key)
 
 ## Constraints
 
-- **AI Provider**: Claude Code CLI (`claude -p`) primary; Gemini 2.5 Flash secondary — Strategy pattern abstraction
+- **AI Provider**: Claude Code CLI (`claude -p`) primary; Gemini 3.1 Flash-Lite Preview secondary — Strategy pattern abstraction
 - **Frontend**: Vue 3 SPA — proper state management, concurrent sessions
 - **Backend**: FastAPI — async, concurrent job handling, structured logging
 - **Database**: SQLite — zero-config persistence for sessions and CV data
