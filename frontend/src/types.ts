@@ -55,6 +55,7 @@ export interface JobResponse {
   id: string
   company_name: string
   job_link: string | null
+  model: string
   status: JobStatus
   created_at: string
   updated_at: string
@@ -67,4 +68,5 @@ export interface JobCreate {
   company_name: string
   job_link?: string
   job_text: string
+  model?: string  // "claude-haiku" (default) or "gemini-flash"
 }
