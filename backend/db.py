@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     tailored_cv_json TEXT,
     gap_diff_json    TEXT,
     pdf_path         TEXT,
+    model            TEXT NOT NULL DEFAULT 'claude-haiku',
     created_at       TEXT NOT NULL,
     updated_at       TEXT NOT NULL
 )
@@ -43,6 +44,14 @@ async def init_db(db_path: Path | None = None) -> None:
         await db.execute("PRAGMA journal_mode=WAL")
         await db.execute("PRAGMA busy_timeout=5000")
         await db.execute(_SCHEMA)
+        # Idempotent migration: add model column if absent
+        cursor = await db.execute("PRAGMA table_info(jobs)")
+        columns = {row[1] async for row in cursor}
+        if "model" not in columns:
+            await db.execute(
+                "ALTER TABLE jobs ADD COLUMN model TEXT NOT NULL DEFAULT 'claude-haiku'"
+            )
+            logger.info("Migration: added 'model' column to jobs table")
         await db.commit()
     logger.info("Database initialized at %s", path)
 
