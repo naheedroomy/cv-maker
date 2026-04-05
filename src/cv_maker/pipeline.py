@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import subprocess
 import time
@@ -26,7 +27,7 @@ def _invoke_claude(prompt: str, timeout: int = 300) -> str:
     t0 = time.monotonic()
     try:
         result = subprocess.run(  # noqa: S603
-            ["claude", "-p", "--model", "haiku", "--no-session-persistence"],  # noqa: S607
+            ["claude", "-p", "--model", os.environ.get("CLAUDE_MODEL", "haiku"), "--no-session-persistence"],  # noqa: S607
             input=prompt,
             capture_output=True,
             text=True,

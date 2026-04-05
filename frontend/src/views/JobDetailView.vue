@@ -20,7 +20,15 @@ const jobId = computed(() => route.params.id as string)
 const cancelling = ref(false)
 const downloading = ref(false)
 const deleting = ref(false)
-const regenerating = ref(false)
+const regenerating = ref<string | null>(null) // tracks which model is regenerating
+const geminiAvailable = ref(false)
+const openaiAvailable = ref(false)
+
+// Fetch provider availability
+fetch('/api/config').then(r => r.ok ? r.json() : {}).then(data => {
+  geminiAvailable.value = data.gemini_available === true
+  openaiAvailable.value = data.openai_available === true
+}).catch(() => {})
 
 const statusText: Record<string, string> = {
   pending: 'Analyzing job...',
@@ -81,16 +89,17 @@ async function handleDelete() {
   }
 }
 
-async function handleRegenerate() {
+async function handleRegenerate(model?: string) {
   if (!currentJob.value) return
-  regenerating.value = true
+  const useModel = model ?? currentJob.value.model
+  regenerating.value = useModel
   try {
-    const newId = await store.regenerateJob(currentJob.value)
+    const newId = await store.regenerateJob(currentJob.value, useModel)
     router.push(`/jobs/${newId}`)
   } catch (err) {
     store.error = err instanceof Error ? err.message : 'Regenerate failed'
   } finally {
-    regenerating.value = false
+    regenerating.value = null
   }
 }
 </script>
@@ -140,15 +149,32 @@ async function handleRegenerate() {
         {{ downloading ? 'Downloading...' : 'Download PDF' }}
       </button>
 
-      <!-- Regenerate: visible on complete, failed, or cancelled -->
-      <button
-        v-if="['complete', 'failed', 'cancelled'].includes(currentJob.status)"
-        class="btn-regenerate"
-        :disabled="regenerating"
-        @click="handleRegenerate"
-      >
-        {{ regenerating ? 'Regenerating...' : 'Regenerate' }}
-      </button>
+      <!-- Regenerate buttons: visible on complete, failed, or cancelled -->
+      <template v-if="['complete', 'failed', 'cancelled'].includes(currentJob.status)">
+        <button
+          class="btn-regenerate"
+          :disabled="!!regenerating"
+          @click="handleRegenerate('claude-haiku')"
+        >
+          {{ regenerating === 'claude-haiku' ? 'Regenerating...' : 'Regenerate (Claude)' }}
+        </button>
+        <button
+          v-if="geminiAvailable"
+          class="btn-regenerate btn-regenerate--gemini"
+          :disabled="!!regenerating"
+          @click="handleRegenerate('gemini-flash')"
+        >
+          {{ regenerating === 'gemini-flash' ? 'Regenerating...' : 'Regenerate (Gemini)' }}
+        </button>
+        <button
+          v-if="openaiAvailable"
+          class="btn-regenerate btn-regenerate--openai"
+          :disabled="!!regenerating"
+          @click="handleRegenerate('openai')"
+        >
+          {{ regenerating === 'openai' ? 'Regenerating...' : 'Regenerate (OpenAI)' }}
+        </button>
+      </template>
 
       <!-- Delete Job: always visible -->
       <button
@@ -366,6 +392,18 @@ async function handleRegenerate() {
 }
 .btn-regenerate:hover:not(:disabled) {
   background: #d97706;
+}
+.btn-regenerate--gemini {
+  background: #4285f4;
+}
+.btn-regenerate--gemini:hover:not(:disabled) {
+  background: #3367d6;
+}
+.btn-regenerate--openai {
+  background: #10a37f;
+}
+.btn-regenerate--openai:hover:not(:disabled) {
+  background: #0d8c6d;
 }
 .btn-regenerate:disabled {
   opacity: 0.6;

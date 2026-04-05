@@ -11,9 +11,9 @@ const emit = defineEmits<{
 }>()
 
 const options = [
-  { value: 'claude-haiku', label: 'Claude Haiku', hint: 'Fast and free — uses your Claude subscription' },
-  { value: 'gemini-flash', label: 'Gemini Flash-Lite', hint: 'Fast and cheap — requires a GEMINI_API_KEY' },
-  { value: 'openai', label: 'OpenAI', hint: 'Works with any OpenAI-compatible API endpoint (Groq, Together AI, Ollama, etc.)' },
+  { value: 'claude-haiku', label: 'Claude Code', hint: 'Free — uses your Claude subscription (model configurable via CLAUDE_MODEL)' },
+  { value: 'gemini-flash', label: 'Gemini', hint: 'Requires GEMINI_API_KEY (model configurable via GEMINI_MODEL)' },
+  { value: 'openai', label: 'OpenAI', hint: 'Requires OPENAI_API_KEY (model configurable via OPENAI_MODEL)' },
 ] as const
 
 function select(model: string): void {
