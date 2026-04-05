@@ -61,6 +61,26 @@ export const useJobStore = defineStore('jobs', () => {
     closeSSE()
   }
 
+  async function deleteJob(jobId: string): Promise<void> {
+    const res = await fetch(`/api/jobs/${jobId}/remove`, { method: 'DELETE' })
+    if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
+    jobs.value = jobs.value.filter((j) => j.id !== jobId)
+    if (currentJob.value?.id === jobId) {
+      currentJob.value = null
+    }
+    closeSSE()
+  }
+
+  async function regenerateJob(job: JobResponse): Promise<string> {
+    if (!job.job_text) throw new Error('Job text not available for regeneration')
+    return submitJob({
+      company_name: job.company_name,
+      job_link: job.job_link ?? undefined,
+      job_text: job.job_text,
+      model: job.model,
+    })
+  }
+
   async function downloadPdf(jobId: string, companyName: string): Promise<void> {
     const res = await fetch(`/api/jobs/${jobId}/pdf`)
     if (!res.ok) throw new Error(`PDF not available: ${res.status}`)
@@ -153,6 +173,8 @@ export const useJobStore = defineStore('jobs', () => {
     fetchJob,
     submitJob,
     cancelJob,
+    deleteJob,
+    regenerateJob,
     downloadPdf,
     openSSE,
     closeSSE,

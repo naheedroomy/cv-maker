@@ -36,6 +36,7 @@ def _row_to_response(row) -> JobResponse:
         id=row["id"],
         company_name=row["company_name"],
         job_link=row["job_link"],
+        job_text=row["job_text"],
         model=row["model"],
         status=row["status"],
         created_at=row["created_at"],
@@ -158,6 +159,49 @@ async def cancel_job(job_id: str) -> Response:
         task.cancel()
         logger.info("Job %s cancellation requested", job_id)
 
+    return Response(status_code=204)
+
+
+# ---------------------------------------------------------------------------
+# Endpoint 4b: DELETE /{job_id}/remove — permanently delete job
+# ---------------------------------------------------------------------------
+
+
+@router.delete("/{job_id}/remove", status_code=204)
+async def delete_job(job_id: str) -> Response:
+    """Permanently delete a job and its output files.
+
+    Cancels the job if still running, then removes from database.
+    Returns 204 on success, 404 if not found.
+    """
+    # Cancel if running
+    task = _job_tasks.get(job_id)
+    if task and not task.done():
+        task.cancel()
+
+    db = await get_db()
+    try:
+        cursor = await db.execute("SELECT pdf_path FROM jobs WHERE id=?", (job_id,))
+        row = await cursor.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        # Delete output files if they exist
+        if row["pdf_path"]:
+            pdf_path = Path(row["pdf_path"])
+            if pdf_path.exists():
+                pdf_path.unlink()
+            tex_path = pdf_path.with_suffix(".tex")
+            if tex_path.exists():
+                tex_path.unlink()
+
+        await db.execute("DELETE FROM jobs WHERE id=?", (job_id,))
+        await db.commit()
+    finally:
+        await db.close()
+
+    _job_tasks.pop(job_id, None)
+    logger.info("Job %s permanently deleted", job_id)
     return Response(status_code=204)
 
 

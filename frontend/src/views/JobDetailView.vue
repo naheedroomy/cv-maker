@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useJobStore } from '@/stores/jobStore'
 import StatusBadge from '@/components/StatusBadge.vue'
@@ -12,12 +12,15 @@ import GapDiffTable from '@/components/GapDiffTable.vue'
 import TailoringNotes from '@/components/TailoringNotes.vue'
 
 const route = useRoute()
+const router = useRouter()
 const store = useJobStore()
 const { currentJob, error } = storeToRefs(store)
 const jobId = computed(() => route.params.id as string)
 
 const cancelling = ref(false)
 const downloading = ref(false)
+const deleting = ref(false)
+const regenerating = ref(false)
 
 const statusText: Record<string, string> = {
   pending: 'Analyzing job...',
@@ -62,6 +65,32 @@ async function handleDownload() {
     store.error = err instanceof Error ? err.message : 'Download failed'
   } finally {
     downloading.value = false
+  }
+}
+
+async function handleDelete() {
+  if (!currentJob.value) return
+  deleting.value = true
+  try {
+    await store.deleteJob(jobId.value)
+    router.push('/')
+  } catch (err) {
+    store.error = err instanceof Error ? err.message : 'Delete failed'
+  } finally {
+    deleting.value = false
+  }
+}
+
+async function handleRegenerate() {
+  if (!currentJob.value) return
+  regenerating.value = true
+  try {
+    const newId = await store.regenerateJob(currentJob.value)
+    router.push(`/jobs/${newId}`)
+  } catch (err) {
+    store.error = err instanceof Error ? err.message : 'Regenerate failed'
+  } finally {
+    regenerating.value = false
   }
 }
 </script>
@@ -110,18 +139,37 @@ async function handleDownload() {
         <LoadingSpinner v-if="downloading" class="btn-spinner" />
         {{ downloading ? 'Downloading...' : 'Download PDF' }}
       </button>
+
+      <!-- Regenerate: visible on complete, failed, or cancelled -->
+      <button
+        v-if="['complete', 'failed', 'cancelled'].includes(currentJob.status)"
+        class="btn-regenerate"
+        :disabled="regenerating"
+        @click="handleRegenerate"
+      >
+        {{ regenerating ? 'Regenerating...' : 'Regenerate' }}
+      </button>
+
+      <!-- Delete Job: always visible -->
+      <button
+        class="btn-delete"
+        :disabled="deleting"
+        @click="handleDelete"
+      >
+        {{ deleting ? 'Deleting...' : 'Delete' }}
+      </button>
     </div>
 
     <!-- Error banner: failed status or store error -->
     <ErrorBanner
       v-if="error"
       :message="error"
-      @retry="store.fetchJob(jobId)"
+      @retry="handleRegenerate"
     />
     <ErrorBanner
       v-else-if="currentJob.status === 'failed'"
-      message="The CV generation failed. Please try again."
-      @retry="store.fetchJob(jobId)"
+      message="The CV generation failed. Click retry to regenerate."
+      @retry="handleRegenerate"
     />
 
     <!-- Spinner + status text: pending or running -->
@@ -161,6 +209,15 @@ async function handleDownload() {
       v-if="currentJob.tailored_cv && currentJob.tailored_cv.tailoring_notes && currentJob.tailored_cv.tailoring_notes.length > 0"
       :notes="currentJob.tailored_cv.tailoring_notes"
     />
+
+    <!-- Job Listing Text -->
+    <section
+      v-if="currentJob.job_text"
+      class="job-text-section"
+    >
+      <h3 class="section-heading">Job Listing</h3>
+      <pre class="job-text-content">{{ currentJob.job_text }}</pre>
+    </section>
   </div>
 </template>
 
@@ -286,10 +343,73 @@ async function handleDownload() {
   margin-top: 48px;
 }
 
-.gap-heading {
+.gap-heading,
+.section-heading {
   font-size: 20px;
   font-weight: 600;
   color: #111827;
   margin-bottom: 16px;
+}
+
+/* Regenerate button */
+.btn-regenerate {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 6px;
+  background: #f59e0b;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.btn-regenerate:hover:not(:disabled) {
+  background: #d97706;
+}
+.btn-regenerate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Delete button */
+.btn-delete {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+.btn-delete:hover:not(:disabled) {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+.btn-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Job listing text */
+.job-text-section {
+  margin-top: 48px;
+}
+
+.job-text-content {
+  font-size: 13px;
+  color: #374151;
+  background: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  max-height: 400px;
+  overflow-y: auto;
 }
 </style>

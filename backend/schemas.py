@@ -19,6 +19,7 @@ class JobResponse(BaseModel):
     id: str
     company_name: str
     job_link: str | None = None
+    job_text: str | None = None
     model: str = "claude-haiku"
     status: str  # one of: pending, running, complete, failed, cancelled
     created_at: str  # ISO 8601 timestamp

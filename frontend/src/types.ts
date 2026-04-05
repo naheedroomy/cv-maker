@@ -55,6 +55,7 @@ export interface JobResponse {
   id: string
   company_name: string
   job_link: string | null
+  job_text: string | null
   model: string
   status: JobStatus
   created_at: string
