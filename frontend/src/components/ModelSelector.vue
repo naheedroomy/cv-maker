@@ -11,7 +11,7 @@ const emit = defineEmits<{
 
 const options = [
   { value: 'claude-haiku', label: 'Claude Haiku', hint: 'Fast and free — uses your Claude subscription' },
-  { value: 'gemini-flash', label: 'Gemini Flash', hint: 'Fast — requires a GEMINI_API_KEY' },
+  { value: 'gemini-flash', label: 'Gemini Flash-Lite', hint: 'Fast and cheap — requires a GEMINI_API_KEY' },
 ] as const
 
 function select(model: string): void {

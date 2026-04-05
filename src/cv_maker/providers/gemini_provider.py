@@ -1,5 +1,5 @@
 # src/cv_maker/providers/gemini_provider.py
-# GeminiProvider — Gemini 2.5 Flash via google-genai SDK.
+# GeminiProvider — Gemini 3.1 Flash-Lite via google-genai SDK.
 # Lazy instantiation: GEMINI_API_KEY is read in __init__, never at module scope.
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class GeminiProvider(BaseProvider):
-    MODEL_ID = "gemini-2.5-flash"
+    MODEL_ID = "gemini-3.1-flash-lite-preview"
 
     def __init__(self) -> None:
         api_key = os.environ.get("GEMINI_API_KEY")

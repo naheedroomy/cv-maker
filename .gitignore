@@ -9,6 +9,7 @@ __pycache__/
 dist/
 build/
 frontend/dist/
+.env
 
 # Backend database (created at runtime)
 backend/cv_maker.db

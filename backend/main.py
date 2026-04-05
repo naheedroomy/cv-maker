@@ -5,6 +5,10 @@ Run with: uvicorn backend.main:app --reload
 from __future__ import annotations
 
 import logging
+
+from dotenv import load_dotenv
+
+load_dotenv()
 from contextlib import asynccontextmanager
 from pathlib import Path
 
