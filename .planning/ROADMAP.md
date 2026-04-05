@@ -89,12 +89,12 @@ Plans:
 **Goal:** Users can choose between Claude Haiku and Gemini 2.5 Flash when generating a tailored CV via a segmented pill toggle in the job submission form; the backend routes to the correct provider and persists the model choice per job
 **Requirements**: GEMINI-01, GEMINI-02, GEMINI-03, GEMINI-04, GEMINI-05, GEMINI-06, GEMINI-07, GEMINI-08, GEMINI-09
 **Depends on:** Phase 7
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 09-01-PLAN.md — Install google-genai, extract _build_prompt from pipeline.py, create providers/ package with Strategy pattern (BaseProvider, ClaudeProvider, GeminiProvider)
 - [x] 09-02-PLAN.md — SQLite model column migration, schema updates, worker provider routing, GET /api/config endpoint, main.py wiring
-- [ ] 09-03-PLAN.md — ModelSelector.vue component, TypeScript type updates, JobFormView integration with /api/config fetch, human-verify checkpoint
+- [x] 09-03-PLAN.md — ModelSelector.vue component, TypeScript type updates, JobFormView integration with /api/config fetch, human-verify checkpoint
 
 ---
 

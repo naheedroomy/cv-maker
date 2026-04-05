@@ -134,3 +134,12 @@ None - no external service configuration required for this plan. GEMINI_API_KEY 
 ---
 *Phase: 09-add-gemini-2-5-flash-as-alternative-ai-provider-with-model-selector-in-vue-ui*
 *Completed: 2026-04-05*
+
+## Self-Check: PASSED
+
+- FOUND: src/cv_maker/providers/__init__.py
+- FOUND: src/cv_maker/providers/base.py
+- FOUND: src/cv_maker/providers/claude_provider.py
+- FOUND: src/cv_maker/providers/gemini_provider.py
+- FOUND commit: 5fbe70b (Task 1)
+- FOUND commit: 06f0e72 (Task 2)
