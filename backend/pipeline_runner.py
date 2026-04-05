@@ -1,8 +1,8 @@
 """Async wrappers for the synchronous cv_maker pipeline and renderer.
 
-Both run_pipeline() and render_pdf() call subprocess.run internally, which
-blocks the OS thread. asyncio.to_thread() moves each call to the thread pool
-executor, preventing the event loop from being blocked.
+run_provider_async() and render_pdf_async() call subprocess.run internally,
+which blocks the OS thread. asyncio.to_thread() moves each call to the thread
+pool executor, preventing the event loop from being blocked.
 
 These wrappers are the ONLY way the backend should call pipeline or renderer
 functions. Never call the synchronous versions directly from async def code.
@@ -13,21 +13,10 @@ import asyncio
 import logging
 
 from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.pipeline import run_pipeline
 from cv_maker.providers.base import BaseProvider
 from cv_maker.renderer import render_pdf
 
 logger = logging.getLogger(__name__)
-
-
-async def run_pipeline_async(
-    base_cv: BaseCV, job_text: str
-) -> tuple[TailoredCV, list[GapItem]]:
-    """Non-blocking wrapper: runs synchronous pipeline in thread pool."""
-    logger.info("Starting pipeline in thread pool")
-    result = await asyncio.to_thread(run_pipeline, base_cv, job_text)
-    logger.info("Pipeline completed")
-    return result
 
 
 async def run_provider_async(

@@ -151,6 +151,7 @@ async def job_worker(
             # ----------------------------------------------------------------
             # Transition: running -> complete; persist results
             # ----------------------------------------------------------------
+            _completed_at = _now_iso()
             db = await get_db()
             try:
                 await db.execute("BEGIN IMMEDIATE")
@@ -163,7 +164,7 @@ async def job_worker(
                         tailored_cv.model_dump_json(),
                         json.dumps([g.model_dump() for g in gap_diff]),
                         str(pdf_path),
-                        _now_iso(),
+                        _completed_at,
                         job_id,
                     ),
                 )
@@ -174,6 +175,10 @@ async def job_worker(
             full_result = {
                 "id": job_id,
                 "status": "complete",
+                "company_name": company_name,
+                "model": model,
+                "created_at": None,      # not in local scope; frontend self-corrects via 30s poll
+                "updated_at": _completed_at,
                 "tailored_cv": tailored_cv.model_dump(),
                 "gap_diff": [g.model_dump() for g in gap_diff],
                 "pdf_url": f"/api/jobs/{job_id}/pdf",
