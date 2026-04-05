@@ -14,8 +14,8 @@ from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from backend.db import get_db
-from backend.tasks import schedule_background_task
 from backend.schemas import JobCreate, JobResponse
+from backend.tasks import schedule_background_task
 from backend.worker import _job_tasks, _sse_queues, job_worker
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ def _row_to_response(row) -> JobResponse:
         id=row["id"],
         company_name=row["company_name"],
         job_link=row["job_link"],
+        model=row["model"],
         status=row["status"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],
@@ -64,21 +65,25 @@ async def create_job(body: JobCreate) -> JobResponse:
     try:
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
-            "INSERT INTO jobs (id, company_name, job_link, job_text, status, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, 'pending', ?, ?)",
-            (job_id, body.company_name, body.job_link, body.job_text, now, now),
+            "INSERT INTO jobs "
+            "(id, company_name, job_link, job_text, model, status, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)",
+            (job_id, body.company_name, body.job_link, body.job_text, body.model, now, now),
         )
         await db.commit()
     finally:
         await db.close()
 
-    task = schedule_background_task(job_worker(job_id, body.company_name, body.job_text))
+    task = schedule_background_task(
+        job_worker(job_id, body.company_name, body.job_text, body.model)
+    )
     _job_tasks[job_id] = task
-    logger.info("Job %s created for company=%s", job_id, body.company_name)
+    logger.info("Job %s created for company=%s model=%s", job_id, body.company_name, body.model)
 
     return JobResponse(
         id=job_id,
         company_name=body.company_name,
+        model=body.model,
         status="pending",
         created_at=now,
         updated_at=now,

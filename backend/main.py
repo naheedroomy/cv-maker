@@ -15,6 +15,7 @@ from fastapi.routing import APIRouter
 from fastapi.staticfiles import StaticFiles
 
 from backend.db import init_db
+from backend.routers.config import router as config_router
 from backend.routers.cv_convert import router as cv_convert_router
 from backend.routers.jobs import router as jobs_router
 
@@ -77,6 +78,7 @@ async def health_check():
 
 api_router.include_router(jobs_router)
 api_router.include_router(cv_convert_router)
+api_router.include_router(config_router)
 app.include_router(api_router)
 
 # ---------------------------------------------------------------------------

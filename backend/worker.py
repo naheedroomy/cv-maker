@@ -17,8 +17,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from backend.db import get_db
-from backend.pipeline_runner import render_pdf_async, run_pipeline_async
+from backend.pipeline_runner import render_pdf_async, run_provider_async
 from cv_maker.data import load_base_cv
+from cv_maker.providers import get_provider
 from cv_maker.renderer import render_latex
 
 logger = logging.getLogger(__name__)
@@ -58,7 +59,9 @@ async def _push_event(job_id: str, event_type: str, data: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
-async def job_worker(job_id: str, company_name: str, job_text: str) -> None:
+async def job_worker(
+    job_id: str, company_name: str, job_text: str, model: str = "claude-haiku"
+) -> None:
     """Background worker: runs pipeline, saves PDF, updates DB at each stage.
 
     Status transitions:
@@ -105,12 +108,16 @@ async def job_worker(job_id: str, company_name: str, job_text: str) -> None:
             logger.info("Job %s: [1/4] Base CV loaded (%.1fs)", job_id, time.monotonic() - t0)
 
             # ----------------------------------------------------------------
-            # Run AI pipeline (Claude CLI via subprocess — async wrapper)
+            # Run AI pipeline (provider-routed via async wrapper)
             # ----------------------------------------------------------------
             t0 = time.monotonic()
-            logger.info("Job %s: [2/4] Starting Claude CLI pipeline...", job_id)
-            tailored_cv, gap_diff = await run_pipeline_async(base_cv, job_text)
-            logger.info("Job %s: [2/4] Claude CLI pipeline done (%.1fs)", job_id, time.monotonic() - t0)
+            provider = get_provider(model)
+            logger.info("Job %s: [2/4] Starting %s pipeline...", job_id, type(provider).__name__)
+            tailored_cv, gap_diff = await run_provider_async(provider, base_cv, job_text)
+            logger.info(
+                "Job %s: [2/4] %s pipeline done (%.1fs)",
+                job_id, type(provider).__name__, time.monotonic() - t0,
+            )
 
             # ----------------------------------------------------------------
             # Render LaTeX source (sync Jinja2 string templating — fast, no I/O)
@@ -125,7 +132,10 @@ async def job_worker(job_id: str, company_name: str, job_text: str) -> None:
             t0 = time.monotonic()
             logger.info("Job %s: [4/4] Compiling PDF with latexmk...", job_id)
             pdf_bytes = await render_pdf_async(latex_source)
-            logger.info("Job %s: [4/4] PDF compiled (%.1fs, %d bytes)", job_id, time.monotonic() - t0, len(pdf_bytes))
+            logger.info(
+                "Job %s: [4/4] PDF compiled (%.1fs, %d bytes)",
+                job_id, time.monotonic() - t0, len(pdf_bytes),
+            )
 
             # ----------------------------------------------------------------
             # Save outputs to disk

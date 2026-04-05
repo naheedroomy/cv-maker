@@ -14,6 +14,7 @@ import logging
 
 from cv_maker.models import BaseCV, GapItem, TailoredCV
 from cv_maker.pipeline import run_pipeline
+from cv_maker.providers.base import BaseProvider
 from cv_maker.renderer import render_pdf
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,16 @@ async def run_pipeline_async(
     logger.info("Starting pipeline in thread pool")
     result = await asyncio.to_thread(run_pipeline, base_cv, job_text)
     logger.info("Pipeline completed")
+    return result
+
+
+async def run_provider_async(
+    provider: BaseProvider, base_cv: BaseCV, job_text: str
+) -> tuple[TailoredCV, list[GapItem]]:
+    """Non-blocking wrapper: runs any provider's synchronous .run() in thread pool."""
+    logger.info("Starting provider %s in thread pool", type(provider).__name__)
+    result = await asyncio.to_thread(provider.run, base_cv, job_text)
+    logger.info("Provider %s completed", type(provider).__name__)
     return result
 
 
