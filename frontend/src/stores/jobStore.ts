@@ -94,9 +94,16 @@ export const useJobStore = defineStore('jobs', () => {
 
     _sse.addEventListener('complete', (e: MessageEvent) => {
       const data = JSON.parse(e.data) as JobResponse
-      currentJob.value = data
+      // Merge with existing job to preserve fields the SSE payload may not include (e.g. created_at)
+      if (currentJob.value?.id === jobId) {
+        currentJob.value = { ...currentJob.value, ...data, created_at: currentJob.value.created_at }
+      } else {
+        currentJob.value = data
+      }
       const idx = jobs.value.findIndex((j) => j.id === jobId)
-      if (idx !== -1) jobs.value[idx] = data
+      if (idx !== -1) {
+        jobs.value[idx] = { ...jobs.value[idx], ...data, created_at: jobs.value[idx].created_at }
+      }
       closeSSE()
     })
 

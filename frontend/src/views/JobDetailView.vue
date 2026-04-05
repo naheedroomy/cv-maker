@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useJobStore } from '@/stores/jobStore'
@@ -14,7 +14,7 @@ import TailoringNotes from '@/components/TailoringNotes.vue'
 const route = useRoute()
 const store = useJobStore()
 const { currentJob, error } = storeToRefs(store)
-const jobId = route.params.id as string
+const jobId = computed(() => route.params.id as string)
 
 const cancelling = ref(false)
 const downloading = ref(false)
@@ -27,12 +27,16 @@ const statusText: Record<string, string> = {
   cancelled: 'Cancelled',
 }
 
-onMounted(async () => {
-  await store.fetchJob(jobId)
+async function loadJob(id: string) {
+  store.closeSSE()
+  currentJob.value = null
+  await store.fetchJob(id)
   if (currentJob.value && !['complete', 'failed', 'cancelled'].includes(currentJob.value.status)) {
-    store.openSSE(jobId)
+    store.openSSE(id)
   }
-})
+}
+
+watch(jobId, (id) => { loadJob(id) }, { immediate: true })
 
 onUnmounted(() => {
   store.closeSSE()
@@ -41,7 +45,7 @@ onUnmounted(() => {
 async function handleCancel() {
   cancelling.value = true
   try {
-    await store.cancelJob(jobId)
+    await store.cancelJob(jobId.value)
   } catch (err) {
     store.error = err instanceof Error ? err.message : 'Cancel failed'
   } finally {
@@ -53,7 +57,7 @@ async function handleDownload() {
   if (!currentJob.value) return
   downloading.value = true
   try {
-    await store.downloadPdf(jobId, currentJob.value.company_name)
+    await store.downloadPdf(jobId.value, currentJob.value.company_name)
   } catch (err) {
     store.error = err instanceof Error ? err.message : 'Download failed'
   } finally {
