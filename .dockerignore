@@ -1,0 +1,17 @@
+.git
+.gitignore
+.idea
+.planning
+.venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+node_modules
+frontend/dist
+output
+backend/cv_maker.db*
+.env
+*.md
+!frontend/README.md

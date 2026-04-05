@@ -7,13 +7,14 @@ BEGIN IMMEDIATE (not BEGIN DEFERRED) — see Phase 5 RESEARCH.md Pitfall 1.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
 import aiosqlite
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = Path("backend/cv_maker.db")
+DB_PATH = Path(os.environ.get("CV_MAKER_DB_PATH", "backend/cv_maker.db"))
 
 _SCHEMA = """\
 CREATE TABLE IF NOT EXISTS jobs (

@@ -1,0 +1,19 @@
+services:
+  cv-maker:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Persist database and generated PDFs across restarts
+      - cv-data:/app/data
+      - output-data:/app/output
+      # Mount base CV so you can edit without rebuilding
+      - ./base_cv.yaml:/app/base_cv.yaml
+    environment:
+      - CV_MAKER_DB_PATH=/app/data/cv_maker.db
+
+volumes:
+  cv-data:
+  output-data:
