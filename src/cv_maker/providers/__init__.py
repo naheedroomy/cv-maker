@@ -8,8 +8,9 @@ from __future__ import annotations
 from cv_maker.providers.base import BaseProvider
 from cv_maker.providers.claude_provider import ClaudeProvider
 from cv_maker.providers.gemini_provider import GeminiProvider
+from cv_maker.providers.openai_provider import OpenAIProvider
 
-__all__ = ["BaseProvider", "ClaudeProvider", "GeminiProvider", "get_provider"]
+__all__ = ["BaseProvider", "ClaudeProvider", "GeminiProvider", "OpenAIProvider", "get_provider"]
 
 
 def get_provider(model: str) -> BaseProvider:
@@ -17,9 +18,12 @@ def get_provider(model: str) -> BaseProvider:
 
     Supported values:
     - "gemini-flash" → GeminiProvider (requires GEMINI_API_KEY)
+    - "openai" → OpenAIProvider (requires OPENAI_API_KEY)
     - "claude-haiku" → ClaudeProvider (default)
     - any unknown value → ClaudeProvider (fallback)
     """
     if model == "gemini-flash":
         return GeminiProvider()
+    if model == "openai":
+        return OpenAIProvider()
     return ClaudeProvider()  # default for "claude-haiku" and any unknown value
