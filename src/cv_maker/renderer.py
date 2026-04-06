@@ -94,6 +94,19 @@ def escape_latex_with_bold(text: str) -> str:
 
 _jinja_env.filters["be"] = escape_latex_with_bold
 
+
+def escape_latex_strip_bold(text: str) -> str:
+    """Escape LaTeX special chars and strip any **bold** markers.
+
+    Used for fields like summary where bold formatting is not wanted —
+    removes the markers instead of converting them to \\textbf{}.
+    """
+    stripped = _BOLD_RE.sub(r"\1", text)
+    return escape_latex(stripped)
+
+
+_jinja_env.filters["se"] = escape_latex_strip_bold
+
 # ---------------------------------------------------------------------------
 # latexmk binary discovery (lazy — called only inside render_pdf)
 # ---------------------------------------------------------------------------
