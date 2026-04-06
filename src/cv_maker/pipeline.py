@@ -345,6 +345,17 @@ CLOSED-LOOP REASONING — use the gap_diff to guide CV tailoring:
 Surface implied responsibilities naturally in the bullets — do not present them as separate, unrelated claims.
 - Do NOT attempt to compensate for "missing" requirements beyond honest representation.
 
+ALIGNMENT ENFORCEMENT:
+For each Tier 1 requirement identified in the gap analysis:
+- If explicit evidence exists in the base CV → it MUST appear in at least one bullet.
+- If implicit evidence exists (inference rules allow it) → it SHOULD be surfaced in at least one bullet.
+- If a Tier 1 requirement with available evidence is not surfaced anywhere in the CV → revise before finalizing.
+
+SUMMARY TARGETING:
+The summary MUST explicitly reflect:
+- The target role identity (e.g., DevOps Engineer, Platform Engineer, SRE) as it appears in the job listing.
+- At least 2 core technologies from Tier 1 requirements that the candidate demonstrably has.
+
 BALANCE:
 - Optimize for BOTH relevance (alignment to job) AND coverage (representation of full experience).
 - A strong CV shows both depth in the target area AND breadth across the candidate's background.
