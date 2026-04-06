@@ -82,13 +82,14 @@ export const useJobStore = defineStore('jobs', () => {
     closeSSE()
   }
 
-  async function regenerateJob(job: JobResponse, model?: string): Promise<string> {
+  async function regenerateJob(job: JobResponse, model?: string, creativityLevel?: number): Promise<string> {
     if (!job.job_text) throw new Error('Job text not available for regeneration')
     return submitJob({
       company_name: job.company_name,
       job_link: job.job_link ?? undefined,
       job_text: job.job_text,
       model: model ?? job.model,
+      creativity_level: creativityLevel ?? job.creativity_level,
     })
   }
 
