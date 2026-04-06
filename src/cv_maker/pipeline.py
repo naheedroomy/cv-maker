@@ -247,7 +247,9 @@ build, test, and deploy automation; Kubernetes work implies container orchestrat
   Tier 1: Core technical stack (must-have technologies and platforms)
   Tier 2: Core responsibilities (e.g., CI/CD, observability, incident response)
   Tier 3: Secondary tools and nice-to-haves
-- Focus CV tailoring primarily on Tier 1 and Tier 2. Do not over-optimize for Tier 3 requirements.
+- Tier prioritization should guide EMPHASIS, not ELIMINATION. Focus CV tailoring primarily on \
+Tier 1 and Tier 2, but do NOT remove valuable experience solely because it is Tier 3. \
+Tier 3 skills still contribute to breadth and credibility.
 - Include this as "gap_diff" in the output.
 
 ALLOWED IMPLICIT INFERENCES:
@@ -282,12 +284,18 @@ Avoid directly reusing phrases from the job listing. Prefer paraphrasing into na
 (b) an allowed implicit inference from the rules above. If you cannot point to the source, do not include the claim.
    - Preserve the level of ownership indicated in the base CV. Do not upgrade action verbs \
 (e.g., "worked on" to "led", "contributed to" to "architected") unless clearly supported by the original bullet.
-   - You are NOT limited to the same number of bullets as the base CV. The base CV is a superset — \
-select, combine, split, or drop bullets based on what is most relevant to THIS job. \
-For highly relevant roles, 5-7 bullets is appropriate. For less relevant roles, 2-3 is enough. \
-Drop bullets that add no value for this specific application. Each bullet should earn its place.
-   - SIGNAL DENSITY: Each bullet should include a technology, an action, and an outcome where possible. \
-Avoid generic phrasing like "worked on", "involved in", "helped with". Prefer concrete, measurable statements.
+   - COVERAGE CONSTRAINT: Do NOT over-prune. Each role should retain enough bullets to reflect \
+the breadth of work performed. Even if a bullet is not directly tied to Tier 1 requirements, \
+include it if it demonstrates complementary skills, adds context to the role, or strengthens \
+overall credibility. Aim for:
+     - 4-6 bullets for highly relevant roles
+     - 3-5 bullets for moderately relevant roles
+     - 2-3 bullets minimum for any role included in the CV
+   - The base CV is a superset — select, combine, split, or rewrite bullets based on what \
+is most relevant to THIS job, but do not compress a role down to fewer bullets than the minimums above.
+   - SIGNAL DENSITY: Prefer high signal density — a technology, an action, and an outcome where possible. \
+Avoid generic phrasing like "worked on", "involved in", "helped with". Prefer concrete, measurable statements. \
+However, do NOT merge or remove bullets just to increase density — preserving meaningful experience is more important than per-bullet optimization.
    - **BOLD key technologies and tools** in each bullet by wrapping them in **double asterisks**. \
 For example: "Built a CI/CD pipeline using **AWS CodePipeline** and **CodeBuild**, reducing deployment time by 50%."
    - You MAY adjust job titles slightly to better align with the target role. For example, \
@@ -326,11 +334,19 @@ CLOSED-LOOP REASONING — use the gap_diff to guide CV tailoring:
 Surface implied responsibilities naturally in the bullets — do not present them as separate, unrelated claims.
 - Do NOT attempt to compensate for "missing" requirements beyond honest representation.
 
+BALANCE:
+- Optimize for BOTH relevance (alignment to job) AND coverage (representation of full experience).
+- A strong CV shows both depth in the target area AND breadth across the candidate's background.
+- When in doubt, keep a bullet rather than remove it — a slightly less relevant bullet is better \
+than a gap that makes the candidate look inexperienced.
+
 FINAL CHECK:
 - Before producing output, ensure:
   - Every bullet is supported by the base CV or the allowed inference rules above
   - No claim exceeds the level of ownership stated in the base CV
   - All Tier 1 requirements are clearly represented in the CV if any evidence exists
+  - No role has been compressed below the minimum bullet count (2-3 minimum per role)
+  - The CV reflects both depth and breadth — not just a narrow match to the job listing
 
 Return ONLY a valid JSON object matching this exact schema — no markdown fences, no commentary:
 
