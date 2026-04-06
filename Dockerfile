@@ -38,7 +38,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY src/ src/
 COPY backend/ backend/
-COPY base_cv.yaml ./
+# base_cv.yaml is bind-mounted via docker-compose.yml — not baked into the image
 
 # Install Python dependencies
 RUN uv sync --frozen --no-dev
