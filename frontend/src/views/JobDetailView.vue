@@ -110,6 +110,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
       <h2 class="company-heading">{{ currentJob.company_name }}</h2>
       <StatusBadge :status="currentJob.status" />
       <span class="model-badge">{{ { 'claude-haiku': 'Claude CLI', 'claude-api': 'Claude API', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[currentJob.model] || currentJob.model }}</span>
+      <span class="model-badge">Level {{ currentJob.creativity_level ?? 2 }}</span>
       <button
         class="applied-toggle"
         :class="{ 'applied-toggle--active': currentJob.applied }"
