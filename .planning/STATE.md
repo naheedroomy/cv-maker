@@ -59,9 +59,10 @@ Archived to PROJECT.md Key Decisions table.
 | 260405-o4h | Fix v2.0 milestone tech debt: SSE payload, dead export, REQUIREMENTS.md | 2026-04-05 | 0d20b72 | [260405-o4h-fix-v2-0-milestone-tech-debt](./quick/260405-o4h-fix-v2-0-milestone-tech-debt/) |
 | 260405-q36 | Update CLAUDE.md and PROJECT.md to reflect Gemini 3.1 Flash-Lite and python-dotenv | 2026-04-05 | 0e94ea3 | [260405-q36-update-claude-md-and-project-md-to-refle](./quick/260405-q36-update-claude-md-and-project-md-to-refle/) |
 | 260405-srf | Add OpenAI-compatible API provider as third model option | 2026-04-05 | f64b28c | [260405-srf-add-openai-compatible-api-provider-as-th](./quick/260405-srf-add-openai-compatible-api-provider-as-th/) |
+| 260406-jb6 | Add creativity slider (0-5) to control AI tailoring liberty | 2026-04-06 | faad203 | [260406-jb6-add-creativity-slider-to-control-ai-tail](./quick/260406-jb6-add-creativity-slider-to-control-ai-tail/) |
 
 ## Session Continuity
 
-Last session: 2026-04-05
-Stopped at: Completed quick-260405-srf
+Last session: 2026-04-06
+Stopped at: Completed quick-260406-jb6
 Resume file: None
