@@ -16,6 +16,7 @@ class SettingsResponse(BaseModel):
     gemini_model: str
     openai_model: str
     openai_base_url: str
+    cv_filename: str
 
 
 class SettingsUpdate(BaseModel):
@@ -24,6 +25,7 @@ class SettingsUpdate(BaseModel):
     gemini_model: str | None = None
     openai_model: str | None = None
     openai_base_url: str | None = None
+    cv_filename: str | None = None
 
 
 @router.get("", response_model=SettingsResponse)
@@ -43,6 +45,7 @@ async def get_settings() -> SettingsResponse:
         gemini_model=stored.get("gemini_model", _DEFAULTS["gemini_model"]),
         openai_model=stored.get("openai_model", _DEFAULTS["openai_model"]),
         openai_base_url=stored.get("openai_base_url", _DEFAULTS["openai_base_url"]),
+        cv_filename=stored.get("cv_filename", _DEFAULTS["cv_filename"]),
     )
 
 

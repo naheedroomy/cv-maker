@@ -17,6 +17,7 @@ _DEFAULTS = {
     "gemini_model": "gemini-2.5-flash",
     "openai_model": "gpt-4o-mini",
     "openai_base_url": "",
+    "cv_filename": "",
 }
 
 

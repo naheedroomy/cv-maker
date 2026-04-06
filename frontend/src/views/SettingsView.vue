@@ -7,15 +7,17 @@ interface Settings {
   gemini_model: string
   openai_model: string
   openai_base_url: string
+  cv_filename: string
 }
 
-const activeTab = ref<'claude-cli' | 'claude-api' | 'gemini' | 'openai'>('claude-cli')
+const activeTab = ref<'general' | 'claude-cli' | 'claude-api' | 'gemini' | 'openai'>('general')
 const settings = ref<Settings>({
   claude_cli_model: 'haiku',
   claude_api_model: 'claude-haiku-4-5',
   gemini_model: 'gemini-2.5-flash',
   openai_model: 'gpt-4o-mini',
   openai_base_url: '',
+  cv_filename: '',
 })
 const saving = ref(false)
 const saved = ref(false)
@@ -54,6 +56,7 @@ async function handleSave() {
 }
 
 const tabs = [
+  { key: 'general' as const, label: 'General' },
   { key: 'claude-cli' as const, label: 'Claude CLI' },
   { key: 'claude-api' as const, label: 'Claude API' },
   { key: 'gemini' as const, label: 'Gemini' },
@@ -75,6 +78,15 @@ const tabs = [
         :class="{ 'tab--active': activeTab === tab.key }"
         @click="activeTab = tab.key"
       >{{ tab.label }}</button>
+    </div>
+
+    <!-- General -->
+    <div v-if="activeTab === 'general'" class="tab-content">
+      <div class="field">
+        <label class="field-label">CV Filename</label>
+        <input v-model="settings.cv_filename" class="field-input" placeholder="e.g. Naheed-Roomy-CV" />
+        <p class="field-hint">Name for generated PDF and LaTeX files. A short ID is appended automatically (e.g. <code>Naheed-Roomy-CV-3b062.pdf</code>). Leave empty to use the job ID as filename.</p>
+      </div>
     </div>
 
     <!-- Claude CLI -->

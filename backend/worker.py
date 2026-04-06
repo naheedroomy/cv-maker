@@ -141,11 +141,20 @@ async def job_worker(
             # ----------------------------------------------------------------
             # Save outputs to disk
             # ----------------------------------------------------------------
+            from backend.settings_cache import get_setting
+
+            cv_name = get_setting("cv_filename").strip()
+            short_id = job_id[:5]
+            if cv_name:
+                file_stem = f"{cv_name}-{short_id}"
+            else:
+                file_stem = job_id
+
             out_dir = Path("output") / company_name
             out_dir.mkdir(parents=True, exist_ok=True)
-            pdf_path = out_dir / f"{job_id}.pdf"
+            pdf_path = out_dir / f"{file_stem}.pdf"
             pdf_path.write_bytes(pdf_bytes)
-            tex_path = out_dir / f"{job_id}.tex"
+            tex_path = out_dir / f"{file_stem}.tex"
             tex_path.write_text(latex_source, encoding="utf-8")
             logger.info("Job %s: Files saved to %s", job_id, out_dir)
 
