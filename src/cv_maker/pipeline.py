@@ -239,6 +239,23 @@ _RULES: dict[str, dict[int, str]] = {
         4: "The summary should position the candidate as an excellent fit.",
         5: "The summary should present the candidate as a perfect fit.",
     },
+    "tone": {
+        0: "",
+        2: (
+            "WRITING STYLE — this is critical for quality:\n"
+            "Do NOT pad bullets with filler adjectives or adverbs. Specifically avoid: "
+            "'robust', 'comprehensive', 'seamless', 'cutting-edge', 'critical', 'significant', "
+            "'efficiently', 'effectively', 'proactively', 'strategically', 'innovative'.\n"
+            "Do NOT inflate the base CV's language. If the base CV says 'Built a CI/CD pipeline', "
+            "do NOT rewrite it as 'Developed a comprehensive, robust CI/CD pipeline'. "
+            "Match or tighten the base CV's tone — never expand it.\n"
+            "The base CV bullets are already well-written. Your job is to SELECT, REORDER, "
+            "and LIGHTLY REWRITE for relevance — not to 'improve' the prose. "
+            "Shorter is better. If a rewrite is longer than the original, you're probably adding filler.\n"
+            "Do NOT add trailing qualifiers like 'ensuring reliability and performance' or "
+            "'improving efficiency and scalability' unless the base CV included them."
+        ),
+    },
     "inference": {
         0: "Do NOT make any inferences about implied experience.",
         1: "Do NOT make any inferences about implied responsibilities.",
@@ -284,6 +301,7 @@ def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> 
     skills_rule = _resolve_rule("skills_injection", level)
     summary_rule = _resolve_rule("summary", level)
     inference_rule = _resolve_rule("inference", level)
+    tone_rule = _resolve_rule("tone", level)
 
     level_label = Creativity(level).name
 
@@ -328,6 +346,7 @@ Additional constraints:
 - The "technologies" field per role must only list tools referenced in that role's bullets.
 - Avoid overusing em dashes; vary punctuation.
 - Skills and highlighted_technologies: plain names only — no parenthetical qualifiers or "alternative:" annotations.
+{tone_rule}
 
 IMPLICIT INFERENCE RULES:
 {inference_rule}
@@ -431,6 +450,7 @@ def _build_system_prompt_for_chat(creativity_level: int = 2) -> str:
     skills_rule = _resolve_rule("skills_injection", level)
     summary_rule = _resolve_rule("summary", level)
     inference_rule = _resolve_rule("inference", level)
+    tone_rule = _resolve_rule("tone", level)
 
     return f"""\
 IMPORTANT — think step-by-step before producing the JSON output:
@@ -465,6 +485,7 @@ EXPERIENCE:
 - **Bold** key technologies. Concise — 1 accomplishment per bullet, 1-2 lines max.
 - "technologies" field per role: only tools referenced in that role's bullets.
 - Skills and highlighted_technologies: plain names only — no parenthetical qualifiers.
+{tone_rule}
 
 INFERENCE RULES:
 {inference_rule}
