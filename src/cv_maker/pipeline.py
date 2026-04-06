@@ -243,15 +243,21 @@ _RULES: dict[str, dict[int, str]] = {
         0: "Do NOT make any inferences about implied experience.",
         1: "Do NOT make any inferences about implied responsibilities.",
         2: (
-            "Allowed implicit inferences:\n"
+            "Implicit inference rules — actively USE these when the job listing asks for skills "
+            "the candidate has not named explicitly but clearly possesses:\n"
             "- Technology adjacency: using a platform implies its standard tooling "
-            "(e.g., Kubernetes -> deployments/scaling; AWS -> IAM/CloudWatch)\n"
-            "- Infrastructure fundamentals: running cloud workloads implies foundational networking, "
-            "security, and load balancing knowledge "
-            "(e.g., AWS + Kubernetes -> VPC, subnets, DNS, security groups)\n"
+            "(e.g., Kubernetes -> deployments/scaling/ingress; AWS -> IAM/CloudWatch)\n"
+            "- Infrastructure fundamentals: running production workloads on cloud + Kubernetes "
+            "implies hands-on networking, security, and routing knowledge. If the job asks for "
+            "networking/VPC/load balancing and the candidate runs K8s on AWS, SURFACE this — "
+            "add a bullet like 'Configured service routing and ingress across Kubernetes clusters' "
+            "or weave networking into an existing infrastructure bullet. "
+            "(AWS + Kubernetes -> VPC, subnets, DNS, security groups, load balancers, ingress)\n"
             "- Responsibility adjacency: a role implies its standard duties "
             "(e.g., incident response -> root cause analysis)\n"
             "- Domain adjacency: deep work in one area implies awareness of related areas\n"
+            "These are not optional — if a Tier 1 requirement matches an inference rule and "
+            "the candidate has the base experience, you MUST surface it.\n"
             "You may NOT infer: specific named tools not adjacent to the stack, organizational scope, "
             "leadership/mentoring, or certifications."
         ),
