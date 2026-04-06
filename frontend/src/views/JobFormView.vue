@@ -5,6 +5,7 @@ import { useJobStore } from '@/stores/jobStore'
 import ErrorBanner from '@/components/ErrorBanner.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
+import CreativitySlider from '@/components/CreativitySlider.vue'
 
 const router = useRouter()
 const store = useJobStore()
@@ -15,6 +16,7 @@ const jobText = ref('')
 const submitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const selectedModel = ref('claude-haiku')
+const selectedCreativity = ref(2)
 const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
@@ -47,6 +49,7 @@ async function handleSubmit(): Promise<void> {
       job_link: jobLink.value.trim() || undefined,
       job_text: jobText.value.trim(),
       model: selectedModel.value,
+      creativity_level: selectedCreativity.value,
     })
     await router.push('/jobs/' + id)
   } catch (err) {
@@ -118,6 +121,11 @@ function handleRetry(): void {
         :claude-api-available="claudeApiAvailable"
         :gemini-available="geminiAvailable"
         :openai-available="openaiAvailable"
+        :disabled="submitting"
+      />
+
+      <CreativitySlider
+        v-model="selectedCreativity"
         :disabled="submitting"
       />
 

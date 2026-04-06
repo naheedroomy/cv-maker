@@ -64,6 +64,7 @@ export interface JobResponse {
   job_link: string | null
   job_text: string | null
   model: string
+  creativity_level: number
   applied: boolean
   status: JobStatus
   created_at: string
@@ -78,4 +79,5 @@ export interface JobCreate {
   job_link?: string
   job_text: string
   model?: string  // "claude-haiku" (default) or "gemini-flash"
+  creativity_level?: number  // 0-5, default 2 (Moderate)
 }
