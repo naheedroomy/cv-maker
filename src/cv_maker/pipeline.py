@@ -274,6 +274,9 @@ Prioritize the top 3 themes from the job description. \
 Only mention certifications the candidate already holds. Do NOT mention expected/upcoming/in-progress certifications in the summary. \
 Do NOT use **bold** markers in the summary — bold formatting is only for experience bullets.
 2. EXPERIENCE:
+   - PRESERVE the exact structure of roles from the base CV. If the base CV has ONE entry for a company, \
+output exactly ONE entry for that company. Do NOT split a single role into multiple entries. \
+All bullets for a role must stay under the same experience entry.
    - NEVER change dates (start, end) from the base CV. The dates are correct as provided — even if they \
 appear to be in the future. Your training data has a knowledge cutoff; the base CV reflects real-world dates.
    - Keep entries in reverse chronological order (most recent first). Do NOT reorder by relevance.
