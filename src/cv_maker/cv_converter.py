@@ -60,6 +60,7 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
     {{
       "company": "<company name>",
       "title": "<job title>",
+      "location": "<city, country or null if not mentioned>",
       "start": "<YYYY-MM>",
       "end": "<YYYY-MM or null if current>",
       "bullets": ["<responsibility or achievement>"],

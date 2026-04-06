@@ -20,6 +20,7 @@ summary: >
 experience:
   - company: "SyscoLabs"
     title: "DevOps Engineer"
+    location: "Colombo, Sri Lanka"
     start: "2025-07"
     end: null
     bullets:
@@ -29,6 +30,7 @@ experience:
       - "Designed end-to-end GitOps workflows using ArgoCD, GitHub Actions, and Terraform, transitioning legacy cloud infrastructure to strict IaC and enabling fully traceable, reproducible AWS environments"
       - "Authored AWS CLI automation to programmatically track cloud optimization scores, remediate security findings, and enforce cost-saving policies across the organization's cloud footprint"
       - "Established production observability and incident response protocols by integrating AWS CloudWatch and Datadog, driving measurable improvements in system availability and reducing MTTD"
+      - "Designed an event-driven processing pipeline on AWS by integrating S3, SQS, and KEDA to dynamically scale Kubernetes jobs based on incoming workload, enabling efficient, on-demand batch processing without native S3 triggers"
     technologies:
       - Kubernetes
       - ArgoCD
@@ -46,6 +48,7 @@ experience:
 
   - company: "Goenomics GmbH"
     title: "Backend & DevOps Engineer"
+    location: "Göttingen, Germany"
     start: "2023-01"
     end: "2024-08"
     bullets:
@@ -68,6 +71,7 @@ experience:
 
   - company: "HiAcuity"
     title: "Backend & DevOps Engineer"
+    location: "Melbourne, Australia"
     start: "2021-09"
     end: "2022-09"
     bullets:
@@ -87,6 +91,7 @@ experience:
 
   - company: "LinearSix Pvt Ltd"
     title: "Associate Software Engineer"
+    location: "Colombo, Sri Lanka"
     start: "2020-07"
     end: "2021-02"
     bullets:
@@ -107,6 +112,7 @@ experience:
 
   - company: "LinearSix Pvt Ltd"
     title: "Intern Software Engineer"
+    location: "Colombo, Sri Lanka"
     start: "2019-07"
     end: "2020-07"
     bullets:

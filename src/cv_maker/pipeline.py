@@ -380,6 +380,7 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
     {
       "company": "<str>",
       "title": "<str>",
+      "location": "<str or null — pass through from base CV>",
       "start": "<YYYY-MM>",
       "end": "<YYYY-MM or null>",
       "bullets": ["<rewritten bullet>"],

@@ -23,6 +23,7 @@ class ContactInfo(BaseModel):
 class ExperienceItem(BaseModel):
     company: str
     title: str
+    location: str | None = None  # e.g. "Melbourne, Australia"
     # Stored as "YYYY-MM" strings — NOT Python date objects.
     # PyYAML silently converts bare 2021-03 to datetime.date; keep quoted in YAML.
     start: str
