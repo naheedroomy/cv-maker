@@ -8,5 +8,5 @@ from cv_maker.providers.base import BaseProvider
 
 
 class ClaudeProvider(BaseProvider):
-    def run(self, base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:
-        return run_pipeline(base_cv, job_text)
+    def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> tuple[TailoredCV, list[GapItem]]:
+        return run_pipeline(base_cv, job_text, creativity_level)

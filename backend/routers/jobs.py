@@ -38,6 +38,7 @@ def _row_to_response(row) -> JobResponse:
         job_link=row["job_link"],
         job_text=row["job_text"],
         model=row["model"],
+        creativity_level=row["creativity_level"],
         applied=bool(row["applied"]),
         status=row["status"],
         created_at=row["created_at"],
@@ -68,24 +69,25 @@ async def create_job(body: JobCreate) -> JobResponse:
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             "INSERT INTO jobs "
-            "(id, company_name, job_link, job_text, model, status, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)",
-            (job_id, body.company_name, body.job_link, body.job_text, body.model, now, now),
+            "(id, company_name, job_link, job_text, model, creativity_level, status, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+            (job_id, body.company_name, body.job_link, body.job_text, body.model, body.creativity_level, now, now),
         )
         await db.commit()
     finally:
         await db.close()
 
     task = schedule_background_task(
-        job_worker(job_id, body.company_name, body.job_text, body.model)
+        job_worker(job_id, body.company_name, body.job_text, body.model, body.creativity_level)
     )
     _job_tasks[job_id] = task
-    logger.info("Job %s created for company=%s model=%s", job_id, body.company_name, body.model)
+    logger.info("Job %s created for company=%s model=%s creativity=%d", job_id, body.company_name, body.model, body.creativity_level)
 
     return JobResponse(
         id=job_id,
         company_name=body.company_name,
         model=body.model,
+        creativity_level=body.creativity_level,
         status="pending",
         created_at=now,
         updated_at=now,

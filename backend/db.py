@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     gap_diff_json    TEXT,
     pdf_path         TEXT,
     model            TEXT NOT NULL DEFAULT 'claude-haiku',
+    creativity_level INTEGER NOT NULL DEFAULT 2,
     applied          INTEGER NOT NULL DEFAULT 0,
     created_at       TEXT NOT NULL,
     updated_at       TEXT NOT NULL
@@ -64,6 +65,11 @@ async def init_db(db_path: Path | None = None) -> None:
                 "ALTER TABLE jobs ADD COLUMN applied INTEGER NOT NULL DEFAULT 0"
             )
             logger.info("Migration: added 'applied' column to jobs table")
+        if "creativity_level" not in columns:
+            await db.execute(
+                "ALTER TABLE jobs ADD COLUMN creativity_level INTEGER NOT NULL DEFAULT 2"
+            )
+            logger.info("Migration: added 'creativity_level' column to jobs table")
         await db.commit()
     logger.info("Database initialized at %s", path)
 

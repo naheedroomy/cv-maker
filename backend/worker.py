@@ -60,7 +60,8 @@ async def _push_event(job_id: str, event_type: str, data: dict) -> None:
 
 
 async def job_worker(
-    job_id: str, company_name: str, job_text: str, model: str = "claude-haiku"
+    job_id: str, company_name: str, job_text: str, model: str = "claude-haiku",
+    creativity_level: int = 2,
 ) -> None:
     """Background worker: runs pipeline, saves PDF, updates DB at each stage.
 
@@ -113,7 +114,7 @@ async def job_worker(
             t0 = time.monotonic()
             provider = get_provider(model)
             logger.info("Job %s: [2/4] Starting %s pipeline...", job_id, type(provider).__name__)
-            tailored_cv, gap_diff = await run_provider_async(provider, base_cv, job_text)
+            tailored_cv, gap_diff = await run_provider_async(provider, base_cv, job_text, creativity_level)
             logger.info(
                 "Job %s: [2/4] %s pipeline done (%.1fs)",
                 job_id, type(provider).__name__, time.monotonic() - t0,

@@ -1,7 +1,7 @@
 """Pydantic schemas for job API request/response contracts."""
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class JobCreate(BaseModel):
@@ -11,6 +11,7 @@ class JobCreate(BaseModel):
     job_link: str | None = None
     job_text: str
     model: str = "claude-haiku"
+    creativity_level: int = Field(default=2, ge=0, le=5)
 
 
 class JobResponse(BaseModel):
@@ -21,6 +22,7 @@ class JobResponse(BaseModel):
     job_link: str | None = None
     job_text: str | None = None
     model: str = "claude-haiku"
+    creativity_level: int = 2
     applied: bool = False
     status: str  # one of: pending, running, complete, failed, cancelled
     created_at: str  # ISO 8601 timestamp

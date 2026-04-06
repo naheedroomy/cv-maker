@@ -135,7 +135,7 @@ def _serialize_base_cv(cv: BaseCV) -> str:
     return yaml.dump(cv.model_dump(), default_flow_style=False, allow_unicode=True)
 
 
-def _build_system_prompt() -> str:
+def _build_system_prompt(creativity_level: int = 2) -> str:
     """Build the system prompt with instructions and output schema.
 
     Used by chat-based providers (OpenAI, Gemini) as the system message.
@@ -290,13 +290,13 @@ which specific job requirement it targets, and why the change is justified by th
 Now produce the JSON output following all the instructions above.\n\n"""
 
 
-def _build_system_prompt_for_chat() -> str:
+def _build_system_prompt_for_chat(creativity_level: int = 2) -> str:
     """Build system prompt with chain-of-thought preamble for chat-based providers.
 
     OpenAI and Gemini need explicit step-by-step reasoning instructions
     to produce exhaustive, detailed output comparable to Claude.
     """
-    return _COT_PREAMBLE + _build_system_prompt()
+    return _COT_PREAMBLE + _build_system_prompt(creativity_level)
 
 
 def _build_user_prompt(base_cv: BaseCV, job_text: str) -> str:
@@ -318,12 +318,12 @@ For each requirement, cite specific evidence from specific roles in the base CV.
 Then produce the tailored CV as a single JSON object."""
 
 
-def _build_prompt(base_cv: BaseCV, job_text: str) -> str:
+def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> str:
     """Build combined prompt for Claude CLI (no system message support).
 
     Concatenates system prompt + user prompt into a single string.
     """
-    return _build_system_prompt() + "\n\n" + _build_user_prompt(base_cv, job_text)
+    return _build_system_prompt(creativity_level) + "\n\n" + _build_user_prompt(base_cv, job_text)
 
 
 # ---------------------------------------------------------------------------
@@ -331,12 +331,12 @@ def _build_prompt(base_cv: BaseCV, job_text: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def run_pipeline(base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:
+def run_pipeline(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> tuple[TailoredCV, list[GapItem]]:
     """Full AI pipeline: analyze job + tailor CV in a single Claude call.
 
     Returns:
         (tailored_cv, gap_diff) where gap_diff is extracted from the combined response.
     """
-    prompt = _build_prompt(base_cv, job_text)
+    prompt = _build_prompt(base_cv, job_text, creativity_level)
     result = _invoke_with_retry(prompt, TailoredCV)
     return result, result.gap_diff

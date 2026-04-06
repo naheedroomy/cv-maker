@@ -9,6 +9,6 @@ from cv_maker.models import BaseCV, GapItem, TailoredCV
 
 class BaseProvider(ABC):
     @abstractmethod
-    def run(self, base_cv: BaseCV, job_text: str) -> tuple[TailoredCV, list[GapItem]]:
+    def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> tuple[TailoredCV, list[GapItem]]:
         """Run the CV tailoring pipeline. Returns (tailored_cv, gap_diff)."""
         ...
