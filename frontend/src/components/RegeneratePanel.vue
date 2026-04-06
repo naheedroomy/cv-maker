@@ -18,6 +18,7 @@ const selectedModel = ref(props.currentModel)
 const selectedCreativity = ref(props.currentCreativityLevel)
 
 // Provider availability
+const claudeCliAvailable = ref(true)
 const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
@@ -27,6 +28,7 @@ onMounted(() => {
   fetch('/api/config')
     .then(r => r.ok ? r.json() : {})
     .then(data => {
+      claudeCliAvailable.value = data.claude_cli_available !== false
       claudeApiAvailable.value = data.claude_api_available === true
       geminiAvailable.value = data.gemini_available === true
       openaiAvailable.value = data.openai_available === true
@@ -63,6 +65,7 @@ function handleRegenerate(): void {
     <div v-if="panelOpen" class="regenerate-options">
       <ModelSelector
         v-model="selectedModel"
+        :claude-cli-available="claudeCliAvailable"
         :claude-api-available="claudeApiAvailable"
         :gemini-available="geminiAvailable"
         :openai-available="openaiAvailable"

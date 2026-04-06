@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   modelValue: string
+  claudeCliAvailable: boolean
   claudeApiAvailable: boolean
   geminiAvailable: boolean
   openaiAvailable: boolean
@@ -25,6 +26,9 @@ function select(model: string): void {
 }
 
 function hintText(): string {
+  if (props.modelValue === 'claude-haiku' && !props.claudeCliAvailable) {
+    return 'Claude Code CLI not available — install and login, or mount ~/.claude in Docker.'
+  }
   if (props.modelValue === 'claude-api' && !props.claudeApiAvailable) {
     return 'Claude API requires ANTHROPIC_API_KEY — not configured.'
   }
@@ -39,6 +43,7 @@ function hintText(): string {
 }
 
 function isDisabledOption(value: string): boolean {
+  if (value === 'claude-haiku' && !props.claudeCliAvailable) return true
   if (value === 'claude-api' && !props.claudeApiAvailable) return true
   if (value === 'gemini-flash' && !props.geminiAvailable) return true
   if (value === 'openai' && !props.openaiAvailable) return true
