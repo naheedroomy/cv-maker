@@ -135,13 +135,81 @@ def _serialize_base_cv(cv: BaseCV) -> str:
     return yaml.dump(cv.model_dump(), default_flow_style=False, allow_unicode=True)
 
 
+def _build_creativity_instructions(level: int) -> str:
+    """Return creativity-level-specific instruction text.
+
+    Levels 0-1 return restrictive instructions (prepended to system prompt).
+    Level 2 returns empty string (default behavior — no modification).
+    Levels 3-5 return permissive instructions (appended to system prompt).
+    """
+    if level == 0:
+        return """\
+CREATIVITY LEVEL: 0 — STRICT MODE
+- Do NOT change any job titles. Use exact titles from the base CV.
+- Do NOT add new bullet points. Only reorder existing bullets.
+- Do NOT weave in technologies not explicitly listed in the base CV.
+- Do NOT adjust the summary beyond minor word reordering.
+- Do NOT make inferences about implied experience.
+- Only reorder sections and bullets to prioritize relevance. Zero content changes.
+"""
+    if level == 1:
+        return """\
+CREATIVITY LEVEL: 1 — CONSERVATIVE MODE
+- Do NOT adjust job titles. Keep original titles exactly.
+- You MAY rewrite bullet points to emphasize relevant aspects, but do not add claims beyond what is explicitly stated.
+- You MAY reorder skills and sections for relevance.
+- Do NOT weave in technologies unless the candidate explicitly lists them.
+- Do NOT make inferences about implied responsibilities.
+- Keep the summary closely aligned with the base CV's original framing.
+"""
+    if level == 2:
+        return ""
+    if level == 3:
+        return """\
+CREATIVITY LEVEL: 3 — FORWARD MODE
+Additional latitude beyond standard tailoring:
+- Aggressively expand partial matches. If there is any implicit connection between the candidate's experience and a job requirement, surface it prominently.
+- You MAY infer additional responsibilities beyond what is explicitly stated, as long as they are clearly plausible given the candidate's role and seniority.
+- You MAY adjust job titles more freely to align with the target role (still no seniority inflation).
+- Add more bullets per role to maximize coverage of job requirements (up to 8-10 for highly relevant roles).
+- Be more assertive in the summary about positioning the candidate as a strong fit.
+"""
+    if level == 4:
+        return """\
+CREATIVITY LEVEL: 4 — BOLD MODE
+You have significant latitude to optimize this CV for the target role:
+- Fill gaps with plausible claims. If a technology or practice is commonly associated with the candidate's known stack, you MAY claim familiarity even without explicit evidence.
+- Speculative additions are allowed: add bullet points describing responsibilities that someone in this role would typically have, even if the base CV does not mention them.
+- Job titles can be adjusted significantly (still no seniority inflation).
+- The summary should position the candidate as an excellent fit, even if some claims stretch the evidence.
+- You MAY add technologies to the skills section that the candidate likely knows based on their stack.
+"""
+    if level == 5:
+        return """\
+CREATIVITY LEVEL: 5 — CREATIVE MODE
+Maximize relevance at the cost of strict accuracy:
+- Invent freely. You MAY fabricate experience, bullet points, and technology claims to maximize alignment with the job listing.
+- Job titles can be rewritten entirely to match the target role.
+- The summary should present the candidate as a perfect fit.
+- Add any technologies, certifications mentions, or experience that would strengthen the application.
+- Accuracy is secondary to relevance. The goal is the strongest possible CV for this specific role.
+WARNING: Output at this level may contain fabricated claims. User assumes responsibility for accuracy.
+"""
+    return ""
+
+
 def _build_system_prompt(creativity_level: int = 2) -> str:
     """Build the system prompt with instructions and output schema.
 
     Used by chat-based providers (OpenAI, Gemini) as the system message.
     Claude CLI concatenates this with the user prompt via _build_prompt().
+
+    For creativity levels 0-1, restrictive instructions are PREPENDED.
+    For level 2 (default), the prompt is returned unchanged.
+    For creativity levels 3-5, permissive instructions are APPENDED.
     """
-    return """\
+    instructions = _build_creativity_instructions(creativity_level)
+    base_prompt = """\
 You are a CV tailoring expert. Given a candidate's base CV and a job listing, you will:
 1. Analyze the job requirements and compute a gap diff
 2. Produce a tailored CV optimized for the role
@@ -265,6 +333,14 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
     }
   ]
 }"""
+    # Level 2 (default): no modification — return base prompt unchanged.
+    if not instructions:
+        return base_prompt
+    # Levels 0-1: prepend restrictive instructions before the base prompt.
+    if creativity_level <= 1:
+        return instructions + "\n" + base_prompt
+    # Levels 3-5: append permissive instructions after the base prompt.
+    return base_prompt + "\n\n" + instructions
 
 
 _COT_PREAMBLE = """\
