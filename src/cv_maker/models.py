@@ -96,17 +96,19 @@ class TailoredSection(BaseModel):
 
 
 class GapItem(BaseModel):
-    """One entry in the gap diff: a job requirement with match level.
+    """One entry in the gap diff: a job requirement with match level and priority tier.
 
     DATA-03: Structured for UI display.
     - match_level="strong": base CV clearly demonstrates this requirement
     - match_level="partial": base CV has related/implicit evidence
     - match_level="missing": base CV does not demonstrate this requirement
+    - tier: 1 (core tech stack), 2 (core responsibilities), 3 (nice-to-have)
     """
 
     requirement: str
     match_level: str  # "strong", "partial", or "missing"
     evidence: str  # Quote or reference from base CV; empty string when missing
+    tier: int | None = None  # 1=must-have, 2=core, 3=nice-to-have; optional for backward compat
 
 
 class TailoringNote(BaseModel):
@@ -116,6 +118,7 @@ class TailoringNote(BaseModel):
     change: str  # What was changed
     reason: str  # Why it was changed — which job requirement it targets
     action: str  # "modified", "added", "removed", "reordered", or "unchanged"
+    source: str = ""  # Evidence basis — base CV reference or inference rule; makes hallucination detectable
 
 
 class TailoredCV(BaseModel):

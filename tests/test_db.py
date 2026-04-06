@@ -37,7 +37,7 @@ def test_init_db_wal_mode(tmp_path: Path) -> None:
 
 
 def test_init_db_jobs_table_columns(tmp_path: Path) -> None:
-    """After init_db(), the jobs table has all 11 expected columns."""
+    """After init_db(), the jobs table has all expected columns."""
     from backend.db import init_db
 
     db_path = tmp_path / "test.db"
@@ -55,6 +55,8 @@ def test_init_db_jobs_table_columns(tmp_path: Path) -> None:
         "created_at",
         "updated_at",
         "model",
+        "applied",
+        "creativity_level",
     }
 
     async def get_columns() -> set[str]:

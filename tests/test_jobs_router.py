@@ -77,7 +77,7 @@ def test_create_job_returns_201(tmp_path: Path):
         TestClient(app) as client,
     ):
         response = client.post(
-            "/api/jobs/",
+            "/api/jobs",
             json={"company_name": "TestCo", "job_text": "Looking for Python dev"},
         )
 
@@ -100,7 +100,7 @@ def test_create_job_missing_field_returns_422(tmp_path: Path):
     ):
         # Missing required 'job_text' field
         response = client.post(
-            "/api/jobs/",
+            "/api/jobs",
             json={"company_name": "TestCo"},
         )
 
@@ -118,16 +118,16 @@ def test_list_jobs_returns_array(tmp_path: Path):
     ):
         # POST two jobs
         client.post(
-            "/api/jobs/",
+            "/api/jobs",
             json={"company_name": "CompanyA", "job_text": "Job listing A"},
         )
         client.post(
-            "/api/jobs/",
+            "/api/jobs",
             json={"company_name": "CompanyB", "job_text": "Job listing B"},
         )
 
         # GET all jobs
-        response = client.get("/api/jobs/")
+        response = client.get("/api/jobs")
 
     assert response.status_code == 200
     jobs = response.json()
@@ -146,7 +146,7 @@ def test_get_job_detail_returns_job(tmp_path: Path):
     ):
         # Create a job first
         create_response = client.post(
-            "/api/jobs/",
+            "/api/jobs",
             json={"company_name": "DetailCo", "job_text": "Detailed job listing"},
         )
         assert create_response.status_code == 201
@@ -232,7 +232,7 @@ def test_get_pdf_404_when_not_complete(tmp_path: Path):
     ):
         # Create a job — worker is mocked so it stays pending
         create_response = client.post(
-            "/api/jobs/",
+            "/api/jobs",
             json={"company_name": "PDFCo", "job_text": "PDF test job"},
         )
         assert create_response.status_code == 201

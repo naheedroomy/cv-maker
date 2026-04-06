@@ -250,19 +250,19 @@ class TestBuildCreativityInstructions:
         assert "Do NOT adjust job titles" in result
 
     def test_level_3_contains_forward_permissions(self) -> None:
-        """Level 3 (Forward) includes aggressive expansion language."""
+        """Level 3 (Forward) focuses on addressing gaps."""
         result = pipeline._build_creativity_instructions(3)
-        assert "aggressively expand partial matches" in result.lower() or "Aggressively expand partial matches" in result
+        assert "ADDRESSING GAPS" in result
 
     def test_level_4_contains_bold_permissions(self) -> None:
-        """Level 4 (Bold) includes speculative fill-gap language."""
+        """Level 4 (Bold) includes fill-gap language."""
         result = pipeline._build_creativity_instructions(4)
-        assert "fill gaps with plausible" in result.lower() or "Fill gaps with plausible" in result
+        assert "fill gaps" in result.lower()
 
     def test_level_5_contains_creative_permissions(self) -> None:
-        """Level 5 (Creative) includes 'invent freely' language."""
+        """Level 5 (Creative) includes fabrication language."""
         result = pipeline._build_creativity_instructions(5)
-        assert "invent freely" in result.lower() or "Invent freely" in result
+        assert "fabricate" in result.lower()
 
     def test_all_levels_return_distinct_text(self) -> None:
         """All six levels produce distinct instruction text."""
