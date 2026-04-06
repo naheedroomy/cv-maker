@@ -243,21 +243,15 @@ _RULES: dict[str, dict[int, str]] = {
         0: "Do NOT make any inferences about implied experience.",
         1: "Do NOT make any inferences about implied responsibilities.",
         2: (
-            "Implicit inference rules — actively USE these when the job listing asks for skills "
-            "the candidate has not named explicitly but clearly possesses:\n"
+            "Implicit inference rules — these define what connections are valid:\n"
             "- Technology adjacency: using a platform implies its standard tooling "
             "(e.g., Kubernetes -> deployments/scaling/ingress; AWS -> IAM/CloudWatch)\n"
-            "- Infrastructure fundamentals: running production workloads on cloud + Kubernetes "
-            "implies hands-on networking, security, and routing knowledge. If the job asks for "
-            "networking/VPC/load balancing and the candidate runs K8s on AWS, SURFACE this — "
-            "add a bullet like 'Configured service routing and ingress across Kubernetes clusters' "
-            "or weave networking into an existing infrastructure bullet. "
-            "(AWS + Kubernetes -> VPC, subnets, DNS, security groups, load balancers, ingress)\n"
+            "- Infrastructure fundamentals: running cloud workloads implies foundational networking, "
+            "security, and routing knowledge "
+            "(e.g., AWS + Kubernetes -> VPC, subnets, DNS, security groups, load balancers, ingress)\n"
             "- Responsibility adjacency: a role implies its standard duties "
             "(e.g., incident response -> root cause analysis)\n"
             "- Domain adjacency: deep work in one area implies awareness of related areas\n"
-            "These are not optional — if a Tier 1 requirement matches an inference rule and "
-            "the candidate has the base experience, you MUST surface it.\n"
             "You may NOT infer: specific named tools not adjacent to the stack, organizational scope, "
             "leadership/mentoring, or certifications."
         ),
@@ -359,8 +353,8 @@ Each note must include:
 
 ---
 ALIGNMENT CHECKS (apply before producing output):
-- Every Tier 1 requirement with evidence in the base CV MUST appear in at least one bullet.
-- Tier 1 requirements with implicit evidence (inference rules allow it) SHOULD be surfaced.
+- Every Tier 1 requirement with explicit evidence in the base CV MUST appear in at least one bullet.
+- For every Tier 1 requirement marked "partial" in the gap analysis: check which inference rule connects the candidate's experience to the requirement. Then ensure at least one bullet or the summary explicitly surfaces that connection. If it doesn't, add or rewrite a bullet to make the connection visible.
 - No bullet may exceed the ownership level stated in the base CV.
 - No role compressed below the minimum bullet count.
 - The CV reflects both depth (target alignment) and breadth (full experience).
@@ -486,8 +480,8 @@ GAP ANALYSIS: 10-15 requirements, each with requirement, match_level, tier, evid
 Tier prioritization guides EMPHASIS, not ELIMINATION.
 
 ALIGNMENT CHECKS:
-- Every Tier 1 requirement with base CV evidence MUST appear in at least one bullet.
-- Tier 1 with implicit evidence SHOULD be surfaced.
+- Every Tier 1 requirement with explicit base CV evidence MUST appear in at least one bullet.
+- For every Tier 1 "partial" match: identify the inference rule that connects the candidate's experience to the requirement. Ensure at least one bullet surfaces that connection. If not, add or rewrite one.
 - No bullet exceeds stated ownership. No role below minimum bullet count.
 - Balance depth (target alignment) and breadth (full experience).
 
