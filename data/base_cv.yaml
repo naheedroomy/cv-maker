@@ -1,0 +1,186 @@
+certifications:
+- Certified Kubernetes Application Developer (CKAD) - April 2025
+- Certified Kubernetes Administrator (CKA) - Expected April 2026
+contact:
+  email: naheedroomy@gmail.com
+  github: github.com/naheedroomy
+  linkedin: linkedin.com/in/naheedroomy
+  location: Ulm, Germany
+  name: Naheed Roomy
+  phone: +49 155 105 00653
+education:
+- degree: BSc (Honours)
+  field: Computer Science
+  institution: University of Westminster
+  year: 2021
+experience:
+- bullets:
+  - Architected a shared agentic AI platform on EKS using kagent, kmcp, and LiteLLM,
+    providing a unified LLM gateway, reusable MCP tool servers (K8s, GitHub, Jenkins),
+    and CRD-driven agent lifecycle management — enabling new AI agents to be deployed
+    via a single YAML manifest with zero additional infrastructure.
+  - Standardized Helm deployments across 15+ microservices by migrating disparate
+    application charts to a centralized library chart model, eliminating 90% of template
+    redundancy (~150 files down to 15) and halving onboarding time for new services.
+  - Engineered zero-touch release pipelines with GitHub Actions enforcing semantic
+    versioning and conventional commits, removing all manual release overhead and
+    producing audit-ready deployment artifacts on every PR merge.
+  - Designed end-to-end GitOps workflows using ArgoCD, GitHub Actions, and Terraform,
+    transitioning legacy cloud infrastructure to strict IaC and enabling fully traceable,
+    reproducible AWS environments.
+  - Authored AWS CLI automation to programmatically track cloud optimization scores,
+    remediate security findings, and enforce cost-saving policies across the organization's
+    cloud footprint.
+  - Established production observability and incident response protocols by integrating
+    AWS CloudWatch and Datadog, driving measurable improvements in system availability
+    and reducing MTTD (Mean Time To Detect).
+  - Designed an event-driven processing pipeline on AWS by integrating S3, SQS, and
+    KEDA to dynamically scale Kubernetes jobs based on incoming workload, enabling
+    efficient, on-demand batch processing without native S3 triggers.
+  company: SyscoLabs
+  end: null
+  location: Colombo, Sri Lanka
+  start: 2025-07
+  technologies:
+  - EKS
+  - kagent
+  - kmcp
+  - LiteLLM
+  - K8s
+  - GitHub
+  - Jenkins
+  - YAML
+  - Helm
+  - microservices
+  - GitHub Actions
+  - ArgoCD
+  - Terraform
+  - IaC
+  - AWS
+  - AWS CLI
+  - AWS CloudWatch
+  - Datadog
+  - S3
+  - SQS
+  - KEDA
+  - Kubernetes
+  title: DevOps Engineer
+- bullets:
+  - Dockerized backend services and provisioned the Kubernetes cluster on Azure, achieving
+    99.9% uptime for production systems through container orchestration and health-check
+    automation.
+  - Automated 5+ critical bioinformatics workflows using Bash and WGS Linux tooling
+    (BLAST, SRA), reducing manual processing time by over 60%.
+  - Re-engineered Python Django management commands to batch-process 30M+ database
+    records, cutting per-job execution time and freeing up system resources for concurrent
+    workloads.
+  - Designed and maintained scalable REST APIs, ensuring reliable data flow between
+    frontend and backend services within the containerized platform.
+  company: Goenomics GmbH
+  end: 2024-08
+  location: Göttingen, Germany
+  start: 2023-01
+  technologies:
+  - Docker
+  - Kubernetes
+  - Azure
+  - Bash
+  - WGS Linux tooling
+  - BLAST
+  - SRA
+  - Python
+  - Django
+  - REST APIs
+  title: Backend & DevOps Engineer
+- bullets:
+  - Built a CI/CD pipeline from scratch using AWS CodePipeline and CodeBuild, reducing
+    deployment time by 50% with automated rollouts to Kubernetes clusters.
+  - Architected a microservices backend from the ground up, delivering 20+ RESTful
+    APIs in FastAPI designed for high availability and horizontal scalability.
+  - Deployed and managed Datadog-based monitoring across the stack, configuring dashboards
+    and alerting to maintain application health and infrastructure performance.
+  company: HiAcuity
+  end: 2022-09
+  location: Melbourne, Australia
+  start: 2021-09
+  technologies:
+  - CI/CD
+  - AWS CodePipeline
+  - AWS CodeBuild
+  - Kubernetes
+  - microservices
+  - RESTful APIs
+  - FastAPI
+  - Datadog
+  title: Backend & DevOps Engineer
+- bullets:
+  - Managed and maintained Production and UAT server environments on RedHat Linux,
+    ensuring reliable, secure server performance across release cycles.
+  - Introduced Ansible playbooks to automate environment provisioning and deployment,
+    replacing manual setup processes and reducing deployment times.
+  - Led production deployments on AWS using Kubernetes and Docker, operating scalable,
+    high-availability application workloads.
+  - Operated and debugged MongoDB in production, resolving database issues to maintain
+    system stability under load.
+  - Monitored system health using Prometheus, maintaining visibility into application
+    and infrastructure performance.
+  company: LinearSix Pvt Ltd
+  end: 2021-02
+  location: Colombo, Sri Lanka
+  start: 2020-07
+  technologies:
+  - RedHat Linux
+  - Ansible
+  - AWS
+  - Kubernetes
+  - Docker
+  - MongoDB
+  - Prometheus
+  title: Associate Software Engineer
+- bullets:
+  - Managed and maintained Production and UAT server environments on RedHat Linux,
+    supporting release cycles and ensuring server stability.
+  - Supported production deployments on AWS using Kubernetes and Docker, assisting
+    with container orchestration and application workloads.
+  - Monitored system health using Prometheus, maintaining visibility into application
+    and infrastructure performance.
+  company: LinearSix Pvt Ltd
+  end: 2020-07
+  location: Colombo, Sri Lanka
+  start: 2019-07
+  technologies:
+  - RedHat Linux
+  - AWS
+  - Kubernetes
+  - Docker
+  - Prometheus
+  title: Intern Software Engineer
+projects: []
+skills:
+- Docker
+- Kubernetes
+- AWS EKS
+- GitHub Actions
+- ArgoCD
+- AWS CodePipeline
+- AWS CodeBuild
+- Terraform
+- Ansible
+- AWS CloudFormation
+- AWS
+- Azure
+- Datadog
+- Prometheus
+- AWS CloudWatch
+- Python
+- Bash
+- PostgreSQL
+- MongoDB
+- FastAPI
+- Django
+summary: CKAD certified DevOps Engineer with 4+ years of experience spanning backend
+  development, cloud infrastructure, and AI-powered automation. Specialized in Kubernetes-native
+  platforms, GitOps workflows, and CI/CD automation on AWS and Azure, with hands-on
+  experience building agentic AI systems for infrastructure self-healing and operational
+  automation. Proven record of reducing deployment time, improving reliability, and
+  standardizing infrastructure at scale in production environments.

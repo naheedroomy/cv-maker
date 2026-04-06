@@ -39,6 +39,11 @@ Instructions:
 Fix obvious spelling and spacing errors in bullet points and descriptions. Do NOT change \
 company names, job titles, proper nouns, or technology names — only fix clear typos \
 (e.g. "mangement" -> "management", extra spaces, broken words).
+9. Multiple titles at the same company: if someone held multiple roles at the same company \
+(e.g. "Associate Software Engineer" then "Intern Software Engineer" at the same company) with \
+shared bullet points, create SEPARATE experience entries for each title with their own date ranges. \
+Distribute the bullets across both entries based on relevance and seniority. Every entry MUST have \
+at least 2 bullet points — never create an entry with an empty bullets list.
 
 Return ONLY a valid JSON object matching this exact schema — no markdown fences, no commentary:
 
