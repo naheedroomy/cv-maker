@@ -309,7 +309,7 @@ Use the gap analysis to guide tailoring.
 TITLES: {title_rule}
 
 SUMMARY: {summary_rule}
-Only mention certifications the candidate already holds — never expected/upcoming ones.
+Do NOT mention expected/upcoming certifications in the summary — only earned ones. But they MUST still appear in the certifications section.
 Do NOT use **bold** markers in the summary.
 The summary MUST reflect: the target role identity as stated in the job listing, and at least 2 core Tier 1 technologies the candidate demonstrably has.
 
@@ -337,7 +337,7 @@ SKILLS: Filter and reorder to lead with the most relevant.
 
 HIGHLIGHTED TECHNOLOGIES: Surface technologies from the base CV that the candidate knows but did not lead with. Plain names only.
 
-EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications from the base CV.
+EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications from the base CV — both earned AND expected/upcoming. NEVER drop a certification. This section is a direct copy.
 
 CONTACT: Pass through unchanged.
 
@@ -450,7 +450,7 @@ CREATIVITY LEVEL: {level} ({level_label})
 TITLES: {title_rule}
 
 SUMMARY: {summary_rule}
-Only mention certifications the candidate already holds. No **bold** in the summary.
+Do NOT mention expected/upcoming certifications in the summary — only earned ones. No **bold** in the summary.
 Must reflect: target role identity and at least 2 Tier 1 technologies the candidate has.
 
 EXPERIENCE:
@@ -471,7 +471,7 @@ SKILLS: {skills_rule}
 
 HIGHLIGHTED TECHNOLOGIES: Surface known-but-not-leading technologies from the base CV. Plain names only.
 
-EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications.
+EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications — both earned AND expected/upcoming. NEVER drop any.
 CONTACT: Pass through unchanged.
 
 TAILORING NOTES (5-10): Each with section, change, reason, action (modified/added/removed/reordered/unchanged), source.
