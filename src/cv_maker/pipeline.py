@@ -317,9 +317,13 @@ across the entire CV is fine, but they should not appear in every bullet.
 A good bullet is a single accomplishment with a measurable outcome, not a detailed narrative.
 3. SKILLS: Filter and reorder skills to lead with those most relevant to this role. \
 If you added a technology in the experience bullets above, you may also list it here — but the \
-primary home for added tech is in the bullet points, not standalone in this section.
+primary home for added tech is in the bullet points, not standalone in this section. \
+List skills as plain names only — no parenthetical qualifiers, no "alternative:" or "similar to:" \
+annotations, no comparisons to job listing technologies. If the candidate knows GitHub Actions \
+but the job asks for GitLab CI, list "GitHub Actions" — do NOT write "GitHub Actions (alternative: GitLab CI)".
 4. HIGHLIGHTED TECHNOLOGIES: Surface technologies from the base CV that the candidate \
-knows but did not lead with. Technologies you wove into experience bullets may also appear here.
+knows but did not lead with. Technologies you wove into experience bullets may also appear here. \
+Same rule: plain names only, no parenthetical qualifiers or comparisons.
 5. EDUCATION and PROJECTS and CERTIFICATIONS: Pass through unchanged. Always include ALL \
 certifications from the base CV — never omit any, even if they seem unrelated to the role.
 6. CONTACT: Pass through unchanged.
