@@ -218,3 +218,144 @@ def test_run_pipeline_raises_on_nonzero_exit(
     ))
     with pytest.raises(RuntimeError, match="exit 1"):
         run_pipeline(base_cv, sample_job_text)
+
+
+# ---------------------------------------------------------------------------
+# Creativity level tests
+# ---------------------------------------------------------------------------
+
+# Capture baseline prompt ONCE at module import (before any tests modify it).
+# This is the "golden" reference for backward compatibility.
+_BASELINE_SYSTEM_PROMPT = pipeline._build_system_prompt()
+_BASELINE_PROMPT_FOR_CHAT = pipeline._build_system_prompt_for_chat()
+
+
+class TestBuildCreativityInstructions:
+    """Tests for the _build_creativity_instructions helper."""
+
+    def test_level_2_returns_empty_string(self) -> None:
+        """Level 2 (default) returns empty string — no modifications to prompt."""
+        result = pipeline._build_creativity_instructions(2)
+        assert result == ""
+
+    def test_level_0_contains_strict_constraints(self) -> None:
+        """Level 0 (Strict) includes restrictive 'Do NOT' instructions."""
+        result = pipeline._build_creativity_instructions(0)
+        assert "Do NOT change any job titles" in result
+        assert "Do NOT add new bullet points" in result
+
+    def test_level_1_contains_conservative_constraints(self) -> None:
+        """Level 1 (Conservative) includes moderate restrictions."""
+        result = pipeline._build_creativity_instructions(1)
+        assert "Do NOT adjust job titles" in result
+
+    def test_level_3_contains_forward_permissions(self) -> None:
+        """Level 3 (Forward) includes aggressive expansion language."""
+        result = pipeline._build_creativity_instructions(3)
+        assert "aggressively expand partial matches" in result.lower() or "Aggressively expand partial matches" in result
+
+    def test_level_4_contains_bold_permissions(self) -> None:
+        """Level 4 (Bold) includes speculative fill-gap language."""
+        result = pipeline._build_creativity_instructions(4)
+        assert "fill gaps with plausible" in result.lower() or "Fill gaps with plausible" in result
+
+    def test_level_5_contains_creative_permissions(self) -> None:
+        """Level 5 (Creative) includes 'invent freely' language."""
+        result = pipeline._build_creativity_instructions(5)
+        assert "invent freely" in result.lower() or "Invent freely" in result
+
+    def test_all_levels_return_distinct_text(self) -> None:
+        """All six levels produce distinct instruction text."""
+        results = [pipeline._build_creativity_instructions(i) for i in range(6)]
+        assert len(set(results)) == 6, f"Expected 6 distinct results, got {len(set(results))}"
+
+
+class TestBuildSystemPromptCreativity:
+    """Tests for _build_system_prompt with creativity_level parameter."""
+
+    def test_level_2_identical_to_baseline(self) -> None:
+        """Level 2 produces byte-for-byte identical output to baseline (backward compat)."""
+        result = pipeline._build_system_prompt(2)
+        assert result == _BASELINE_SYSTEM_PROMPT
+
+    def test_default_identical_to_baseline(self) -> None:
+        """Calling with no argument produces same output as baseline."""
+        result = pipeline._build_system_prompt()
+        assert result == _BASELINE_SYSTEM_PROMPT
+
+    def test_level_0_prepends_restrictions(self) -> None:
+        """Level 0 instructions appear BEFORE the existing prompt content."""
+        result = pipeline._build_system_prompt(0)
+        strict_pos = result.find("CREATIVITY LEVEL: 0")
+        expert_pos = result.find("You are a CV tailoring expert")
+        assert strict_pos < expert_pos, "Level 0 instructions should be prepended"
+
+    def test_level_1_prepends_restrictions(self) -> None:
+        """Level 1 instructions appear BEFORE the existing prompt content."""
+        result = pipeline._build_system_prompt(1)
+        conservative_pos = result.find("CREATIVITY LEVEL: 1")
+        expert_pos = result.find("You are a CV tailoring expert")
+        assert conservative_pos < expert_pos, "Level 1 instructions should be prepended"
+
+    def test_level_3_appends_permissions(self) -> None:
+        """Level 3 instructions appear AFTER the existing prompt content."""
+        result = pipeline._build_system_prompt(3)
+        # The existing prompt's last major content
+        schema_pos = result.rfind("gap_diff")
+        forward_pos = result.find("CREATIVITY LEVEL: 3")
+        assert forward_pos > schema_pos, "Level 3 instructions should be appended"
+
+    def test_level_5_appends_permissions(self) -> None:
+        """Level 5 instructions appear AFTER the existing prompt content."""
+        result = pipeline._build_system_prompt(5)
+        schema_pos = result.rfind("gap_diff")
+        creative_pos = result.find("CREATIVITY LEVEL: 5")
+        assert creative_pos > schema_pos, "Level 5 instructions should be appended"
+
+
+class TestBuildSystemPromptForChatCreativity:
+    """Tests for _build_system_prompt_for_chat with creativity_level parameter."""
+
+    def test_level_2_identical_to_baseline(self) -> None:
+        """Level 2 for chat produces identical output to baseline."""
+        result = pipeline._build_system_prompt_for_chat(2)
+        assert result == _BASELINE_PROMPT_FOR_CHAT
+
+    def test_level_0_includes_restrictions(self) -> None:
+        """Level 0 for chat includes 'Do NOT change any job titles'."""
+        result = pipeline._build_system_prompt_for_chat(0)
+        assert "Do NOT change any job titles" in result
+
+
+class TestBuildPromptCreativity:
+    """Tests for _build_prompt with creativity_level."""
+
+    def test_level_0_includes_restrictions(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """_build_prompt with level 0 includes level 0 restrictions."""
+        result = pipeline._build_prompt(base_cv, sample_job_text, 0)
+        assert "Do NOT change any job titles" in result
+
+    def test_level_2_matches_baseline(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """_build_prompt with level 2 matches current behavior."""
+        baseline = pipeline._build_prompt(base_cv, sample_job_text)
+        result = pipeline._build_prompt(base_cv, sample_job_text, 2)
+        assert result == baseline
+
+
+class TestRunPipelineCreativity:
+    """Tests for run_pipeline with creativity_level parameter."""
+
+    def test_level_3_passes_through_to_prompt(
+        self, monkeypatch, base_cv: BaseCV, sample_job_text: str
+    ) -> None:
+        """run_pipeline(level=3) passes level through to prompt — prompt contains level 3 text."""
+        captured_prompts = []
+
+        def fake_run(cmd, **kwargs):
+            captured_prompts.append(kwargs.get("input", ""))
+            return _make_proc(TAILORED_CV_JSON)
+
+        monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(fake_run))
+        run_pipeline(base_cv, sample_job_text, 3)
+        assert len(captured_prompts) == 1
+        assert "CREATIVITY LEVEL: 3" in captured_prompts[0]
