@@ -356,7 +356,9 @@ ALIGNMENT CHECKS (apply before producing output):
 - Every Tier 1 requirement with explicit evidence in the base CV MUST appear in at least one bullet.
 - For every Tier 1 requirement marked "partial" in the gap analysis: check which inference rule connects the candidate's experience to the requirement. Then ensure at least one bullet or the summary explicitly surfaces that connection. If it doesn't, add or rewrite a bullet to make the connection visible.
 - No bullet may exceed the ownership level stated in the base CV.
-- No role compressed below the minimum bullet count.
+- No role compressed below the minimum bullet count: every experience entry MUST have at \
+least 2 bullet points. If a role in the base CV has 2 or fewer bullets, keep all of them — \
+optimize wording but never remove. Never return an experience entry with an empty bullets list.
 - The CV reflects both depth (target alignment) and breadth (full experience).
 - Optimize for BOTH relevance and coverage — not just a narrow match to the job listing.
 
@@ -482,7 +484,8 @@ Tier prioritization guides EMPHASIS, not ELIMINATION.
 ALIGNMENT CHECKS:
 - Every Tier 1 requirement with explicit base CV evidence MUST appear in at least one bullet.
 - For every Tier 1 "partial" match: identify the inference rule that connects the candidate's experience to the requirement. Ensure at least one bullet surfaces that connection. If not, add or rewrite one.
-- No bullet exceeds stated ownership. No role below minimum bullet count.
+- No bullet exceeds stated ownership. No role below minimum bullet count (2). \
+Never return empty bullets lists. If a role has 2 or fewer bullets, keep all of them.
 - Balance depth (target alignment) and breadth (full experience).
 
 Return ONLY valid JSON (no fences, no commentary) matching the schema provided in the user message."""
