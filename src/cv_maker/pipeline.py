@@ -9,12 +9,29 @@ import os
 import re
 import subprocess
 import time
+from enum import IntEnum
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
 from cv_maker.models import BaseCV, GapItem, TailoredCV
+
+# ---------------------------------------------------------------------------
+# Creativity levels
+# ---------------------------------------------------------------------------
+
+
+class Creativity(IntEnum):
+    """Creativity level governs how freely the model may deviate from the base CV."""
+
+    STRICT = 0       # Reorder only — zero content changes
+    CONSERVATIVE = 1  # Rewrite for emphasis, no new claims
+    DEFAULT = 2       # Surface implicit experience via inference rules
+    FORWARD = 3       # Aggressively surface implicit connections
+    BOLD = 4          # Add plausible adjacent-tech claims (flagged)
+    CREATIVE = 5      # Fabrication allowed (user assumes responsibility)
+
 
 # ---------------------------------------------------------------------------
 # Private helpers
@@ -85,7 +102,6 @@ def _extract_json(text: str) -> dict:
                     "action": "modified",
                 })
             elif isinstance(note, dict):
-                # Ensure all required fields exist
                 normalized.append({
                     "section": note.get("section", "General"),
                     "change": note.get("change", str(note)),
@@ -135,342 +151,348 @@ def _serialize_base_cv(cv: BaseCV) -> str:
     return yaml.dump(cv.model_dump(), default_flow_style=False, allow_unicode=True)
 
 
-def _build_creativity_instructions(level: int) -> str:
-    """Return creativity-level-specific instruction text.
+# ---------------------------------------------------------------------------
+# Prompt builder — single parameterized prompt
+# ---------------------------------------------------------------------------
 
-    Levels 0-1 return restrictive instructions (prepended to system prompt).
-    Level 2 returns empty string (default behavior — no modification).
-    Levels 3-5 return permissive instructions (appended to system prompt).
+# Per-concern rules keyed by creativity level thresholds.
+# The builder picks the highest level <= the requested creativity via _resolve_rule().
+
+_RULES: dict[str, dict[int, str]] = {
+    "titles": {
+        0: "Do NOT change any job titles. Use exact titles from the base CV.",
+        1: "Do NOT change any job titles. Use exact titles from the base CV.",
+        2: (
+            "You MAY adjust job titles slightly to align with the target role "
+            "(e.g., 'Software Engineer' -> 'Software & DevOps Engineer'). "
+            "NEVER inflate seniority — do not add Senior/Lead/Staff/Principal."
+        ),
+        3: (
+            "You MAY adjust job titles more freely to align with the target role. "
+            "NEVER inflate seniority — do not add Senior/Lead/Staff/Principal."
+        ),
+        4: (
+            "Job titles can be adjusted significantly to align with the target role. "
+            "NEVER inflate seniority — do not add Senior/Lead/Staff/Principal."
+        ),
+        5: "Job titles can be rewritten to match the target role exactly.",
+    },
+    "bullets": {
+        0: (
+            "Do NOT rewrite or add bullets. Only REORDER existing bullets by relevance. "
+            "Zero content changes."
+        ),
+        1: (
+            "You MAY rewrite bullets to emphasize relevant aspects, but every claim must be "
+            "explicitly stated in the base CV. No inferences, no new claims. "
+            "When in doubt, keep a bullet rather than remove it."
+        ),
+        2: (
+            "You MAY rewrite, split, combine, or reorder bullets. Every bullet must trace back "
+            "to a specific bullet in the base CV or an allowed implicit inference (see below). "
+            "When in doubt, keep a bullet rather than remove it — a slightly less relevant bullet "
+            "is better than a gap that makes the candidate look inexperienced."
+        ),
+        3: (
+            "Aggressively surface implicit connections. If the candidate's experience plausibly "
+            "includes a requirement, make that connection explicit. Add short new bullets "
+            "rather than inflating existing ones."
+        ),
+        4: (
+            "Actively fill gaps. For 'missing' requirements, you MAY add short bullets claiming "
+            "familiarity ONLY for technologies adjacent to the candidate's known stack. "
+            "Phrase as exposure, not ownership (e.g., 'Gained exposure to X through Y workflows'). "
+            "Document the evidence basis in tailoring_notes for candidate review."
+        ),
+        5: (
+            "Maximize relevance by filling all gaps. You MAY fabricate plausible experience "
+            "to address missing requirements. Keep the same concise bullet format. "
+            "WARNING: Output may contain fabricated claims — user assumes responsibility."
+        ),
+    },
+    "skills_injection": {
+        0: "Do NOT add any technologies not already listed in the base CV.",
+        1: "Do NOT add any technologies not already listed in the base CV.",
+        2: (
+            "If you wove a technology into experience bullets via inference, you MAY also "
+            "list it in skills. List skills as plain names — no parenthetical qualifiers, "
+            "no 'alternative:' or 'similar to:' annotations."
+        ),
+        3: (
+            "You MAY add technologies to the skills section that are clearly implied by the "
+            "candidate's stack. Plain names only."
+        ),
+        4: (
+            "You MAY add technologies the candidate plausibly knows based on their stack. "
+            "Plain names only."
+        ),
+        5: "Add any technologies that would strengthen the application. Plain names only.",
+    },
+    "summary": {
+        0: "Do NOT adjust the summary beyond minor word reordering.",
+        1: "Keep the summary closely aligned with the base CV's original framing.",
+        2: (
+            "Position the candidate to match the role's core identity. Reflect seniority signals "
+            "like ownership and cross-team impact. Prioritize the top 3 themes from the job description."
+        ),
+        3: "Be assertive in positioning the candidate as a strong fit for the role.",
+        4: "The summary should position the candidate as an excellent fit.",
+        5: "The summary should present the candidate as a perfect fit.",
+    },
+    "inference": {
+        0: "Do NOT make any inferences about implied experience.",
+        1: "Do NOT make any inferences about implied responsibilities.",
+        2: (
+            "Allowed implicit inferences:\n"
+            "- Technology adjacency: using a platform implies its standard tooling "
+            "(e.g., Kubernetes -> deployments/scaling; AWS -> IAM/CloudWatch)\n"
+            "- Infrastructure fundamentals: running cloud workloads implies foundational networking, "
+            "security, and load balancing knowledge "
+            "(e.g., AWS + Kubernetes -> VPC, subnets, DNS, security groups)\n"
+            "- Responsibility adjacency: a role implies its standard duties "
+            "(e.g., incident response -> root cause analysis)\n"
+            "- Domain adjacency: deep work in one area implies awareness of related areas\n"
+            "You may NOT infer: specific named tools not adjacent to the stack, organizational scope, "
+            "leadership/mentoring, or certifications."
+        ),
+        # Levels 3-5 inherit level 2 inference rules — the bullet rules above
+        # govern what the model is allowed to DO with those inferences.
+    },
+}
+
+
+def _resolve_rule(rule_name: str, level: int) -> str:
+    """Pick the instruction for the highest defined threshold <= level."""
+    levels = _RULES[rule_name]
+    applicable = [k for k in sorted(levels) if k <= level]
+    if not applicable:
+        applicable = [min(levels)]
+    return levels[applicable[-1]]
+
+
+def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> str:
+    """Build a single, self-consistent prompt parameterized by creativity level.
+
+    Instead of layering contradictory instructions, each concern (titles, bullets,
+    skills, summary, inference) is stated exactly once at the appropriate strictness.
     """
-    if level == 0:
-        return """\
-CREATIVITY LEVEL: 0 — STRICT MODE
-- Do NOT change any job titles. Use exact titles from the base CV.
-- Do NOT add new bullet points. Only reorder existing bullets.
-- Do NOT weave in technologies not explicitly listed in the base CV.
-- Do NOT adjust the summary beyond minor word reordering.
-- Do NOT make inferences about implied experience.
-- Only reorder sections and bullets to prioritize relevance. Zero content changes.
-"""
-    if level == 1:
-        return """\
-CREATIVITY LEVEL: 1 — CONSERVATIVE MODE
-- Do NOT adjust job titles. Keep original titles exactly.
-- You MAY rewrite bullet points to emphasize relevant aspects, but do not add claims beyond what is explicitly stated.
-- You MAY reorder skills and sections for relevance.
-- Do NOT weave in technologies unless the candidate explicitly lists them.
-- Do NOT make inferences about implied responsibilities.
-- Keep the summary closely aligned with the base CV's original framing.
-"""
-    if level == 2:
-        return ""
-    if level == 3:
-        return """\
-CREATIVITY LEVEL: 3 — FORWARD MODE
-Focus on ADDRESSING GAPS from the gap analysis:
-- For "partial" matches, aggressively surface implicit connections. If the candidate's experience \
-plausibly includes a requirement, make that connection explicit in a bullet.
-- You MAY infer responsibilities that are clearly implied by the candidate's role and seniority \
-(e.g., a senior engineer likely mentors juniors, a platform lead likely drives architectural decisions).
-- You MAY adjust job titles more freely to align with the target role (still no seniority inflation).
-- Be more assertive in the summary about positioning the candidate as a strong fit.
-- Keep bullets CONCISE. Do not make them longer — make them more targeted. Add new short bullets \
-rather than expanding existing ones into paragraphs.
-"""
-    if level == 4:
-        return """\
-CREATIVITY LEVEL: 4 — BOLD MODE
-Actively fill gaps identified in the gap analysis:
-- For "missing" requirements, you MAY add short bullet points claiming familiarity ONLY IF \
-the technology is adjacent to tools already used in the base CV. Phrase as exposure, not ownership \
-(e.g., "Gained exposure to Terraform through infrastructure provisioning workflows" — not \
-"Architected infrastructure using Terraform").
-- You MAY add technologies to the skills section that the candidate plausibly knows based on their stack.
-- Job titles can be adjusted more significantly to align with the target role (still no seniority inflation).
-- The summary should position the candidate as an excellent fit.
-- Keep bullets SHORT and punchy — one accomplishment per bullet. Do NOT write paragraph-length bullets. \
-Adding more short bullets is better than making fewer bullets longer.
-- For each added claim, include the evidence basis in tailoring_notes so the candidate can verify.
-"""
-    if level == 5:
-        return """\
-CREATIVITY LEVEL: 5 — CREATIVE MODE
-Maximize relevance by filling all gaps:
-- You MAY fabricate plausible experience and technology claims to address "missing" requirements.
-- Job titles can be rewritten to match the target role.
-- The summary should present the candidate as a perfect fit.
-- Add technologies and skills that would strengthen the application.
-- Keep the same concise bullet format — short, punchy accomplishments. Do NOT write verbose bullets. \
-The goal is more relevant content, not more words per bullet.
-WARNING: Output at this level may contain fabricated claims. User assumes responsibility for accuracy.
-"""
-    return ""
+    level = max(0, min(5, creativity_level))
+    base_cv_yaml = _serialize_base_cv(base_cv)
 
+    title_rule = _resolve_rule("titles", level)
+    bullet_rule = _resolve_rule("bullets", level)
+    skills_rule = _resolve_rule("skills_injection", level)
+    summary_rule = _resolve_rule("summary", level)
+    inference_rule = _resolve_rule("inference", level)
 
-def _build_system_prompt(creativity_level: int = 2) -> str:
-    """Build the system prompt with instructions and output schema.
+    level_label = Creativity(level).name
 
-    Used by chat-based providers (OpenAI, Gemini) as the system message.
-    Claude CLI concatenates this with the user prompt via _build_prompt().
+    prompt = f"""\
+You are a CV tailoring expert. Given a candidate's base CV and a job listing, produce a tailored CV and gap analysis.
 
-    For creativity levels 0-1, restrictive instructions are PREPENDED.
-    For level 2 (default), the prompt is returned unchanged.
-    For creativity levels 3-5, permissive instructions are APPENDED.
-    """
-    instructions = _build_creativity_instructions(creativity_level)
-    base_prompt = """\
-You are a CV tailoring expert. Given a candidate's base CV and a job listing, you will:
-1. Analyze the job requirements and compute a gap diff
-2. Produce a tailored CV optimized for the role
+CREATIVITY LEVEL: {level} ({level_label})
 
-BULLET SOURCE OF TRUTH:
-The base CV is the ONLY source of truth. It contains EVERYTHING the candidate has done — \
-every role, every bullet, every technology. Not every application needs every bullet. \
-You may:
-- Reorder, rewrite, split, or combine bullets from the base CV
-- Surface implicit experience already evidenced in the base CV
-- OMIT bullets that are irrelevant to this specific role
-- Select the most relevant subset while keeping enough breadth for well-roundedness
-You may NOT introduce entirely new experiences, responsibilities, or technologies that cannot \
-be traced back to specific content in the base CV. If adding a new bullet, it must be a \
-transformation or extraction of existing content — not a new claim.
+---
+STEP 1 — GAP ANALYSIS
 
-Instructions:
+Extract 10-15 key requirements from the job listing. For each:
+- Scan the ENTIRE base CV for evidence (all roles, all bullets). Check both explicit mentions and implicit signals.
+- Assign match_level: "strong" (direct evidence), "partial" (implicit/related), or "missing" (no evidence).
+- Assign tier: 1 (core tech stack), 2 (core responsibilities), 3 (nice-to-haves).
+- Tier prioritization guides EMPHASIS, not ELIMINATION. Do not remove valuable experience just because it is Tier 3.
 
-GAP ANALYSIS:
-- Extract key requirements and technologies from the job listing (aim for 10-15).
-- For each requirement, evaluate the base CV for evidence. Consider both explicit mentions AND \
-implicit signals (e.g., observability work implies monitoring and alerting; CI/CD work implies \
-build, test, and deploy automation; Kubernetes work implies container orchestration and scaling).
-- Assign a match_level: "strong" (direct evidence), "partial" (implicit/related), or "missing" (no evidence).
-- PRIORITIZE requirements into tiers:
-  Tier 1: Core technical stack (must-have technologies and platforms)
-  Tier 2: Core responsibilities (e.g., CI/CD, observability, incident response)
-  Tier 3: Secondary tools and nice-to-haves
-- Tier prioritization should guide EMPHASIS, not ELIMINATION. Focus CV tailoring primarily on \
-Tier 1 and Tier 2, but do NOT remove valuable experience solely because it is Tier 3. \
-Tier 3 skills still contribute to breadth and credibility.
-- Include this as "gap_diff" in the output.
+---
+STEP 2 — TAILORED CV
 
-ALLOWED IMPLICIT INFERENCES:
-When a candidate's experience clearly implies adjacent skills, you may surface them. \
-Allowed inference patterns:
-- Technology adjacency: using a platform implies its standard tooling \
-(e.g., Kubernetes implies deployments/scaling; AWS implies IAM/CloudWatch; CI/CD implies pipeline automation)
-- Infrastructure fundamentals: running workloads on a cloud platform implies working knowledge of its \
-foundational layer (e.g., AWS + Kubernetes implies VPC, networking, subnets, load balancing, DNS, \
-security groups; Azure implies resource groups, VNETs; any cloud production work implies basic \
-networking and security configuration)
-- Responsibility adjacency: a role implies its standard duties \
-(e.g., incident response implies root cause analysis; platform work implies reliability engineering)
-- Domain adjacency: deep work in one area implies awareness of related areas \
-(e.g., backend development implies API design; infrastructure work implies monitoring)
-You may NOT infer:
-- Specific named tools not mentioned or clearly adjacent to the candidate's stack
-- Organizational scope (team-wide or company-wide ownership) unless explicitly stated
-- Leadership, mentoring, or management unless explicitly stated
-- Certifications or formal qualifications
+Use the gap analysis to guide tailoring.
 
-CV TAILORING — address each section:
-1. SUMMARY: Position the candidate to match the role's core identity (e.g., Platform Engineer, SRE, DevOps). \
-Reflect seniority signals such as ownership, system design, and cross-team impact. \
-Prioritize the top 3 themes from the job description. \
-Only mention certifications the candidate already holds. Do NOT mention expected/upcoming/in-progress certifications in the summary. \
-Do NOT use **bold** markers in the summary — bold formatting is only for experience bullets.
-2. EXPERIENCE:
-   - PRESERVE the exact structure of roles from the base CV. If the base CV has ONE entry for a company, \
-output exactly ONE entry for that company. Do NOT split a single role into multiple entries. \
-All bullets for a role must stay under the same experience entry.
-   - NEVER change dates (start, end) from the base CV. The dates are correct as provided — even if they \
-appear to be in the future. Your training data has a knowledge cutoff; the base CV reflects real-world dates.
-   - Keep entries in reverse chronological order (most recent first). Do NOT reorder by relevance.
-   - Rewrite bullets to sound natural and professional. Do NOT write bullets that read like they were \
-written specifically to match a job listing. They should sound like real accomplishments, not keyword-stuffed responses. \
-Avoid directly reusing phrases from the job listing. Prefer paraphrasing into natural, experience-driven language.
-   - EVIDENCE ANCHORING: Every bullet must be traceable to (a) a specific bullet in the base CV, or \
-(b) an allowed implicit inference from the rules above. If you cannot point to the source, do not include the claim.
-   - Preserve the level of ownership indicated in the base CV. Do not upgrade action verbs \
-(e.g., "worked on" to "led", "contributed to" to "architected") unless clearly supported by the original bullet.
-   - COVERAGE CONSTRAINT: Do NOT over-prune. Each role should retain enough bullets to reflect \
-the breadth of work performed. Even if a bullet is not directly tied to Tier 1 requirements, \
-include it if it demonstrates complementary skills, adds context to the role, or strengthens \
-overall credibility. Aim for:
-     - 4-6 bullets for highly relevant roles
-     - 3-5 bullets for moderately relevant roles
-     - 2-3 bullets minimum for any role included in the CV
-   - The base CV is a superset — select, combine, split, or rewrite bullets based on what \
-is most relevant to THIS job, but do not compress a role down to fewer bullets than the minimums above.
-   - SIGNAL DENSITY: Prefer high signal density — a technology, an action, and an outcome where possible. \
-Avoid generic phrasing like "worked on", "involved in", "helped with". Prefer concrete, measurable statements. \
-However, do NOT merge or remove bullets just to increase density — preserving meaningful experience is more important than per-bullet optimization.
-   - **BOLD key technologies and tools** in each bullet by wrapping them in **double asterisks**. \
-For example: "Built a CI/CD pipeline using **AWS CodePipeline** and **CodeBuild**, reducing deployment time by 50%."
-   - You MAY adjust job titles slightly to better align with the target role. For example, \
-if the base CV says "Software Engineer" but the job listing is for a DevOps role, you can adjust \
-to "Software & DevOps Engineer" or similar — keep it honest but optimize for relevance. \
-However, NEVER inflate seniority level. Do NOT add "Senior", "Lead", "Staff", "Principal", or \
-similar seniority prefixes that are not in the original title.
-   - If the job listing requires technologies the candidate hasn't explicitly listed, you MAY \
-weave them naturally into existing bullet points ONLY if they are adjacent to the candidate's \
-known stack (per the inference rules above). Phrase as exposure, not ownership.
-   - The "technologies" field for each experience entry must only include tools explicitly referenced \
-in the bullets for that role. Do not introduce new technologies in this field that aren't mentioned in the bullets.
-   - Avoid overusing em dashes (—). Use commas, periods, or semicolons for variety. One or two em dashes \
-across the entire CV is fine, but they should not appear in every bullet.
-   - Keep bullets CONCISE — one to two lines each. Do not write paragraph-length bullets. \
-A good bullet is a single accomplishment with a measurable outcome, not a detailed narrative.
-3. SKILLS: Filter and reorder skills to lead with those most relevant to this role. \
-If you added a technology in the experience bullets above, you may also list it here — but the \
-primary home for added tech is in the bullet points, not standalone in this section. \
-List skills as plain names only — no parenthetical qualifiers, no "alternative:" or "similar to:" \
-annotations, no comparisons to job listing technologies. If the candidate knows GitHub Actions \
-but the job asks for GitLab CI, list "GitHub Actions" — do NOT write "GitHub Actions (alternative: GitLab CI)".
-4. HIGHLIGHTED TECHNOLOGIES: Surface technologies from the base CV that the candidate \
-knows but did not lead with. Technologies you wove into experience bullets may also appear here. \
-Same rule: plain names only, no parenthetical qualifiers or comparisons.
-5. EDUCATION and PROJECTS and CERTIFICATIONS: Pass through unchanged. Always include ALL \
-certifications from the base CV — never omit any, even if they seem unrelated to the role.
-6. CONTACT: Pass through unchanged.
-7. TAILORING NOTES: Provide a list of 5-10 structured notes. Each note must include:
-   - "section": which part of the CV was changed (e.g., "Summary", "SyscoLabs experience", "Skills")
-   - "change": what specifically was changed
-   - "reason": why — which job requirement or strategic goal it targets
-   - "action": one of "modified", "added", "removed", "reordered", or "unchanged"
-   - "source": the evidence basis — either a quote/reference from the base CV, or which \
-implicit inference rule justifies the change. This makes hallucination detectable.
+TITLES: {title_rule}
 
-CLOSED-LOOP REASONING — use the gap_diff to guide CV tailoring:
-- Emphasize "strong" matches prominently in bullets and summary. These are Tier 1 priorities.
-- Expand and reframe "partial" matches using the allowed implicit inference rules above. \
-Surface implied responsibilities naturally in the bullets — do not present them as separate, unrelated claims.
-- Do NOT attempt to compensate for "missing" requirements beyond honest representation.
+SUMMARY: {summary_rule}
+Only mention certifications the candidate already holds — never expected/upcoming ones.
+Do NOT use **bold** markers in the summary.
+The summary MUST reflect: the target role identity as stated in the job listing, and at least 2 core Tier 1 technologies the candidate demonstrably has.
 
-ALIGNMENT ENFORCEMENT:
-For each Tier 1 requirement identified in the gap analysis:
-- If explicit evidence exists in the base CV → it MUST appear in at least one bullet.
-- If implicit evidence exists (inference rules allow it) → it SHOULD be surfaced in at least one bullet.
-- If a Tier 1 requirement with available evidence is not surfaced anywhere in the CV → revise before finalizing.
+EXPERIENCE:
+{bullet_rule}
+Additional constraints:
+- Preserve exact role structure from the base CV. If the base CV has ONE entry for a company, output exactly ONE entry. Do NOT split a single role into multiple entries.
+- Never change dates (start, end) from the base CV.
+- Keep reverse chronological order.
+- Write natural, professional bullets — avoid keyword-stuffing or directly reusing phrases from the job listing.
+- Preserve ownership levels from the base CV. Do not upgrade verbs ("worked on" -> "led") unless clearly supported.
+- Bullet count per role: 4-6 for highly relevant, 3-5 for moderate, 2-3 minimum for any included role. Do NOT compress below these minimums.
+- Signal density: prefer a technology, an action, and an outcome per bullet. Avoid "worked on", "involved in", "helped with". But do NOT merge or remove bullets just to increase density — preserving meaningful experience matters more.
+- **Bold** key technologies in bullets.
+- Keep bullets concise — one accomplishment each, 1-2 lines max.
+- The "technologies" field per role must only list tools referenced in that role's bullets.
+- Avoid overusing em dashes; vary punctuation.
+- Skills and highlighted_technologies: plain names only — no parenthetical qualifiers or "alternative:" annotations.
 
-SUMMARY TARGETING:
-The summary MUST explicitly reflect:
-- The target role identity (e.g., DevOps Engineer, Platform Engineer, SRE) as it appears in the job listing.
-- At least 2 core technologies from Tier 1 requirements that the candidate demonstrably has.
+IMPLICIT INFERENCE RULES:
+{inference_rule}
 
-BALANCE:
-- Optimize for BOTH relevance (alignment to job) AND coverage (representation of full experience).
-- A strong CV shows both depth in the target area AND breadth across the candidate's background.
-- When in doubt, keep a bullet rather than remove it — a slightly less relevant bullet is better \
-than a gap that makes the candidate look inexperienced.
+SKILLS: Filter and reorder to lead with the most relevant.
+{skills_rule}
 
-FINAL CHECK:
-- Before producing output, ensure:
-  - Every bullet is supported by the base CV or the allowed inference rules above
-  - No claim exceeds the level of ownership stated in the base CV
-  - All Tier 1 requirements are clearly represented in the CV if any evidence exists
-  - No role has been compressed below the minimum bullet count (2-3 minimum per role)
-  - The CV reflects both depth and breadth — not just a narrow match to the job listing
+HIGHLIGHTED TECHNOLOGIES: Surface technologies from the base CV that the candidate knows but did not lead with. Plain names only.
 
-Return ONLY a valid JSON object matching this exact schema — no markdown fences, no commentary:
+EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications from the base CV.
 
-{
-  "contact": {"name": "<str>", "email": "<str>", "linkedin": "<str or null>",
-               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>"},
+CONTACT: Pass through unchanged.
+
+---
+STEP 3 — TAILORING NOTES (5-10)
+
+Each note must include:
+- "section": which CV section was changed
+- "change": what was changed
+- "reason": which job requirement it targets
+- "action": one of "modified", "added", "removed", "reordered", "unchanged"
+- "source": the base CV reference or inference rule that justifies the change
+
+---
+ALIGNMENT CHECKS (apply before producing output):
+- Every Tier 1 requirement with evidence in the base CV MUST appear in at least one bullet.
+- Tier 1 requirements with implicit evidence (inference rules allow it) SHOULD be surfaced.
+- No bullet may exceed the ownership level stated in the base CV.
+- No role compressed below the minimum bullet count.
+- The CV reflects both depth (target alignment) and breadth (full experience).
+- Optimize for BOTH relevance and coverage — not just a narrow match to the job listing.
+
+---
+BASE CV:
+{base_cv_yaml}
+---
+JOB LISTING:
+{job_text}
+---
+
+Return ONLY a valid JSON object (no markdown fences, no commentary) matching this schema:
+
+{{
+  "contact": {{"name": "<str>", "email": "<str>", "linkedin": "<str or null>",
+               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>"}},
   "summary": "<tailored summary>",
   "experience": [
-    {
+    {{
       "company": "<str>",
       "title": "<str>",
-      "location": "<str or null — pass through from base CV>",
+      "location": "<str or null>",
       "start": "<YYYY-MM>",
       "end": "<YYYY-MM or null>",
       "bullets": ["<rewritten bullet>"],
       "technologies": ["<tech>"]
-    }
+    }}
   ],
   "skills": ["<most relevant first>"],
-  "education": [{"institution": "<str>", "degree": "<str>",
-                   "field": "<str or null>", "year": "<int or null>"}],
-  "projects": [{"name": "<str>", "description": "<str>",
-                  "technologies": [], "url": "<str or null>"}],
+  "education": [{{"institution": "<str>", "degree": "<str>",
+                   "field": "<str or null>", "year": "<int or null>"}}],
+  "projects": [{{"name": "<str>", "description": "<str>",
+                  "technologies": [], "url": "<str or null>"}}],
   "certifications": ["<str>"],
-  "highlighted_technologies": ["<surfaced tech from base CV>"],
+  "highlighted_technologies": ["<surfaced tech>"],
   "tailoring_notes": [
-    {
+    {{
       "section": "<CV section>",
-      "change": "<what was changed>",
-      "reason": "<why — which job requirement it targets>",
+      "change": "<what>",
+      "reason": "<why>",
       "action": "modified",
-      "source": "<base CV reference or inference rule>"
-    }
+      "source": "<evidence>"
+    }}
   ],
   "gap_diff": [
-    {
-      "requirement": "<requirement from job listing>",
-      "match_level": "strong",
+    {{
+      "requirement": "<str>",
+      "match_level": "strong|partial|missing",
       "tier": 1,
-      "evidence": "<quote or reference from base CV>"
-    },
-    {
-      "requirement": "<partially matched requirement>",
-      "match_level": "partial",
-      "tier": 2,
-      "evidence": "<implicit or related evidence from base CV>"
-    },
-    {
-      "requirement": "<missing requirement>",
-      "match_level": "missing",
-      "tier": 3,
-      "evidence": ""
-    }
+      "evidence": "<str>"
+    }}
   ]
-}"""
-    # Level 2 (default): no modification — return base prompt unchanged.
-    if not instructions:
-        return base_prompt
-    # Levels 0-1: prepend restrictive instructions before the base prompt.
-    if creativity_level <= 1:
-        return instructions + "\n" + base_prompt
-    # Levels 3-5: append permissive instructions after the base prompt.
-    return base_prompt + "\n\n" + instructions
-
-
-_COT_PREAMBLE = """\
-IMPORTANT — think step-by-step before producing the JSON output:
-
-Step 1: Read the entire job listing carefully. Identify ALL requirements, technologies, \
-and responsibilities mentioned — aim for 10-15 distinct requirements. Do not stop at 3-5.
-
-Step 2: For EACH requirement, scan the ENTIRE base CV (all roles, all bullets) for evidence. \
-Check for both direct keyword matches AND implicit signals. For each match, note the specific \
-company, role, and bullet that provides evidence. Quote or paraphrase the evidence.
-
-Step 3: Assign match_level (strong/partial/missing) for each requirement. A "partial" match \
-must include an explanation of what implicit signal connects the evidence to the requirement.
-
-Step 4: Using your gap analysis, rewrite each experience section. For "strong" matches, \
-make the connection prominent. For "partial" matches, surface the implied experience. \
-For "missing" matches, do not fabricate.
-
-Step 5: Write 5-10 detailed tailoring notes. Each note should explain: what you changed, \
-which specific job requirement it targets, and why the change is justified by the base CV.
-
-Now produce the JSON output following all the instructions above.\n\n"""
+}}"""
+    return prompt
 
 
 def _build_system_prompt_for_chat(creativity_level: int = 2) -> str:
-    """Build system prompt with chain-of-thought preamble for chat-based providers.
+    """Build system prompt for chat-based providers (OpenAI, Gemini).
 
-    OpenAI and Gemini need explicit step-by-step reasoning instructions
-    to produce exhaustive, detailed output comparable to Claude.
+    These providers need explicit chain-of-thought instructions
+    to produce exhaustive output comparable to Claude.
+    The CoT preamble is prepended to the system message;
+    the CV + job listing go in the user message via _build_user_prompt().
     """
-    return _COT_PREAMBLE + _build_system_prompt(creativity_level)
+    level = max(0, min(5, creativity_level))
+    level_label = Creativity(level).name
+
+    title_rule = _resolve_rule("titles", level)
+    bullet_rule = _resolve_rule("bullets", level)
+    skills_rule = _resolve_rule("skills_injection", level)
+    summary_rule = _resolve_rule("summary", level)
+    inference_rule = _resolve_rule("inference", level)
+
+    return f"""\
+IMPORTANT — think step-by-step before producing the JSON output:
+
+Step 1: Read the entire job listing. Identify ALL requirements, technologies, and responsibilities (aim for 10-15).
+Step 2: For EACH requirement, scan the ENTIRE base CV for evidence. Note the specific company, role, and bullet. Quote or paraphrase.
+Step 3: Assign match_level (strong/partial/missing) and tier (1/2/3) for each.
+Step 4: Rewrite each experience section guided by the gap analysis.
+Step 5: Write 5-10 detailed tailoring notes with evidence references.
+
+Now produce the JSON output following all instructions below.
+
+---
+
+You are a CV tailoring expert. Given a candidate's base CV and a job listing, produce a tailored CV and gap analysis.
+
+CREATIVITY LEVEL: {level} ({level_label})
+
+TITLES: {title_rule}
+
+SUMMARY: {summary_rule}
+Only mention certifications the candidate already holds. No **bold** in the summary.
+Must reflect: target role identity and at least 2 Tier 1 technologies the candidate has.
+
+EXPERIENCE:
+{bullet_rule}
+- Preserve exact role structure from base CV. One entry per company = one output entry. Do NOT split roles.
+- Preserve dates and reverse chronological order. Natural, professional language — no keyword-stuffing.
+- Preserve ownership levels. Don't upgrade verbs unless supported.
+- Bullet count: 4-6 (high relevance), 3-5 (moderate), 2-3 minimum. Do NOT compress below minimums.
+- Signal density: prefer technology + action + outcome per bullet. But do NOT merge/remove bullets just for density.
+- **Bold** key technologies. Concise — 1 accomplishment per bullet, 1-2 lines max.
+- "technologies" field per role: only tools referenced in that role's bullets.
+- Skills and highlighted_technologies: plain names only — no parenthetical qualifiers.
+
+INFERENCE RULES:
+{inference_rule}
+
+SKILLS: {skills_rule}
+
+HIGHLIGHTED TECHNOLOGIES: Surface known-but-not-leading technologies from the base CV. Plain names only.
+
+EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications.
+CONTACT: Pass through unchanged.
+
+TAILORING NOTES (5-10): Each with section, change, reason, action (modified/added/removed/reordered/unchanged), source.
+
+GAP ANALYSIS: 10-15 requirements, each with requirement, match_level, tier, evidence.
+Tier prioritization guides EMPHASIS, not ELIMINATION.
+
+ALIGNMENT CHECKS:
+- Every Tier 1 requirement with base CV evidence MUST appear in at least one bullet.
+- Tier 1 with implicit evidence SHOULD be surfaced.
+- No bullet exceeds stated ownership. No role below minimum bullet count.
+- Balance depth (target alignment) and breadth (full experience).
+
+Return ONLY valid JSON (no fences, no commentary) matching the schema provided in the user message."""
 
 
 def _build_user_prompt(base_cv: BaseCV, job_text: str) -> str:
     """Build the user prompt containing the CV and job listing data."""
     base_cv_yaml = _serialize_base_cv(base_cv)
     return f"""\
-BASE CV (YAML format — the candidate's complete experience):
+BASE CV:
 ---
 {base_cv_yaml}
 ---
@@ -481,20 +503,53 @@ JOB LISTING:
 ---
 
 Analyze the job listing thoroughly. Extract ALL requirements (aim for 10-15). \
-For each requirement, cite specific evidence from specific roles in the base CV. \
-Then produce the tailored CV as a single JSON object."""
+For each, cite specific evidence from the base CV. Then produce the tailored CV \
+as a single JSON object matching this schema:
 
-
-def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> str:
-    """Build combined prompt for Claude CLI (no system message support).
-
-    Concatenates system prompt + user prompt into a single string.
-    """
-    return _build_system_prompt(creativity_level) + "\n\n" + _build_user_prompt(base_cv, job_text)
+{{
+  "contact": {{"name": "<str>", "email": "<str>", "linkedin": "<str or null>",
+               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>"}},
+  "summary": "<tailored summary>",
+  "experience": [
+    {{
+      "company": "<str>",
+      "title": "<str>",
+      "location": "<str or null>",
+      "start": "<YYYY-MM>",
+      "end": "<YYYY-MM or null>",
+      "bullets": ["<rewritten bullet>"],
+      "technologies": ["<tech>"]
+    }}
+  ],
+  "skills": ["<most relevant first>"],
+  "education": [{{"institution": "<str>", "degree": "<str>",
+                   "field": "<str or null>", "year": "<int or null>"}}],
+  "projects": [{{"name": "<str>", "description": "<str>",
+                  "technologies": [], "url": "<str or null>"}}],
+  "certifications": ["<str>"],
+  "highlighted_technologies": ["<surfaced tech>"],
+  "tailoring_notes": [
+    {{
+      "section": "<CV section>",
+      "change": "<what>",
+      "reason": "<why>",
+      "action": "modified",
+      "source": "<evidence>"
+    }}
+  ],
+  "gap_diff": [
+    {{
+      "requirement": "<str>",
+      "match_level": "strong|partial|missing",
+      "tier": 1,
+      "evidence": "<str>"
+    }}
+  ]
+}}"""
 
 
 # ---------------------------------------------------------------------------
-# Public entry point — single combined Claude call
+# Public entry point
 # ---------------------------------------------------------------------------
 
 

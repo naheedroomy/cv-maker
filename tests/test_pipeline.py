@@ -9,7 +9,7 @@ import pytest
 
 import cv_maker.pipeline as pipeline
 from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.pipeline import _build_prompt, run_pipeline
+from cv_maker.pipeline import Creativity, _build_prompt, _resolve_rule, run_pipeline
 
 # ---------------------------------------------------------------------------
 # Module-level JSON fixtures — minimal valid payloads matching each schema
@@ -221,125 +221,121 @@ def test_run_pipeline_raises_on_nonzero_exit(
 
 
 # ---------------------------------------------------------------------------
-# Creativity level tests
+# Parameterized prompt — _resolve_rule tests
 # ---------------------------------------------------------------------------
 
-# Capture baseline prompt ONCE at module import (before any tests modify it).
-# This is the "golden" reference for backward compatibility.
-_BASELINE_SYSTEM_PROMPT = pipeline._build_system_prompt()
-_BASELINE_PROMPT_FOR_CHAT = pipeline._build_system_prompt_for_chat()
 
+class TestResolveRule:
+    """Tests for _resolve_rule — picks the right instruction per creativity level."""
 
-class TestBuildCreativityInstructions:
-    """Tests for the _build_creativity_instructions helper."""
-
-    def test_level_2_returns_empty_string(self) -> None:
-        """Level 2 (default) returns empty string — no modifications to prompt."""
-        result = pipeline._build_creativity_instructions(2)
-        assert result == ""
-
-    def test_level_0_contains_strict_constraints(self) -> None:
-        """Level 0 (Strict) includes restrictive 'Do NOT' instructions."""
-        result = pipeline._build_creativity_instructions(0)
+    def test_exact_match(self) -> None:
+        """Exact level key returns that level's instruction."""
+        result = _resolve_rule("titles", 0)
         assert "Do NOT change any job titles" in result
-        assert "Do NOT add new bullet points" in result
 
-    def test_level_1_contains_conservative_constraints(self) -> None:
-        """Level 1 (Conservative) includes moderate restrictions."""
-        result = pipeline._build_creativity_instructions(1)
-        assert "Do NOT adjust job titles" in result
+    def test_inherits_from_lower_level(self) -> None:
+        """If no key for requested level, inherits from highest key below it."""
+        # Inference only defines 0, 1, 2 — level 4 should inherit from 2
+        result = _resolve_rule("inference", 4)
+        assert "Technology adjacency" in result
 
-    def test_level_3_contains_forward_permissions(self) -> None:
-        """Level 3 (Forward) focuses on addressing gaps."""
-        result = pipeline._build_creativity_instructions(3)
-        assert "ADDRESSING GAPS" in result
+    def test_all_rules_have_level_2(self) -> None:
+        """Every rule concern has a level 2 definition (the default)."""
+        for rule_name in pipeline._RULES:
+            result = _resolve_rule(rule_name, 2)
+            assert isinstance(result, str)
+            assert len(result) > 0
 
-    def test_level_4_contains_bold_permissions(self) -> None:
-        """Level 4 (Bold) includes fill-gap language."""
-        result = pipeline._build_creativity_instructions(4)
-        assert "fill gaps" in result.lower()
 
-    def test_level_5_contains_creative_permissions(self) -> None:
-        """Level 5 (Creative) includes fabrication language."""
-        result = pipeline._build_creativity_instructions(5)
+class TestParameterizedPrompt:
+    """Tests for the parameterized prompt builder."""
+
+    def test_level_0_contains_strict_title_rule(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Level 0 prompt includes 'Do NOT change any job titles'."""
+        result = _build_prompt(base_cv, sample_job_text, 0)
+        assert "Do NOT change any job titles" in result
+
+    def test_level_0_contains_strict_bullet_rule(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Level 0 prompt includes 'Only REORDER existing bullets'."""
+        result = _build_prompt(base_cv, sample_job_text, 0)
+        assert "Only REORDER existing bullets" in result
+
+    def test_level_2_contains_inference_rules(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Level 2 prompt includes inference rules (technology adjacency etc.)."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "Technology adjacency" in result
+        assert "Infrastructure fundamentals" in result
+
+    def test_level_4_contains_exposure_language(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Level 4 prompt includes 'exposure, not ownership' language."""
+        result = _build_prompt(base_cv, sample_job_text, 4)
+        assert "exposure" in result.lower()
+
+    def test_level_5_contains_fabrication_warning(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Level 5 prompt includes fabrication warning."""
+        result = _build_prompt(base_cv, sample_job_text, 5)
         assert "fabricate" in result.lower()
+        assert "WARNING" in result
 
-    def test_all_levels_return_distinct_text(self) -> None:
-        """All six levels produce distinct instruction text."""
-        results = [pipeline._build_creativity_instructions(i) for i in range(6)]
-        assert len(set(results)) == 6, f"Expected 6 distinct results, got {len(set(results))}"
+    def test_level_label_embedded(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Prompt includes the level number and name."""
+        result = _build_prompt(base_cv, sample_job_text, 3)
+        assert "CREATIVITY LEVEL: 3 (FORWARD)" in result
 
+    def test_all_levels_produce_distinct_prompts(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """All 6 levels produce distinct prompt text."""
+        prompts = [_build_prompt(base_cv, sample_job_text, i) for i in range(6)]
+        assert len(set(prompts)) == 6
 
-class TestBuildSystemPromptCreativity:
-    """Tests for _build_system_prompt with creativity_level parameter."""
+    def test_default_is_level_2(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Calling without creativity_level defaults to level 2."""
+        default = _build_prompt(base_cv, sample_job_text)
+        explicit = _build_prompt(base_cv, sample_job_text, 2)
+        assert default == explicit
 
-    def test_level_2_identical_to_baseline(self) -> None:
-        """Level 2 produces byte-for-byte identical output to baseline (backward compat)."""
-        result = pipeline._build_system_prompt(2)
-        assert result == _BASELINE_SYSTEM_PROMPT
+    def test_no_split_rule_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Prompt includes the no-split rule for role structure."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "Do NOT split a single role" in result
 
-    def test_default_identical_to_baseline(self) -> None:
-        """Calling with no argument produces same output as baseline."""
-        result = pipeline._build_system_prompt()
-        assert result == _BASELINE_SYSTEM_PROMPT
+    def test_signal_density_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Prompt includes signal density guidance."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "Signal density" in result
 
-    def test_level_0_prepends_restrictions(self) -> None:
-        """Level 0 instructions appear BEFORE the existing prompt content."""
-        result = pipeline._build_system_prompt(0)
-        strict_pos = result.find("CREATIVITY LEVEL: 0")
-        expert_pos = result.find("You are a CV tailoring expert")
-        assert strict_pos < expert_pos, "Level 0 instructions should be prepended"
+    def test_coverage_constraint_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Prompt includes minimum bullet count constraint."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "2-3 minimum" in result
 
-    def test_level_1_prepends_restrictions(self) -> None:
-        """Level 1 instructions appear BEFORE the existing prompt content."""
-        result = pipeline._build_system_prompt(1)
-        conservative_pos = result.find("CREATIVITY LEVEL: 1")
-        expert_pos = result.find("You are a CV tailoring expert")
-        assert conservative_pos < expert_pos, "Level 1 instructions should be prepended"
-
-    def test_level_3_appends_permissions(self) -> None:
-        """Level 3 instructions appear AFTER the existing prompt content."""
-        result = pipeline._build_system_prompt(3)
-        # The existing prompt's last major content
-        schema_pos = result.rfind("gap_diff")
-        forward_pos = result.find("CREATIVITY LEVEL: 3")
-        assert forward_pos > schema_pos, "Level 3 instructions should be appended"
-
-    def test_level_5_appends_permissions(self) -> None:
-        """Level 5 instructions appear AFTER the existing prompt content."""
-        result = pipeline._build_system_prompt(5)
-        schema_pos = result.rfind("gap_diff")
-        creative_pos = result.find("CREATIVITY LEVEL: 5")
-        assert creative_pos > schema_pos, "Level 5 instructions should be appended"
+    def test_level_clamped_to_range(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Levels outside 0-5 are clamped."""
+        low = _build_prompt(base_cv, sample_job_text, -1)
+        zero = _build_prompt(base_cv, sample_job_text, 0)
+        assert low == zero
+        high = _build_prompt(base_cv, sample_job_text, 99)
+        five = _build_prompt(base_cv, sample_job_text, 5)
+        assert high == five
 
 
-class TestBuildSystemPromptForChatCreativity:
-    """Tests for _build_system_prompt_for_chat with creativity_level parameter."""
+class TestChatPrompt:
+    """Tests for _build_system_prompt_for_chat."""
 
-    def test_level_2_identical_to_baseline(self) -> None:
-        """Level 2 for chat produces identical output to baseline."""
+    def test_includes_cot_preamble(self) -> None:
+        """Chat prompt includes chain-of-thought steps."""
         result = pipeline._build_system_prompt_for_chat(2)
-        assert result == _BASELINE_PROMPT_FOR_CHAT
+        assert "Step 1:" in result
+        assert "Step 5:" in result
 
     def test_level_0_includes_restrictions(self) -> None:
-        """Level 0 for chat includes 'Do NOT change any job titles'."""
+        """Level 0 chat prompt includes title restrictions."""
         result = pipeline._build_system_prompt_for_chat(0)
         assert "Do NOT change any job titles" in result
 
-
-class TestBuildPromptCreativity:
-    """Tests for _build_prompt with creativity_level."""
-
-    def test_level_0_includes_restrictions(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """_build_prompt with level 0 includes level 0 restrictions."""
-        result = pipeline._build_prompt(base_cv, sample_job_text, 0)
-        assert "Do NOT change any job titles" in result
-
-    def test_level_2_matches_baseline(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """_build_prompt with level 2 matches current behavior."""
-        baseline = pipeline._build_prompt(base_cv, sample_job_text)
-        result = pipeline._build_prompt(base_cv, sample_job_text, 2)
-        assert result == baseline
+    def test_level_embedded(self) -> None:
+        """Chat prompt includes level label."""
+        result = pipeline._build_system_prompt_for_chat(3)
+        assert "CREATIVITY LEVEL: 3 (FORWARD)" in result
 
 
 class TestRunPipelineCreativity:
@@ -359,3 +355,16 @@ class TestRunPipelineCreativity:
         run_pipeline(base_cv, sample_job_text, 3)
         assert len(captured_prompts) == 1
         assert "CREATIVITY LEVEL: 3" in captured_prompts[0]
+
+
+class TestCreativityEnum:
+    """Tests for the Creativity IntEnum."""
+
+    def test_values(self) -> None:
+        assert Creativity.STRICT == 0
+        assert Creativity.DEFAULT == 2
+        assert Creativity.CREATIVE == 5
+
+    def test_name_lookup(self) -> None:
+        assert Creativity(3).name == "FORWARD"
+        assert Creativity(4).name == "BOLD"
