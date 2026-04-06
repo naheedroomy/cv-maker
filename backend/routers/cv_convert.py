@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
+import yaml
 from fastapi import APIRouter, HTTPException
 
 from backend.schemas import CvConvertRequest, CvConvertResponse
@@ -31,8 +32,8 @@ async def convert_cv(body: CvConvertRequest) -> CvConvertResponse:
         return CvConvertResponse(success=False, message="CV text cannot be empty.")
 
     try:
-        # Claude CLI is a subprocess — run in thread to avoid blocking the event loop
-        result = await asyncio.to_thread(convert_cv_to_yaml, body.cv_text)
+        # LLM call — run in thread to avoid blocking the event loop
+        result = await asyncio.to_thread(convert_cv_to_yaml, body.cv_text, body.model)
     except RuntimeError as exc:
         # Claude parse failure or validation error — return structured error to frontend
         logger.warning("CV conversion failed: %s", exc)
@@ -50,8 +51,11 @@ async def convert_cv(body: CvConvertRequest) -> CvConvertResponse:
         logger.exception("Failed to save base_cv.yaml after successful parse")
         raise HTTPException(status_code=500, detail="Parsed CV but failed to save file") from exc
 
+    yaml_content = yaml.dump(result.model_dump(), default_flow_style=False, allow_unicode=True)
+
     return CvConvertResponse(
         success=True,
-        message=f"CV parsed and saved as base_cv.yaml",
+        message="CV parsed and saved as base_cv.yaml",
         contact_name=result.contact.name,
+        yaml_content=yaml_content,
     )

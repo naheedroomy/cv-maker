@@ -10,12 +10,13 @@ services:
       - cv-data:/app/data
       # PDFs accessible on host at ./output/
       - ./output:/app/output
-      # Mount base CV so you can edit without rebuilding
-      - ./base_cv.yaml:/app/base_cv.yaml
+      # Mount base CV directory — base_cv.yaml is created by the Import CV page
+      - ./data:/app/cv-data
       # Mount Claude CLI auth from host (run 'claude login' on host first)
       - ~/.claude:/root/.claude:ro
     environment:
       - CV_MAKER_DB_PATH=/app/data/cv_maker.db
+      - BASE_CV_PATH=/app/cv-data/base_cv.yaml
 
 volumes:
   cv-data:

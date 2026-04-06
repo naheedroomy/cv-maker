@@ -1,14 +1,32 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import ModelSelector from '@/components/ModelSelector.vue'
 
 const cvText = ref('')
 const converting = ref(false)
 const successMessage = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
+const yamlContent = ref<string | null>(null)
+const selectedModel = ref('claude-haiku')
+const claudeApiAvailable = ref(false)
+const geminiAvailable = ref(false)
+const openaiAvailable = ref(false)
 
 const canConvert = computed(
   () => cvText.value.trim() !== '' && !converting.value,
 )
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/config')
+    if (res.ok) {
+      const data = await res.json()
+      claudeApiAvailable.value = data.claude_api_available === true
+      geminiAvailable.value = data.gemini_available === true
+      openaiAvailable.value = data.openai_available === true
+    }
+  } catch {}
+})
 
 function handleFileChange(event: Event): void {
   const input = event.target as HTMLInputElement
@@ -26,6 +44,7 @@ function handleFileChange(event: Event): void {
     cvText.value = (e.target?.result as string) ?? ''
     successMessage.value = null
     errorMessage.value = null
+    yamlContent.value = null
   }
   reader.onerror = () => {
     errorMessage.value = 'Failed to read the file. Please paste your CV text instead.'
@@ -38,12 +57,13 @@ async function handleConvert(): Promise<void> {
   converting.value = true
   successMessage.value = null
   errorMessage.value = null
+  yamlContent.value = null
 
   try {
     const response = await fetch('/api/cv/convert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cv_text: cvText.value.trim() }),
+      body: JSON.stringify({ cv_text: cvText.value.trim(), model: selectedModel.value }),
     })
 
     if (!response.ok) {
@@ -55,6 +75,7 @@ async function handleConvert(): Promise<void> {
     if (data.success) {
       const name = data.contact_name ? ` for ${data.contact_name}` : ''
       successMessage.value = `${data.message}${name}.`
+      yamlContent.value = data.yaml_content || null
     } else {
       errorMessage.value = data.message || 'Conversion failed. Please try again.'
     }
@@ -115,6 +136,14 @@ async function handleConvert(): Promise<void> {
       ></textarea>
     </div>
 
+    <ModelSelector
+      v-model="selectedModel"
+      :claude-api-available="claudeApiAvailable"
+      :gemini-available="geminiAvailable"
+      :openai-available="openaiAvailable"
+      :disabled="converting"
+    />
+
     <button
       type="button"
       class="convert-btn"
@@ -125,6 +154,12 @@ async function handleConvert(): Promise<void> {
       <span v-if="converting" class="spinner" aria-hidden="true"></span>
       <span>{{ converting ? 'Converting...' : 'Convert to YAML' }}</span>
     </button>
+
+    <!-- Parsed YAML preview -->
+    <div v-if="yamlContent" class="yaml-preview">
+      <h3 class="yaml-heading">Generated base_cv.yaml</h3>
+      <pre class="yaml-content">{{ yamlContent }}</pre>
+    </div>
   </div>
 </template>
 
@@ -288,5 +323,32 @@ async function handleConvert(): Promise<void> {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* YAML preview */
+.yaml-preview {
+  margin-top: 32px;
+}
+
+.yaml-heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.yaml-content {
+  font-size: 13px;
+  color: #374151;
+  background: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  max-height: 500px;
+  overflow-y: auto;
+  font-family: 'SF Mono', 'Fira Code', monospace;
 }
 </style>

@@ -36,6 +36,7 @@ class CvConvertRequest(BaseModel):
     """Request body for POST /api/cv/convert."""
 
     cv_text: str  # Plain-text content of the CV to parse
+    model: str = "claude-haiku"  # Provider to use for parsing
 
 
 class CvConvertResponse(BaseModel):
@@ -44,3 +45,4 @@ class CvConvertResponse(BaseModel):
     success: bool
     message: str
     contact_name: str | None = None  # Name parsed from the CV, for confirmation display
+    yaml_content: str | None = None  # The generated YAML content for preview
