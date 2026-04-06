@@ -43,11 +43,11 @@
     {\VAR{exp.company|e}}
     {\VAR{exp.location|e if exp.location else ""}}
     {}
-    {\begin{itemize}
+    {\BLOCK{if exp.bullets}\begin{itemize}
 \BLOCK{for bullet in exp.bullets}
         \item \VAR{bullet|be}
 \BLOCK{endfor}
-    \end{itemize}}
+    \end{itemize}\BLOCK{endif}}
 \BLOCK{endfor}
 
 \BLOCK{if cv.certifications}
