@@ -257,6 +257,10 @@ When a candidate's experience clearly implies adjacent skills, you may surface t
 Allowed inference patterns:
 - Technology adjacency: using a platform implies its standard tooling \
 (e.g., Kubernetes implies deployments/scaling; AWS implies IAM/CloudWatch; CI/CD implies pipeline automation)
+- Infrastructure fundamentals: running workloads on a cloud platform implies working knowledge of its \
+foundational layer (e.g., AWS + Kubernetes implies VPC, networking, subnets, load balancing, DNS, \
+security groups; Azure implies resource groups, VNETs; any cloud production work implies basic \
+networking and security configuration)
 - Responsibility adjacency: a role implies its standard duties \
 (e.g., incident response implies root cause analysis; platform work implies reliability engineering)
 - Domain adjacency: deep work in one area implies awareness of related areas \
