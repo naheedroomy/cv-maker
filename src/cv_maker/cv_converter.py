@@ -35,6 +35,10 @@ Instructions:
 5. skills: extract as a flat list of strings (technologies, tools, languages, frameworks, etc.).
 6. certifications: extract as a flat list of strings; empty list [] if none found.
 7. projects: extract as a list of project objects; empty list [] if none found.
+8. The pasted CV text may contain typos, OCR artifacts, or formatting issues from copy-paste. \
+Fix obvious spelling and spacing errors in bullet points and descriptions. Do NOT change \
+company names, job titles, proper nouns, or technology names — only fix clear typos \
+(e.g. "mangement" -> "management", extra spaces, broken words).
 
 Return ONLY a valid JSON object matching this exact schema — no markdown fences, no commentary:
 
