@@ -10,6 +10,7 @@ import SkeletonSection from '@/components/SkeletonSection.vue'
 import CvPreview from '@/components/CvPreview.vue'
 import GapDiffTable from '@/components/GapDiffTable.vue'
 import TailoringNotes from '@/components/TailoringNotes.vue'
+import RegeneratePanel from '@/components/RegeneratePanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,17 +21,7 @@ const jobId = computed(() => route.params.id as string)
 const cancelling = ref(false)
 const downloading = ref(false)
 const deleting = ref(false)
-const regenerating = ref<string | null>(null) // tracks which model is regenerating
-const claudeApiAvailable = ref(false)
-const geminiAvailable = ref(false)
-const openaiAvailable = ref(false)
-
-// Fetch provider availability
-fetch('/api/config').then(r => r.ok ? r.json() : {}).then(data => {
-  claudeApiAvailable.value = data.claude_api_available === true
-  geminiAvailable.value = data.gemini_available === true
-  openaiAvailable.value = data.openai_available === true
-}).catch(() => {})
+const regenerating = ref(false)
 
 const statusText: Record<string, string> = {
   pending: 'Analyzing job...',
@@ -91,17 +82,16 @@ async function handleDelete() {
   }
 }
 
-async function handleRegenerate(model?: string) {
+async function handleRegenerate(model?: string, creativityLevel?: number) {
   if (!currentJob.value) return
-  const useModel = model ?? currentJob.value.model
-  regenerating.value = useModel
+  regenerating.value = true
   try {
-    const newId = await store.regenerateJob(currentJob.value, useModel)
+    const newId = await store.regenerateJob(currentJob.value, model, creativityLevel)
     router.push(`/jobs/${newId}`)
   } catch (err) {
     store.error = err instanceof Error ? err.message : 'Regenerate failed'
   } finally {
-    regenerating.value = null
+    regenerating.value = false
   }
 }
 </script>
@@ -157,40 +147,14 @@ async function handleRegenerate(model?: string) {
         {{ downloading ? 'Downloading...' : 'Download PDF' }}
       </button>
 
-      <!-- Regenerate buttons: visible on complete, failed, or cancelled -->
-      <template v-if="['complete', 'failed', 'cancelled'].includes(currentJob.status)">
-        <button
-          class="btn-regenerate"
-          :disabled="!!regenerating"
-          @click="handleRegenerate('claude-haiku')"
-        >
-          {{ regenerating === 'claude-haiku' ? 'Regenerating...' : 'Regenerate (Claude CLI)' }}
-        </button>
-        <button
-          v-if="claudeApiAvailable"
-          class="btn-regenerate btn-regenerate--claude-api"
-          :disabled="!!regenerating"
-          @click="handleRegenerate('claude-api')"
-        >
-          {{ regenerating === 'claude-api' ? 'Regenerating...' : 'Regenerate (Claude API)' }}
-        </button>
-        <button
-          v-if="geminiAvailable"
-          class="btn-regenerate btn-regenerate--gemini"
-          :disabled="!!regenerating"
-          @click="handleRegenerate('gemini-flash')"
-        >
-          {{ regenerating === 'gemini-flash' ? 'Regenerating...' : 'Regenerate (Gemini)' }}
-        </button>
-        <button
-          v-if="openaiAvailable"
-          class="btn-regenerate btn-regenerate--openai"
-          :disabled="!!regenerating"
-          @click="handleRegenerate('openai')"
-        >
-          {{ regenerating === 'openai' ? 'Regenerating...' : 'Regenerate (OpenAI)' }}
-        </button>
-      </template>
+      <!-- Regenerate panel: visible on complete, failed, or cancelled -->
+      <RegeneratePanel
+        v-if="['complete', 'failed', 'cancelled'].includes(currentJob.status)"
+        :current-model="currentJob.model"
+        :current-creativity-level="currentJob.creativity_level"
+        :disabled="regenerating"
+        @regenerate="handleRegenerate"
+      />
 
       <!-- Delete Job: always visible -->
       <button
@@ -422,45 +386,6 @@ async function handleRegenerate(model?: string) {
   font-weight: 600;
   color: #111827;
   margin-bottom: 16px;
-}
-
-/* Regenerate button */
-.btn-regenerate {
-  height: 40px;
-  padding: 0 24px;
-  border-radius: 6px;
-  background: #f59e0b;
-  border: none;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 150ms ease;
-}
-.btn-regenerate:hover:not(:disabled) {
-  background: #d97706;
-}
-.btn-regenerate--claude-api {
-  background: #d97706;
-}
-.btn-regenerate--claude-api:hover:not(:disabled) {
-  background: #b45309;
-}
-.btn-regenerate--gemini {
-  background: #4285f4;
-}
-.btn-regenerate--gemini:hover:not(:disabled) {
-  background: #3367d6;
-}
-.btn-regenerate--openai {
-  background: #10a37f;
-}
-.btn-regenerate--openai:hover:not(:disabled) {
-  background: #0d8c6d;
-}
-.btn-regenerate:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* Delete button */
