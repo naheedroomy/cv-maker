@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Full-Stack Rebuild
-status: complete
-stopped_at: Milestone v2.0 archived
-last_updated: "2026-04-05T13:00:00.000Z"
-last_activity: 2026-04-05
+milestone: v1.0
+milestone_name: milestone
+status: executing
+stopped_at: Completed 1000-02-PLAN.md
+last_updated: "2026-04-07T11:13:05.489Z"
+last_activity: 2026-04-07
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 1
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Milestone v2.0 complete — planning next milestone
+**Current focus:** Phase 1000 — cover-letter-generator
 
 ## Current Position
 
-Phase: All v2.0 phases complete (5-9)
-Plan: N/A
-Status: Milestone v2.0 shipped
-Last activity: 2026-04-05
+Phase: 1000 (cover-letter-generator) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-07
 
 Progress: [██████████] 100%
 
@@ -51,6 +51,9 @@ Progress: [██████████] 100%
 
 Archived to PROJECT.md Key Decisions table.
 
+- [Phase 1000]: ToneSelector clones ModelSelector.vue pill pattern per D-04, replacing .model- prefix with .tone- and removing availability check complexity
+- [Phase 1000]: CoverLetterSection uses storeToRefs for reactive currentJob to resolve company name for PDF download filename without extra prop
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
@@ -62,6 +65,7 @@ Archived to PROJECT.md Key Decisions table.
 | 260406-jb6 | Add creativity slider (0-5) to control AI tailoring liberty | 2026-04-06 | faad203 | [260406-jb6-add-creativity-slider-to-control-ai-tail](./quick/260406-jb6-add-creativity-slider-to-control-ai-tail/) |
 | 260406-k1w | Redesign regenerate UI with model and creativity controls | 2026-04-06 | 1e7355e | [260406-k1w-redesign-regenerate-ui-with-model-and-cr](./quick/260406-k1w-redesign-regenerate-ui-with-model-and-cr/) |
 | 260407-hg6 | Add Core Competencies pills, bullet reordering, anti-pruning | 2026-04-07 | 3d451c2 | [260407-hg6-add-core-competencies-pills-bullet-reord](./quick/260407-hg6-add-core-competencies-pills-bullet-reord/) |
+| Phase 1000 P02 | 2min | 2 tasks | 4 files |
 
 ### Roadmap Evolution
 
@@ -70,6 +74,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07
-Stopped at: Completed quick-260407-hg6
+Last session: 2026-04-07T11:13:05.486Z
+Stopped at: Completed 1000-02-PLAN.md
 Resume file: None
