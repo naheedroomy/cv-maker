@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import ToneSelector from '@/components/ToneSelector.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
@@ -42,6 +42,15 @@ onMounted(async () => {
     openaiAvailable.value = data.openai_available === true
   } catch { /* keep optimistic defaults */ }
 })
+
+// Warn before navigating away while generating
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (generating.value) {
+    e.preventDefault()
+  }
+}
+onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
+onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
 
 // Sync internal state when parent prop changes (job reload) — but not while generating
 watch(() => props.existingCoverLetter, (val) => {
