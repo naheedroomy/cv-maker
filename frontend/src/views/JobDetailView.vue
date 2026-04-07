@@ -212,13 +212,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
       <GapDiffTable :items="currentJob.gap_diff" />
     </section>
 
-    <!-- AI Tailoring Notes -->
-    <TailoringNotes
-      v-if="currentJob.tailored_cv && currentJob.tailored_cv.tailoring_notes && currentJob.tailored_cv.tailoring_notes.length > 0"
-      :notes="currentJob.tailored_cv.tailoring_notes"
-    />
-
-    <!-- Cover Letter Section: visible when job is complete (per D-01) -->
+    <!-- Cover Letter Section: visible when job is complete -->
     <CoverLetterSection
       v-if="currentJob.status === 'complete'"
       :job-id="jobId"
@@ -226,6 +220,12 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
       :current-model="currentJob.model"
       :existing-cover-letter="currentJob.cover_letter_text ?? null"
       :existing-notes="currentJob.cover_letter_notes ?? null"
+    />
+
+    <!-- AI Tailoring Notes -->
+    <TailoringNotes
+      v-if="currentJob.tailored_cv && currentJob.tailored_cv.tailoring_notes && currentJob.tailored_cv.tailoring_notes.length > 0"
+      :notes="currentJob.tailored_cv.tailoring_notes"
     />
 
     <!-- Job Listing Text -->

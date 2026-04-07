@@ -32,7 +32,7 @@ const openaiAvailable = ref(false)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/providers/status')
+    const res = await fetch('/api/config')
     const data = await res.json()
     claudeCliAvailable.value = data.claude_cli_available !== false
     claudeApiAvailable.value = data.claude_api_available === true
