@@ -2,7 +2,7 @@ name: Deploy to VPS
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 concurrency:
   group: deploy-production
@@ -29,8 +29,8 @@ jobs:
             cd "$APP_DIR"
 
             echo "==> Pulling latest code..."
-            git fetch origin main
-            git reset --hard origin/main
+            git fetch origin master
+            git reset --hard origin/master
 
             # .env is created once on the VPS (step 4 in docs/deployment.md)
             # and persists across deploys — git reset doesn't touch it.
