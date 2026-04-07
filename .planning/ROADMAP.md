@@ -76,3 +76,18 @@ Plans:
 - [x] 1000-01-PLAN.md — Backend core: cover letter generation module, fpdf2 renderer, DB migration, API schemas
 - [x] 1000-02-PLAN.md — Frontend: ToneSelector, CoverLetterSection components, types, store actions
 - [x] 1000-03-PLAN.md — Integration: API router, main.py wiring, JobDetailView integration, end-to-end verification
+
+### Phase 1001: Frontend UX Revamp & Project Restructure
+
+**Goal:** Revamp the frontend UX for a cleaner, less clunky experience — fix button sizing and placement, improve cover letter generator discoverability, streamline regeneration flow. Also restructure the repo folder layout to flatten src/cv_maker/ into src/ and organize the project more logically.
+**Scope:**
+- Frontend UX cleanup: button sizing, placement, spacing, visual hierarchy
+- Cover letter section discoverability and generation flow
+- Regenerate panel UX improvements
+- Project folder restructure: flatten src/cv_maker/ nesting, clean up jumbled layout
+**Requirements**: TBD
+**Depends on:** Phase 1000
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD
