@@ -73,7 +73,7 @@ experience:
     (BLAST, SRA), reducing manual processing time by over 60%.
   - Re-engineered Python Django management commands to batch-process 30M+ database
     records, cutting per-job execution time and freeing up system resources for concurrent
-    workloads.
+    workloads, PostgreSQL.
   - Designed and maintained scalable REST APIs, ensuring reliable data flow between
     frontend and backend services within the containerized platform.
   company: Goenomics GmbH
@@ -91,6 +91,7 @@ experience:
   - Python
   - Django
   - REST APIs
+  - PostgreSQL
   title: Backend & DevOps Engineer
 - bullets:
   - Built a CI/CD pipeline from scratch using AWS CodePipeline and CodeBuild, reducing
@@ -142,8 +143,6 @@ experience:
     supporting release cycles and ensuring server stability.
   - Supported production deployments on AWS using Kubernetes and Docker, assisting
     with container orchestration and application workloads.
-  - Monitored system health using Prometheus, maintaining visibility into application
-    and infrastructure performance.
   company: LinearSix Pvt Ltd
   end: 2020-07
   location: Colombo, Sri Lanka
@@ -178,7 +177,7 @@ skills:
 - MongoDB
 - FastAPI
 - Django
-summary: CKAD certified DevOps Engineer with 4+ years of experience spanning backend
+summary: CKAD certified DevOps Engineer with 5+ years of experience spanning backend
   development, cloud infrastructure, and AI-powered automation. Specialized in Kubernetes-native
   platforms, GitOps workflows, and CI/CD automation on AWS and Azure, with hands-on
   experience building agentic AI systems for infrastructure self-healing and operational
