@@ -53,3 +53,22 @@
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
+
+### Phase 1000: Cover Letter Generator
+
+**Goal:** Users can generate a tailored cover letter alongside their tailored CV — using the base CV, job listing, and tailored CV output as inputs. Cover letters sound human (no AI-smell) via humanizer-inspired anti-pattern rules and a two-pass generate-then-self-critique architecture.
+**Scope:**
+- New cover letter prompt with anti-AI-smell rules (no significance inflation, no promotional language, simple verbs, varied rhythm, specificity over scope, no generic conclusions)
+- Two-pass architecture: generate draft → self-critique for AI tells → revise
+- Reuse existing provider abstraction (all 4 providers)
+- New Pydantic model for cover letter output
+- New API endpoint (POST /api/jobs/:id/cover-letter or integrated into job pipeline)
+- Vue component for cover letter preview + download
+- Optional: PDF rendering via LaTeX or plain text output
+- Creativity slider applies to cover letter tone/boldness
+**Requirements**: TBD
+**Depends on:** Current codebase (no phase dependency)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 1000 to break down)

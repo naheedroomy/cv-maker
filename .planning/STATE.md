@@ -63,6 +63,11 @@ Archived to PROJECT.md Key Decisions table.
 | 260406-k1w | Redesign regenerate UI with model and creativity controls | 2026-04-06 | 1e7355e | [260406-k1w-redesign-regenerate-ui-with-model-and-cr](./quick/260406-k1w-redesign-regenerate-ui-with-model-and-cr/) |
 | 260407-hg6 | Add Core Competencies pills, bullet reordering, anti-pruning | 2026-04-07 | 3d451c2 | [260407-hg6-add-core-competencies-pills-bullet-reord](./quick/260407-hg6-add-core-competencies-pills-bullet-reord/) |
 
+### Roadmap Evolution
+
+- Phase 999.1 added (backlog): Visual template selector in Settings
+- Phase 1000 added: Cover Letter Generator
+
 ## Session Continuity
 
 Last session: 2026-04-07
