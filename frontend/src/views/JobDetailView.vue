@@ -277,6 +277,13 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
     <div v-show="activeTab === 'job-listing' && ['complete', 'failed', 'cancelled'].includes(currentJob.status)" class="tab-panel">
       <section v-if="currentJob.job_text" class="analysis-section">
         <h3 class="section-heading">Job Listing</h3>
+        <a
+          v-if="currentJob.job_link"
+          :href="currentJob.job_link"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="job-link"
+        >{{ currentJob.job_link }}</a>
         <pre class="job-text-content">{{ currentJob.job_text }}</pre>
       </section>
       <p v-else class="tab-empty-state">No job listing text available.</p>
