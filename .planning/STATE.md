@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 1000-02-PLAN.md
-last_updated: "2026-04-07T11:13:05.489Z"
+stopped_at: Completed 1000-01-PLAN.md
+last_updated: "2026-04-07T11:14:21.849Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 1000 (cover-letter-generator) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -53,6 +53,8 @@ Archived to PROJECT.md Key Decisions table.
 
 - [Phase 1000]: ToneSelector clones ModelSelector.vue pill pattern per D-04, replacing .model- prefix with .tone- and removing availability check complexity
 - [Phase 1000]: CoverLetterSection uses storeToRefs for reactive currentJob to resolve company name for PDF download filename without extra prop
+- [Phase 1000]: Standalone generate_cover_letter() function rather than ABC method — different signature avoids forcing all 4 providers to implement a second method
+- [Phase 1000]: fpdf2 for cover letter PDF — pure Python, zero system deps, vs LaTeX (overkill) or WeasyPrint (C libs)
 
 ### Quick Tasks Completed
 
@@ -66,6 +68,7 @@ Archived to PROJECT.md Key Decisions table.
 | 260406-k1w | Redesign regenerate UI with model and creativity controls | 2026-04-06 | 1e7355e | [260406-k1w-redesign-regenerate-ui-with-model-and-cr](./quick/260406-k1w-redesign-regenerate-ui-with-model-and-cr/) |
 | 260407-hg6 | Add Core Competencies pills, bullet reordering, anti-pruning | 2026-04-07 | 3d451c2 | [260407-hg6-add-core-competencies-pills-bullet-reord](./quick/260407-hg6-add-core-competencies-pills-bullet-reord/) |
 | Phase 1000 P02 | 2min | 2 tasks | 4 files |
+| Phase 1000 P01 | 162 | 2 tasks | 6 files |
 
 ### Roadmap Evolution
 
@@ -74,6 +77,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T11:13:05.486Z
-Stopped at: Completed 1000-02-PLAN.md
+Last session: 2026-04-07T11:14:21.846Z
+Stopped at: Completed 1000-01-PLAN.md
 Resume file: None
