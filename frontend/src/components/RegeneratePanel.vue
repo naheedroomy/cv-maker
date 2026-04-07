@@ -91,16 +91,17 @@ function handleRegenerate(): void {
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: #f59e0b;
-  border: none;
-  color: #ffffff;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #374151;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 150ms ease;
+  transition: border-color 150ms ease, color 150ms ease;
 }
 .btn-regenerate-toggle:hover:not(:disabled) {
-  background: #d97706;
+  border-color: #374151;
+  color: #111827;
 }
 .btn-regenerate-toggle:disabled {
   opacity: 0.6;
@@ -119,7 +120,7 @@ function handleRegenerate(): void {
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: #f59e0b;
+  background: #2563eb;
   border: none;
   color: #ffffff;
   font-size: 14px;
@@ -129,7 +130,7 @@ function handleRegenerate(): void {
   transition: background-color 150ms ease;
 }
 .btn-regenerate-now:hover:not(:disabled) {
-  background: #d97706;
+  background: #1d4ed8;
 }
 .btn-regenerate-now:disabled {
   opacity: 0.6;

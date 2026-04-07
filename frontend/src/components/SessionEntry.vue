@@ -32,21 +32,19 @@ function formatDate(iso: string): string {
 <style scoped>
 .session-entry {
   display: block;
-  padding: 8px 16px;
+  padding: 12px 16px;
   min-height: 48px;
   text-decoration: none;
-  color: #374151;
-  border-bottom: 1px solid #e2e8f0;
+  color: #111827;
   cursor: pointer;
   transition: background-color 100ms ease;
 }
 .session-entry:hover {
-  background: #f1f5f9;
-  color: #111827;
+  background: #f9fafb;
 }
 .session-entry--active {
-  background: #eff6ff;
-  color: #1e40af;
+  background: #f3f4f6;
+  border-left: 3px solid #2563eb;
 }
 .session-top {
   display: flex;
@@ -57,6 +55,7 @@ function formatDate(iso: string): string {
 .company-name {
   font-size: 14px;
   font-weight: 600;
+  color: #111827;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
