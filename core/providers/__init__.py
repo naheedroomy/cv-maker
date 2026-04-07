@@ -5,11 +5,11 @@
 # not at server startup.
 from __future__ import annotations
 
-from cv_maker.providers.base import BaseProvider
-from cv_maker.providers.claude_api_provider import ClaudeAPIProvider
-from cv_maker.providers.claude_provider import ClaudeProvider
-from cv_maker.providers.gemini_provider import GeminiProvider
-from cv_maker.providers.openai_provider import OpenAIProvider
+from core.providers.base import BaseProvider
+from core.providers.claude_api_provider import ClaudeAPIProvider
+from core.providers.claude_provider import ClaudeProvider
+from core.providers.gemini_provider import GeminiProvider
+from core.providers.openai_provider import OpenAIProvider
 
 __all__ = [
     "BaseProvider",

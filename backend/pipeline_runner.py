@@ -12,9 +12,9 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.providers.base import BaseProvider
-from cv_maker.renderer import render_pdf
+from core.models import BaseCV, GapItem, TailoredCV
+from core.providers.base import BaseProvider
+from core.renderer import render_pdf
 
 logger = logging.getLogger(__name__)
 

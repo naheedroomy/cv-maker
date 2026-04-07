@@ -24,7 +24,7 @@ from backend.db import get_db, init_db
 
 
 def _fake_base_cv():
-    from cv_maker.models import BaseCV, ContactInfo, EducationItem, ExperienceItem
+    from core.models import BaseCV, ContactInfo, EducationItem, ExperienceItem
 
     return BaseCV(
         contact=ContactInfo(name="Test User", email="test@test.com"),
@@ -43,7 +43,7 @@ def _fake_base_cv():
 
 
 def _fake_tailored_cv():
-    from cv_maker.models import ContactInfo, EducationItem, ExperienceItem, TailoredCV
+    from core.models import ContactInfo, EducationItem, ExperienceItem, TailoredCV
 
     return TailoredCV(
         contact=ContactInfo(name="Test User", email="test@test.com"),
@@ -62,7 +62,7 @@ def _fake_tailored_cv():
 
 
 def _fake_gap_items():
-    from cv_maker.models import GapItem
+    from core.models import GapItem
 
     return [GapItem(requirement="Python", match_level="strong", evidence="5 years exp")]
 

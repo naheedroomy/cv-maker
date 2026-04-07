@@ -2,9 +2,9 @@
 # ClaudeProvider — thin wrapper around the existing Claude CLI pipeline.
 from __future__ import annotations
 
-from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.pipeline import run_pipeline
-from cv_maker.providers.base import BaseProvider
+from core.models import BaseCV, GapItem, TailoredCV
+from core.pipeline import run_pipeline
+from core.providers.base import BaseProvider
 
 
 class ClaudeProvider(BaseProvider):

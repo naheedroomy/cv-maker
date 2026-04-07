@@ -6,9 +6,9 @@ import logging
 
 from pydantic import BaseModel
 
-from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.pipeline import _extract_json, _invoke_with_retry, _serialize_base_cv
-from cv_maker.providers import get_provider
+from core.models import BaseCV, GapItem, TailoredCV
+from core.pipeline import _extract_json, _invoke_with_retry, _serialize_base_cv
+from core.providers import get_provider
 
 logger = logging.getLogger(__name__)
 

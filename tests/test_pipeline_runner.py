@@ -20,7 +20,7 @@ def test_render_pdf_async_is_coroutine() -> None:
 
 def test_render_pdf_async_delegates_to_thread() -> None:
     """render_pdf_async must call asyncio.to_thread with render_pdf as first arg."""
-    from cv_maker.renderer import render_pdf
+    from core.renderer import render_pdf
 
     fake_bytes = b"%PDF-1.4 fake"
     with patch(

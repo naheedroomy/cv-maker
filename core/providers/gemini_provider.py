@@ -11,9 +11,9 @@ from google.genai import errors as genai_errors
 
 from google.genai import types as genai_types
 
-from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.pipeline import _build_system_prompt_for_chat, _build_user_prompt, _extract_json
-from cv_maker.providers.base import BaseProvider
+from core.models import BaseCV, GapItem, TailoredCV
+from core.pipeline import _build_system_prompt_for_chat, _build_user_prompt, _extract_json
+from core.providers.base import BaseProvider
 
 logger = logging.getLogger(__name__)
 

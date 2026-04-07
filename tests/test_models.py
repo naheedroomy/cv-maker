@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from cv_maker.data import load_base_cv
-from cv_maker.models import BaseCV, JobRequirements, TailoredCV
+from core.data import load_base_cv
+from core.models import BaseCV, JobRequirements, TailoredCV
 
 MINIMAL_CV = {
     "contact": {"name": "Test User", "email": "test@example.com"},

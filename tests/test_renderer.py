@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from cv_maker.models import TailoredCV
-from cv_maker.renderer import escape_latex, render_latex, render_pdf
+from core.models import TailoredCV
+from core.renderer import escape_latex, render_latex, render_pdf
 
 LATEXMK_AVAILABLE = bool(
     shutil.which("latexmk") or Path("/Library/TeX/texbin/latexmk").exists()

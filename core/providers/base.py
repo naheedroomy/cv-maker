@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from cv_maker.models import BaseCV, GapItem, TailoredCV
+from core.models import BaseCV, GapItem, TailoredCV
 
 
 class BaseProvider(ABC):

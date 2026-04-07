@@ -8,7 +8,7 @@ import yaml
 from fastapi import APIRouter, HTTPException
 
 from backend.schemas import CvConvertRequest, CvConvertResponse
-from cv_maker.cv_converter import convert_cv_to_yaml, save_base_cv
+from core.cv_converter import convert_cv_to_yaml, save_base_cv
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/cv", tags=["cv"])
 @router.get("/info")
 async def get_cv_info():
     """Return the full base CV data for preview, plus a loaded flag."""
-    from cv_maker.data import DEFAULT_CV_PATH, load_base_cv
+    from core.data import DEFAULT_CV_PATH, load_base_cv
 
     if not DEFAULT_CV_PATH.exists():
         return {"loaded": False}

@@ -10,9 +10,9 @@ from pathlib import Path
 
 import yaml
 
-from cv_maker.data import DEFAULT_CV_PATH
-from cv_maker.models import BaseCV
-from cv_maker.pipeline import _extract_json, _invoke_with_retry
+from core.data import DEFAULT_CV_PATH
+from core.models import BaseCV
+from core.pipeline import _extract_json, _invoke_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ def convert_cv_to_yaml(cv_text: str, model: str = "claude-haiku") -> BaseCV:
         return _invoke_with_retry(prompt, BaseCV, max_attempts=3)
 
     # Use API-based provider
-    from cv_maker.providers import get_provider
+    from core.providers import get_provider
 
     provider = get_provider(model)
 
@@ -148,9 +148,9 @@ def _invoke_provider(provider, system_prompt: str, user_prompt: str) -> str:
     from google import genai
     from google.genai import types as genai_types
 
-    from cv_maker.providers.claude_api_provider import ClaudeAPIProvider
-    from cv_maker.providers.gemini_provider import GeminiProvider
-    from cv_maker.providers.openai_provider import OpenAIProvider
+    from core.providers.claude_api_provider import ClaudeAPIProvider
+    from core.providers.gemini_provider import GeminiProvider
+    from core.providers.openai_provider import OpenAIProvider
 
     if isinstance(provider, ClaudeAPIProvider):
         response = provider._client.messages.create(

@@ -45,8 +45,8 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest) 
         raise HTTPException(status_code=409, detail="Job has no tailored CV data")
 
     # 2. Parse stored data
-    from cv_maker.models import GapItem, TailoredCV
-    from cv_maker.data import load_base_cv
+    from core.models import GapItem, TailoredCV
+    from core.data import load_base_cv
 
     tailored_cv = TailoredCV.model_validate(json.loads(row["tailored_cv_json"]))
     gap_diff = [GapItem.model_validate(g) for g in json.loads(row["gap_diff_json"])]
@@ -55,7 +55,7 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest) 
     base_cv = await asyncio.to_thread(load_base_cv)
 
     # 4. Generate cover letter (sync LLM call via thread pool)
-    from cv_maker.cover_letter import generate_cover_letter
+    from core.cover_letter import generate_cover_letter
 
     cover_letter_text = await asyncio.to_thread(
         generate_cover_letter,
@@ -153,7 +153,7 @@ async def get_cover_letter_pdf(job_id: str) -> Response:
         except (json.JSONDecodeError, KeyError):
             pass
 
-    from cv_maker.cover_letter_renderer import render_cover_letter_pdf
+    from core.cover_letter_renderer import render_cover_letter_pdf
 
     pdf_bytes = await asyncio.to_thread(
         render_cover_letter_pdf, row["cover_letter_text"], candidate_name

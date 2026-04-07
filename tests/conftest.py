@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from cv_maker.models import BaseCV, TailoredCV
+from core.models import BaseCV, TailoredCV
 
 MINIMAL_CV = {
     "contact": {"name": "Test User", "email": "test@example.com"},
@@ -29,8 +29,8 @@ def minimal_cv_dict():
 
 @pytest.fixture
 def base_cv_path():
-    """Path to the sample base_cv.yaml at project root."""
-    return Path("base_cv.yaml")
+    """Path to the canonical base_cv.yaml in the data/ directory."""
+    return Path("data/base_cv.yaml")
 
 
 @pytest.fixture

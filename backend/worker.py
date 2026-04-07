@@ -18,9 +18,9 @@ from pathlib import Path
 
 from backend.db import get_db
 from backend.pipeline_runner import render_pdf_async, run_provider_async
-from cv_maker.data import load_base_cv
-from cv_maker.providers import get_provider
-from cv_maker.renderer import render_latex
+from core.data import load_base_cv
+from core.providers import get_provider
+from core.renderer import render_latex
 
 logger = logging.getLogger(__name__)
 

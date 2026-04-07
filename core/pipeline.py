@@ -15,7 +15,7 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-from cv_maker.models import BaseCV, GapItem, TailoredCV
+from core.models import BaseCV, GapItem, TailoredCV
 
 # ---------------------------------------------------------------------------
 # Creativity levels

@@ -7,9 +7,9 @@ import types
 
 import pytest
 
-import cv_maker.pipeline as pipeline
-from cv_maker.models import BaseCV, GapItem, TailoredCV
-from cv_maker.pipeline import Creativity, _build_prompt, _resolve_rule, run_pipeline
+import core.pipeline as pipeline
+from core.models import BaseCV, GapItem, TailoredCV
+from core.pipeline import Creativity, _build_prompt, _resolve_rule, run_pipeline
 
 # ---------------------------------------------------------------------------
 # Module-level JSON fixtures — minimal valid payloads matching each schema

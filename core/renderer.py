@@ -12,7 +12,7 @@ from pathlib import Path
 
 import jinja2
 
-from cv_maker.models import TailoredCV
+from core.models import TailoredCV
 
 # ---------------------------------------------------------------------------
 # Template environment — custom delimiters to avoid LaTeX {} collision

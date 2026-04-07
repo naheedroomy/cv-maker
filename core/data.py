@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 from pydantic import ValidationError
 
-from cv_maker.models import BaseCV
+from core.models import BaseCV
 
 DEFAULT_CV_PATH = Path(os.environ.get("BASE_CV_PATH", "data/base_cv.yaml"))
 
