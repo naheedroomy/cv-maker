@@ -8,6 +8,9 @@ interface Settings {
   openai_model: string
   openai_base_url: string
   cv_filename: string
+  anthropic_api_key: string
+  gemini_api_key: string
+  openai_api_key: string
 }
 
 const activeTab = ref<'general' | 'claude-cli' | 'claude-api' | 'gemini' | 'openai'>('general')
@@ -18,6 +21,9 @@ const settings = ref<Settings>({
   openai_model: 'gpt-4o-mini',
   openai_base_url: '',
   cv_filename: '',
+  anthropic_api_key: '',
+  gemini_api_key: '',
+  openai_api_key: '',
 })
 const saving = ref(false)
 const saved = ref(false)
@@ -39,10 +45,19 @@ async function handleSave() {
   saved.value = false
   error.value = null
   try {
+    // Build payload: if an API key field still shows a masked value (***xxxx),
+    // omit it so the backend doesn't overwrite the stored key with the masked string.
+    const payload: Partial<Settings> = { ...settings.value }
+    const apiKeyFields = ['anthropic_api_key', 'gemini_api_key', 'openai_api_key'] as const
+    for (const field of apiKeyFields) {
+      if (payload[field]?.startsWith('***')) {
+        delete payload[field]
+      }
+    }
     const res = await fetch('/api/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings.value),
+      body: JSON.stringify(payload),
     })
     if (!res.ok) throw new Error(`Save failed: ${res.status}`)
     settings.value = await res.json()
@@ -67,7 +82,7 @@ const tabs = [
 <template>
   <div class="settings-view">
     <h2 class="settings-title">Provider Settings</h2>
-    <p class="settings-subtitle">Configure model names and endpoints for each provider. API keys are set via environment variables.</p>
+    <p class="settings-subtitle">Configure model names, endpoints, and API keys for each provider.</p>
 
     <!-- Tabs -->
     <div class="tabs">
@@ -110,8 +125,9 @@ const tabs = [
         <p class="field-hint">Anthropic model ID. Examples: claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-6</p>
       </div>
       <div class="field">
-        <label class="field-label">Authentication</label>
-        <p class="field-hint">Set <code>ANTHROPIC_API_KEY</code> in your <code>.env</code> file.</p>
+        <label class="field-label">API Key</label>
+        <input v-model="settings.anthropic_api_key" type="password" class="field-input" placeholder="sk-ant-..." />
+        <p class="field-hint">Anthropic API key. Overrides <code>.env</code> value if set. Masked after save.</p>
       </div>
     </div>
 
@@ -123,8 +139,9 @@ const tabs = [
         <p class="field-hint">Google model ID. Examples: gemini-2.5-flash, gemini-2.5-pro, gemini-2.0-flash</p>
       </div>
       <div class="field">
-        <label class="field-label">Authentication</label>
-        <p class="field-hint">Set <code>GEMINI_API_KEY</code> in your <code>.env</code> file.</p>
+        <label class="field-label">API Key</label>
+        <input v-model="settings.gemini_api_key" type="password" class="field-input" placeholder="AIza..." />
+        <p class="field-hint">Google AI API key. Overrides <code>.env</code> value if set. Masked after save.</p>
       </div>
     </div>
 
@@ -141,8 +158,9 @@ const tabs = [
         <p class="field-hint">Override for OpenAI-compatible APIs (Groq, Together AI, Ollama, etc.). Leave empty for default OpenAI.</p>
       </div>
       <div class="field">
-        <label class="field-label">Authentication</label>
-        <p class="field-hint">Set <code>OPENAI_API_KEY</code> in your <code>.env</code> file.</p>
+        <label class="field-label">API Key</label>
+        <input v-model="settings.openai_api_key" type="password" class="field-input" placeholder="sk-..." />
+        <p class="field-hint">OpenAI API key. Overrides <code>.env</code> value if set. Masked after save.</p>
       </div>
     </div>
 

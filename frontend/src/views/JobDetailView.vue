@@ -23,7 +23,7 @@ const cancelling = ref(false)
 const downloading = ref(false)
 const deleting = ref(false)
 const regenerating = ref(false)
-const activeTab = ref<'cv' | 'cover-letter' | 'analysis'>('cv')
+const activeTab = ref<'cv' | 'cover-letter' | 'analysis' | 'job-listing'>('cv')
 
 const statusText: Record<string, string> = {
   pending: 'Analyzing job...',
@@ -184,6 +184,11 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
         :class="{ 'tab-btn--active': activeTab === 'analysis' }"
         @click="activeTab = 'analysis'"
       >Analysis</button>
+      <button
+        class="tab-btn"
+        :class="{ 'tab-btn--active': activeTab === 'job-listing' }"
+        @click="activeTab = 'job-listing'"
+      >Job Listing</button>
     </div>
 
     <!-- Zone 4: TAB PANELS -->
@@ -260,15 +265,18 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
         :notes="currentJob.tailored_cv.tailoring_notes"
       />
 
-      <!-- Job Listing Text -->
+      <p v-if="!currentJob.gap_diff?.length && !currentJob.tailored_cv?.tailoring_notes?.length" class="tab-empty-state">
+        Analysis runs automatically when your CV is generated.
+      </p>
+    </div>
+
+    <!-- Job Listing Tab -->
+    <div v-show="activeTab === 'job-listing' && ['complete', 'failed', 'cancelled'].includes(currentJob.status)" class="tab-panel">
       <section v-if="currentJob.job_text" class="analysis-section">
         <h3 class="section-heading">Job Listing</h3>
         <pre class="job-text-content">{{ currentJob.job_text }}</pre>
       </section>
-
-      <p v-if="!currentJob.gap_diff?.length && !currentJob.tailored_cv?.tailoring_notes?.length && !currentJob.job_text" class="tab-empty-state">
-        Analysis runs automatically when your CV is generated.
-      </p>
+      <p v-else class="tab-empty-state">No job listing text available.</p>
     </div>
 
   </div>
