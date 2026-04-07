@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -168,7 +169,8 @@ async def job_worker(
             else:
                 file_stem = job_id
 
-            out_dir = Path("output") / company_name
+            data_dir = Path(os.environ.get("CV_MAKER_DB_PATH", "cv_maker.db")).parent
+            out_dir = data_dir / "output" / str(user_id) / company_name
             out_dir.mkdir(parents=True, exist_ok=True)
             pdf_path = out_dir / f"{file_stem}.pdf"
             pdf_path.write_bytes(pdf_bytes)
