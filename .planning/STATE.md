@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
 status: executing
-stopped_at: Completed 1002-01-PLAN.md
-last_updated: "2026-04-07T14:59:41.890Z"
+stopped_at: Completed 1002-02-PLAN.md
+last_updated: "2026-04-07T15:02:23.783Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 1002 (multi-tenant-db-schema) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -63,6 +63,7 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1001]: Tab panels use v-show (not v-if) for instant switching — preserves CoverLetterSection form state across tab switches
 - [Phase 1001]: Cancel Job moved outside tabs to running-actions area — tabs only shown when job is complete/failed/cancelled
 - [Phase quick]: get_api_key() centralizes DB-overrides-.env logic for all 3 API providers
+- [Phase 1002]: Eliminated in-process settings cache - get_setting and get_api_key are now async with per-user DB lookups — Per-user settings require direct DB queries - in-process cache was incompatible with multi-tenant model
 
 ### Quick Tasks Completed
 
@@ -83,6 +84,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1001 P01 | 720 | 2 tasks | 26 files |
 | Phase 1001 P03 | 167 | 1 tasks | 2 files |
 | Phase 1002 P01 | 1min | 1 tasks | 1 files |
+| Phase 1002 P02 | 1min | 1 tasks | 1 files |
 
 ### Roadmap Evolution
 
@@ -91,6 +93,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T14:59:41.882Z
-Stopped at: Completed 1002-01-PLAN.md
-Resume file: .planning/phases/1002-multi-tenant-db-schema/1002-02-PLAN.md
+Last session: 2026-04-07T15:02:14.677Z
+Stopped at: Completed 1002-02-PLAN.md
+Resume file: .planning/phases/1002-multi-tenant-db-schema/1002-03-PLAN.md
