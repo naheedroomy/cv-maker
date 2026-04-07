@@ -29,9 +29,12 @@ def _sanitize_text(text: str) -> str:
 def render_cover_letter_pdf(text: str, candidate_name: str = "") -> bytes:
     """Render plain text cover letter to PDF bytes.
 
+    Each newline in the input produces a line break in the PDF.
+    Blank lines produce paragraph spacing.
+
     Args:
-        text: The cover letter plain text (paragraphs separated by blank lines).
-        candidate_name: Optional name to display as a header.
+        text: The cover letter plain text.
+        candidate_name: Unused — kept for API compatibility.
 
     Returns:
         PDF file content as bytes.
@@ -43,21 +46,15 @@ def render_cover_letter_pdf(text: str, candidate_name: str = "") -> bytes:
     pdf.set_left_margin(25)
     pdf.set_right_margin(25)
 
-    if candidate_name:
-        candidate_name = _sanitize_text(candidate_name)
-        pdf.set_font("Helvetica", "B", 14)
-        pdf.cell(0, 10, candidate_name, new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(4)
-
     pdf.set_font("Helvetica", size=11)
     pdf.set_text_color(30, 30, 30)
 
-    for paragraph in text.split("\n\n"):
-        paragraph = paragraph.strip()
-        if not paragraph:
-            continue
-        paragraph = paragraph.replace("\n", " ")
-        pdf.multi_cell(0, 6, paragraph)
-        pdf.ln(4)
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if not stripped:
+            # Blank line — paragraph gap
+            pdf.ln(6)
+        else:
+            pdf.multi_cell(0, 6, stripped)
 
     return bytes(pdf.output())
