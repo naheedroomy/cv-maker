@@ -41,3 +41,15 @@
 | 7. Vue Frontend | v2.0 | 3/3 | Complete | 2026-04-04 |
 | 8. Production Wiring | v2.0 | 2/2 | Complete | 2026-04-04 |
 | 9. Gemini Provider | v2.0 | 4/4 | Complete | 2026-04-05 |
+
+## Backlog
+
+### Phase 999.1: Visual template selector in Settings (BACKLOG)
+
+**Goal:** Let users choose from multiple LaTeX CV templates via a visual gallery in the Settings panel. Each template shows a thumbnail preview; the selected template is used for all PDF renders.
+**Scope:** Multiple .tex.jinja templates, template metadata (name, preview image), settings DB field, renderer template selection, frontend preview gallery component.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
