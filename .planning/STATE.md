@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
-status: executing
-stopped_at: Completed 1003-01-PLAN.md
-last_updated: "2026-04-07T16:05:11.421Z"
+status: verifying
+stopped_at: Completed 1003-03-PLAN.md — awaiting human verification checkpoint
+last_updated: "2026-04-07T16:16:17.058Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
-  completed_phases: 3
-  total_plans: 12
-  completed_plans: 11
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 10
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 
 Phase: 1003 (google-auth-backend-jwt-middleware) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
 Progress: [██████████] 100%
@@ -70,6 +70,9 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1003]: apiFetch pattern: auto-Bearer + 401 redirect; plain fetch for pre-auth calls (/api/config, /api/auth/google) to avoid redirect loops
 - [Phase 1003]: asyncio_mode=auto in pytest config removes need for @pytest.mark.asyncio decorator on every async test
 - [Phase 1003]: CORS_ORIGINS env var with comma-split supports multiple origins for staging+production without code changes
+- [Phase 1003]: config endpoint stays public (no get_current_user) — feature flags and google_client_id needed before auth is established
+- [Phase 1003]: apiFetch drop-in replaces all native fetch() in jobStore — Bearer token auto-injected, 401 triggers logout+redirect
+- [Phase 1003]: AppSidebar user profile uses authStore storeToRefs — reactive display of Google avatar, name, sign-out without props
 
 ### Quick Tasks Completed
 
@@ -94,6 +97,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1002 P03 | 3min | 7 tasks | 11 files |
 | Phase 1003 P02 | 2 | 2 tasks | 5 files |
 | Phase 1003 P01 | 230 | 2 tasks | 7 files |
+| Phase 1003 P03 | 15min | 2 tasks | 7 files |
 
 ### Roadmap Evolution
 
@@ -102,6 +106,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T16:05:11.418Z
-Stopped at: Completed 1003-01-PLAN.md
+Last session: 2026-04-07T16:16:17.055Z
+Stopped at: Completed 1003-03-PLAN.md — awaiting human verification checkpoint
 Resume file: None
