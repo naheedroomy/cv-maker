@@ -47,8 +47,6 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up - initializing database")
     await init_db()
     logger.info("Database ready")
-    from backend.settings_cache import load_settings
-    await load_settings()
     from core.data import DEFAULT_CV_PATH, ensure_base_cv_exists
     ensure_base_cv_exists()
     logger.info("Base CV path: %s", DEFAULT_CV_PATH)
