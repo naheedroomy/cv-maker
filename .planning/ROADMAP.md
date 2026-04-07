@@ -56,7 +56,7 @@
 | 1002. Multi-Tenant DB Schema | v3.0 | 3/3 | Complete    | 2026-04-07 |
 | 1003. Google Auth Backend + JWT Middleware | v3.0 | 2/3 | Complete    | 2026-04-07 |
 | 1004. CV Ingestion & Visual Editor | v3.0 | 3/3 | Complete    | 2026-04-07 |
-| 1005. Dockerization & docker-compose | v3.0 | 0/0 | Not Started | — |
+| 1005. Dockerization & docker-compose | v3.0 | 1/2 | In Progress|  |
 | 1006. CI/CD, Domain & HTTPS | v3.0 | 0/0 | Not Started | — |
 
 ---
@@ -174,7 +174,7 @@
 5. `docker-compose down && docker-compose up` (no `--build`) starts the app from cached images without re-installing dependencies
 
 **Plans:**
-- [ ] TBD
+1/2 plans executed
 
 ---
 

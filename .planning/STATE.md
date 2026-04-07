@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
-status: verifying
-stopped_at: Completed 1004-02-PLAN.md
-last_updated: "2026-04-07T17:18:02.731Z"
+status: executing
+stopped_at: Completed 1005-01-PLAN.md
+last_updated: "2026-04-07T17:35:54.649Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
   completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 17
+  completed_plans: 16
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 1004 — cv-ingestion-and-visual-editor
+**Current focus:** Phase 1005 — dockerization-and-docker-compose
 
 ## Current Position
 
-Phase: 1005
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 1005 (dockerization-and-docker-compose) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-07
 
 Progress: [██████████] 100%
@@ -78,6 +78,7 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1004]: Sidebar fetchCvInfo uses apiFetch (not plain fetch) to carry JWT Bearer token for /api/cv/me
 - [Phase 1004]: Optional chaining + explicit index guard for TypeScript array access: const item = arr?.[i]; if (!item) return — satisfies strict type checker without noUncheckedIndexedAccess
 - [Phase 1004]: v-show for CvEditorSection collapse (not v-if) — preserves form input state when re-expanding collapsed sections
+- [Phase 1005]: Split backend/frontend into separate containers — backend has no frontend code, SPA served by Nginx; npm ci for reproducible builds
 
 ### Quick Tasks Completed
 
@@ -106,6 +107,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1004 P01 | 216 | 2 tasks | 8 files |
 | Phase 1004 P03 | 166 | 2 tasks | 3 files |
 | Phase 1004 P02 | 564 | 2 tasks | 5 files |
+| Phase 1005 P01 | 94s | 3 tasks | 3 files |
 
 ### Roadmap Evolution
 
@@ -114,6 +116,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T17:16:37.161Z
-Stopped at: Completed 1004-02-PLAN.md
+Last session: 2026-04-07T17:35:54.645Z
+Stopped at: Completed 1005-01-PLAN.md
 Resume file: None
