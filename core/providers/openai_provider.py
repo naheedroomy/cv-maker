@@ -17,17 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIProvider(BaseProvider):
-    def __init__(self) -> None:
-        from backend.settings_cache import get_api_key, get_setting
-        api_key = get_api_key("openai_api_key")
+    def __init__(self, api_key: str = "", model: str = "", base_url: str | None = None) -> None:
         if not api_key:
-            raise RuntimeError("OPENAI_API_KEY is not set (neither in .env nor in Settings)")
-        base_url = get_setting("openai_base_url") or None
-        self._model = get_setting("openai_model") or "gpt-4o-mini"
-        kwargs: dict[str, str] = {"api_key": api_key}
-        if base_url is not None:
-            kwargs["base_url"] = base_url
-        self._client = openai.OpenAI(**kwargs)
+            raise RuntimeError("OpenAI-compatible API key not configured (set in Settings or .env as OPENAI_API_KEY)")
+        self._client = openai.OpenAI(api_key=api_key, base_url=base_url)
+        self._model = model or "gpt-4o-mini"
 
     def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> tuple[TailoredCV, list[GapItem]]:
         system_prompt = _build_system_prompt_for_chat(creativity_level)
