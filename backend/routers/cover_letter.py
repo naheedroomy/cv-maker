@@ -5,11 +5,12 @@ import asyncio
 import json
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from backend.db import ANONYMOUS_USER_ID, get_db
+from backend.auth import get_current_user
+from backend.db import get_db
 from backend.schemas import CoverLetterRequest, CoverLetterResponse
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/jobs", tags=["cover-letter"])
 
 
 @router.post("/{job_id}/cover-letter", response_model=CoverLetterResponse)
-async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest) -> CoverLetterResponse:
+async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, user: dict = Depends(get_current_user)) -> CoverLetterResponse:
     """Generate a cover letter for a completed job.
 
     Requires job status == 'complete' with tailored_cv_json and gap_diff_json populated.
@@ -34,7 +35,7 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest) 
     try:
         cursor = await db.execute(
             "SELECT * FROM jobs WHERE id=? AND user_id=?",
-            (job_id, ANONYMOUS_USER_ID),
+            (job_id, user["id"]),
         )
         row = await cursor.fetchone()
     finally:
@@ -77,7 +78,7 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest) 
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=? WHERE id=? AND user_id=?",
-            (cover_letter_text, body.user_notes, job_id, ANONYMOUS_USER_ID),
+            (cover_letter_text, body.user_notes, job_id, user["id"]),
         )
         await db.commit()
     finally:
@@ -101,13 +102,13 @@ class CoverLetterSaveRequest(BaseModel):
 
 
 @router.put("/{job_id}/cover-letter", response_model=CoverLetterResponse)
-async def save_cover_letter(job_id: str, body: CoverLetterSaveRequest) -> CoverLetterResponse:
+async def save_cover_letter(job_id: str, body: CoverLetterSaveRequest, user: dict = Depends(get_current_user)) -> CoverLetterResponse:
     """Save edited cover letter text back to the database."""
     db = await get_db()
     try:
         cursor = await db.execute(
             "SELECT id FROM jobs WHERE id=? AND user_id=?",
-            (job_id, ANONYMOUS_USER_ID),
+            (job_id, user["id"]),
         )
         row = await cursor.fetchone()
         if row is None:
@@ -116,7 +117,7 @@ async def save_cover_letter(job_id: str, body: CoverLetterSaveRequest) -> CoverL
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=? WHERE id=? AND user_id=?",
-            (body.cover_letter_text, body.cover_letter_notes, job_id, ANONYMOUS_USER_ID),
+            (body.cover_letter_text, body.cover_letter_notes, job_id, user["id"]),
         )
         await db.commit()
     finally:
@@ -134,13 +135,13 @@ async def save_cover_letter(job_id: str, body: CoverLetterSaveRequest) -> CoverL
 
 
 @router.get("/{job_id}/cover-letter/pdf")
-async def get_cover_letter_pdf(job_id: str) -> Response:
+async def get_cover_letter_pdf(job_id: str, user: dict = Depends(get_current_user)) -> Response:
     """Return cover letter as PDF bytes. 404 if no cover letter exists."""
     db = await get_db()
     try:
         cursor = await db.execute(
             "SELECT cover_letter_text, tailored_cv_json FROM jobs WHERE id=? AND user_id=?",
-            (job_id, ANONYMOUS_USER_ID),
+            (job_id, user["id"]),
         )
         row = await cursor.fetchone()
     finally:
