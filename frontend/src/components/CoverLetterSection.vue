@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import ToneSelector from '@/components/ToneSelector.vue'
+import ModelSelector from '@/components/ModelSelector.vue'
 import { useJobStore } from '@/stores/jobStore'
 
 const props = defineProps<{
@@ -15,6 +16,7 @@ const props = defineProps<{
 const store = useJobStore()
 const { currentJob } = storeToRefs(store)
 
+const selectedModel = ref(props.currentModel)
 const tone = ref('professional')
 const userNotes = ref(props.existingNotes ?? '')
 const coverLetterText = ref(props.existingCoverLetter ?? '')
@@ -22,6 +24,22 @@ const generating = ref(false)
 const saving = ref(false)
 const copied = ref(false)
 const showForm = ref(false)
+
+const claudeCliAvailable = ref(true)
+const claudeApiAvailable = ref(false)
+const geminiAvailable = ref(false)
+const openaiAvailable = ref(false)
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/providers/status')
+    const data = await res.json()
+    claudeCliAvailable.value = data.claude_cli_available !== false
+    claudeApiAvailable.value = data.claude_api_available === true
+    geminiAvailable.value = data.gemini_available === true
+    openaiAvailable.value = data.openai_available === true
+  } catch { /* keep optimistic defaults */ }
+})
 
 // Sync internal state when parent prop changes (job reload)
 watch(() => props.existingCoverLetter, (val) => {
@@ -41,7 +59,7 @@ async function handleGenerate(): Promise<void> {
   try {
     const result = await store.generateCoverLetter(
       props.jobId,
-      props.currentModel,
+      selectedModel.value,
       tone.value,
       userNotes.value,
     )
@@ -90,8 +108,26 @@ function handleRegenerate(): void {
       </button>
     </div>
 
-    <!-- State 2: Form visible (notes + tone + generate button) -->
+    <!-- State 2: Form visible (model + tone + generate, then optional notes) -->
     <div v-if="showForm && !coverLetterText" class="cover-letter-form">
+      <div class="form-row">
+        <ModelSelector
+          v-model="selectedModel"
+          :claude-cli-available="claudeCliAvailable"
+          :claude-api-available="claudeApiAvailable"
+          :gemini-available="geminiAvailable"
+          :openai-available="openaiAvailable"
+          :disabled="generating"
+        />
+        <ToneSelector v-model="tone" :disabled="generating" />
+      </div>
+      <button
+        class="btn-generate"
+        :disabled="generating"
+        @click="handleGenerate"
+      >
+        {{ generating ? 'Generating...' : 'Generate Cover Letter' }}
+      </button>
       <div class="form-field">
         <label class="field-label">Notes (optional)</label>
         <textarea
@@ -102,14 +138,6 @@ function handleRegenerate(): void {
           :disabled="generating"
         />
       </div>
-      <ToneSelector v-model="tone" :disabled="generating" />
-      <button
-        class="btn-generate"
-        :disabled="generating"
-        @click="handleGenerate"
-      >
-        {{ generating ? 'Generating...' : 'Generate Cover Letter' }}
-      </button>
     </div>
 
     <!-- State 3: Cover letter generated — editable preview -->
@@ -185,6 +213,13 @@ function handleRegenerate(): void {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .form-field {
