@@ -61,9 +61,10 @@ Archived to PROJECT.md Key Decisions table.
 | 260405-srf | Add OpenAI-compatible API provider as third model option | 2026-04-05 | f64b28c | [260405-srf-add-openai-compatible-api-provider-as-th](./quick/260405-srf-add-openai-compatible-api-provider-as-th/) |
 | 260406-jb6 | Add creativity slider (0-5) to control AI tailoring liberty | 2026-04-06 | faad203 | [260406-jb6-add-creativity-slider-to-control-ai-tail](./quick/260406-jb6-add-creativity-slider-to-control-ai-tail/) |
 | 260406-k1w | Redesign regenerate UI with model and creativity controls | 2026-04-06 | 1e7355e | [260406-k1w-redesign-regenerate-ui-with-model-and-cr](./quick/260406-k1w-redesign-regenerate-ui-with-model-and-cr/) |
+| 260407-hg6 | Add Core Competencies pills, bullet reordering, anti-pruning | 2026-04-07 | 3d451c2 | [260407-hg6-add-core-competencies-pills-bullet-reord](./quick/260407-hg6-add-core-competencies-pills-bullet-reord/) |
 
 ## Session Continuity
 
-Last session: 2026-04-06
-Stopped at: Completed quick-260406-k1w
+Last session: 2026-04-07
+Stopped at: Completed quick-260407-hg6
 Resume file: None
