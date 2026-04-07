@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { JobResponse, JobCreate, TailoredCV, GapItem } from '@/types'
+import { apiFetch } from '@/utils/apiFetch'
 
 // Re-export types for convenience
 export type { JobResponse, JobCreate, TailoredCV, GapItem }
@@ -18,7 +19,7 @@ export const useJobStore = defineStore('jobs', () => {
   // ── Fetch Actions ──────────────────────────────────────────────────────────
 
   async function fetchJobs(): Promise<void> {
-    const res = await fetch('/api/jobs')
+    const res = await apiFetch('/api/jobs')
     if (!res.ok) throw new Error(`GET /api/jobs failed: ${res.status}`)
     const data: JobResponse[] = await res.json()
     // Sort by created_at descending — most recent first
@@ -28,13 +29,13 @@ export const useJobStore = defineStore('jobs', () => {
   }
 
   async function fetchJob(jobId: string): Promise<void> {
-    const res = await fetch(`/api/jobs/${jobId}`)
+    const res = await apiFetch(`/api/jobs/${jobId}`)
     if (!res.ok) throw new Error(`GET /api/jobs/${jobId} failed: ${res.status}`)
     currentJob.value = await res.json()
   }
 
   async function submitJob(payload: JobCreate): Promise<string> {
-    const res = await fetch('/api/jobs', {
+    const res = await apiFetch('/api/jobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -49,7 +50,7 @@ export const useJobStore = defineStore('jobs', () => {
   }
 
   async function cancelJob(jobId: string): Promise<void> {
-    const res = await fetch(`/api/jobs/${jobId}`, { method: 'DELETE' })
+    const res = await apiFetch(`/api/jobs/${jobId}`, { method: 'DELETE' })
     if (res.status === 409) throw new Error('Job already completed or cancelled')
     if (!res.ok) throw new Error(`Cancel failed: ${res.status}`)
     // 204 No Content — update store optimistically
@@ -62,7 +63,7 @@ export const useJobStore = defineStore('jobs', () => {
   }
 
   async function toggleApplied(jobId: string): Promise<void> {
-    const res = await fetch(`/api/jobs/${jobId}/applied`, { method: 'PATCH' })
+    const res = await apiFetch(`/api/jobs/${jobId}/applied`, { method: 'PATCH' })
     if (!res.ok) throw new Error(`Toggle applied failed: ${res.status}`)
     const updated: JobResponse = await res.json()
     if (currentJob.value?.id === jobId) {
@@ -73,7 +74,7 @@ export const useJobStore = defineStore('jobs', () => {
   }
 
   async function deleteJob(jobId: string): Promise<void> {
-    const res = await fetch(`/api/jobs/${jobId}/remove`, { method: 'DELETE' })
+    const res = await apiFetch(`/api/jobs/${jobId}/remove`, { method: 'DELETE' })
     if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
     jobs.value = jobs.value.filter((j) => j.id !== jobId)
     if (currentJob.value?.id === jobId) {
@@ -94,7 +95,7 @@ export const useJobStore = defineStore('jobs', () => {
   }
 
   async function downloadPdf(jobId: string, companyName: string): Promise<void> {
-    const res = await fetch(`/api/jobs/${jobId}/pdf`)
+    const res = await apiFetch(`/api/jobs/${jobId}/pdf`)
     if (!res.ok) throw new Error(`PDF not available: ${res.status}`)
     const blob = await res.blob()
     const url = URL.createObjectURL(blob)
@@ -144,7 +145,7 @@ export const useJobStore = defineStore('jobs', () => {
       // Fallback: poll GET /api/jobs/:id every 5s on SSE error
       _pollInterval = setInterval(async () => {
         try {
-          const res = await fetch(`/api/jobs/${jobId}`)
+          const res = await apiFetch(`/api/jobs/${jobId}`)
           if (res.ok) {
             const job: JobResponse = await res.json()
             currentJob.value = job
@@ -185,7 +186,7 @@ export const useJobStore = defineStore('jobs', () => {
     tone: string,
     userNotes: string,
   ): Promise<string> {
-    const res = await fetch(`/api/jobs/${jobId}/cover-letter`, {
+    const res = await apiFetch(`/api/jobs/${jobId}/cover-letter`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, tone, user_notes: userNotes }),
@@ -210,7 +211,7 @@ export const useJobStore = defineStore('jobs', () => {
     coverLetterText: string,
     userNotes: string,
   ): Promise<void> {
-    const res = await fetch(`/api/jobs/${jobId}/cover-letter`, {
+    const res = await apiFetch(`/api/jobs/${jobId}/cover-letter`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cover_letter_text: coverLetterText, cover_letter_notes: userNotes }),
@@ -226,7 +227,7 @@ export const useJobStore = defineStore('jobs', () => {
   }
 
   async function downloadCoverLetterPdf(jobId: string, companyName: string): Promise<void> {
-    const res = await fetch(`/api/jobs/${jobId}/cover-letter/pdf`)
+    const res = await apiFetch(`/api/jobs/${jobId}/cover-letter/pdf`)
     if (!res.ok) throw new Error(`Cover letter PDF not available: ${res.status}`)
     const blob = await res.blob()
     const url = URL.createObjectURL(blob)
