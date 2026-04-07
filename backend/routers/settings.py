@@ -4,8 +4,8 @@ from __future__ import annotations
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from backend.db import get_db
-from backend.settings_cache import _DEFAULTS, update_cache
+from backend.db import ANONYMOUS_USER_ID, get_db
+from backend.settings_cache import _DEFAULTS
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -49,7 +49,10 @@ async def get_settings() -> SettingsResponse:
     """Return current provider settings (model names + base URLs + masked API keys)."""
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT key, value FROM settings")
+        cursor = await db.execute(
+            "SELECT key, value FROM settings WHERE user_id=?",
+            (ANONYMOUS_USER_ID,),
+        )
         rows = await cursor.fetchall()
     finally:
         await db.close()
@@ -76,11 +79,10 @@ async def update_settings(body: SettingsUpdate) -> SettingsResponse:
         updates = body.model_dump(exclude_none=True)
         for key, value in updates.items():
             await db.execute(
-                "INSERT INTO settings (key, value) VALUES (?, ?) "
-                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                (key, value),
+                "INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?) "
+                "ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value",
+                (ANONYMOUS_USER_ID, key, value),
             )
-            update_cache(key, value)
         await db.commit()
     finally:
         await db.close()
