@@ -5,8 +5,9 @@ import asyncio
 import logging
 
 import yaml
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from backend.auth import get_current_user
 from backend.schemas import CvConvertRequest, CvConvertResponse
 from core.cv_converter import convert_cv_to_yaml, save_base_cv
 
@@ -16,7 +17,7 @@ router = APIRouter(prefix="/cv", tags=["cv"])
 
 
 @router.get("/info")
-async def get_cv_info():
+async def get_cv_info(user: dict = Depends(get_current_user)):
     """Return the full base CV data for preview, plus a loaded flag."""
     from core.data import DEFAULT_CV_PATH, load_base_cv
 
@@ -39,7 +40,7 @@ async def get_cv_info():
 
 
 @router.post("/convert", response_model=CvConvertResponse)
-async def convert_cv(body: CvConvertRequest) -> CvConvertResponse:
+async def convert_cv(body: CvConvertRequest, user: dict = Depends(get_current_user)) -> CvConvertResponse:
     """Parse plain-text CV content into BaseCV YAML and save it as base_cv.yaml.
 
     Invokes Claude Code CLI via asyncio.to_thread (subprocess call — must not block the

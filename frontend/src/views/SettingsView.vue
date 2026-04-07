@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { apiFetch } from '@/utils/apiFetch'
 
 interface Settings {
   claude_cli_model: string
@@ -31,7 +32,7 @@ const error = ref<string | null>(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/settings')
+    const res = await apiFetch('/api/settings')
     if (res.ok) {
       settings.value = await res.json()
     }
@@ -54,7 +55,7 @@ async function handleSave() {
         delete payload[field]
       }
     }
-    const res = await fetch('/api/settings', {
+    const res = await apiFetch('/api/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

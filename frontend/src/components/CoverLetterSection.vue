@@ -3,6 +3,7 @@ import { ref, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import ToneSelector from '@/components/ToneSelector.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
+import { apiFetch } from '@/utils/apiFetch'
 import { useJobStore } from '@/stores/jobStore'
 
 const props = defineProps<{
@@ -32,7 +33,7 @@ const openaiAvailable = ref(false)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/config')
+    const res = await apiFetch('/api/config')
     const data = await res.json()
     claudeCliAvailable.value = data.claude_cli_available !== false
     claudeApiAvailable.value = data.claude_api_available === true

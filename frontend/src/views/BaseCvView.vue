@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import CvPreview from '@/components/CvPreview.vue'
+import { apiFetch } from '@/utils/apiFetch'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const loading = ref(true)
@@ -9,7 +10,7 @@ const loaded = ref(false)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/cv/info')
+    const res = await apiFetch('/api/cv/info')
     if (res.ok) {
       const data = await res.json()
       loaded.value = data.loaded === true
