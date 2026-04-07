@@ -49,12 +49,14 @@ def render_cover_letter_pdf(text: str, candidate_name: str = "") -> bytes:
     pdf.set_font("Helvetica", size=11)
     pdf.set_text_color(30, 30, 30)
 
+    page_width = pdf.w - pdf.l_margin - pdf.r_margin
     for line in text.split("\n"):
         stripped = line.strip()
         if not stripped:
             # Blank line — paragraph gap
             pdf.ln(6)
         else:
-            pdf.multi_cell(0, 6, stripped)
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(page_width, 6, stripped)
 
     return bytes(pdf.output())
