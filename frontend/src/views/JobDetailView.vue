@@ -38,7 +38,8 @@ async function loadJob(id: string) {
   currentJob.value = null
   activeTab.value = 'cv'
   await store.fetchJob(id)
-  if (currentJob.value && !['complete', 'failed', 'cancelled'].includes(currentJob.value.status)) {
+  const loaded = currentJob.value
+  if (loaded && !['complete', 'failed', 'cancelled'].includes(loaded.status)) {
     store.openSSE(id)
   }
 }
