@@ -17,6 +17,9 @@ class SettingsResponse(BaseModel):
     openai_model: str
     openai_base_url: str
     cv_filename: str
+    anthropic_api_key: str
+    gemini_api_key: str
+    openai_api_key: str
 
 
 class SettingsUpdate(BaseModel):
@@ -26,11 +29,24 @@ class SettingsUpdate(BaseModel):
     openai_model: str | None = None
     openai_base_url: str | None = None
     cv_filename: str | None = None
+    anthropic_api_key: str | None = None
+    gemini_api_key: str | None = None
+    openai_api_key: str | None = None
+
+
+def _mask_key(key: str) -> str:
+    """Return masked version of an API key for display safety.
+
+    Returns '***' + last 4 chars if non-empty, otherwise empty string.
+    """
+    if not key:
+        return ""
+    return "***" + key[-4:]
 
 
 @router.get("", response_model=SettingsResponse)
 async def get_settings() -> SettingsResponse:
-    """Return current provider settings (model names + base URLs)."""
+    """Return current provider settings (model names + base URLs + masked API keys)."""
     db = await get_db()
     try:
         cursor = await db.execute("SELECT key, value FROM settings")
@@ -46,6 +62,9 @@ async def get_settings() -> SettingsResponse:
         openai_model=stored.get("openai_model", _DEFAULTS["openai_model"]),
         openai_base_url=stored.get("openai_base_url", _DEFAULTS["openai_base_url"]),
         cv_filename=stored.get("cv_filename", _DEFAULTS["cv_filename"]),
+        anthropic_api_key=_mask_key(stored.get("anthropic_api_key", _DEFAULTS["anthropic_api_key"])),
+        gemini_api_key=_mask_key(stored.get("gemini_api_key", _DEFAULTS["gemini_api_key"])),
+        openai_api_key=_mask_key(stored.get("openai_api_key", _DEFAULTS["openai_api_key"])),
     )
 
 

@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import logging
-import os
 
 import anthropic
 
@@ -19,10 +18,10 @@ class ClaudeAPIProvider(BaseProvider):
     DEFAULT_MODEL = "claude-haiku-4-5"
 
     def __init__(self) -> None:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        from backend.settings_cache import get_api_key, get_setting
+        api_key = get_api_key("anthropic_api_key")
         if not api_key:
-            raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
-        from backend.settings_cache import get_setting
+            raise RuntimeError("ANTHROPIC_API_KEY is not set (neither in .env nor in Settings)")
         self._model = get_setting("claude_api_model") or self.DEFAULT_MODEL
         self._client = anthropic.Anthropic(api_key=api_key)
 

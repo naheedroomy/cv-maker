@@ -1,11 +1,12 @@
 """Application configuration endpoint — reports feature availability."""
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
 
 from fastapi import APIRouter
+
+from backend.settings_cache import get_api_key
 
 router = APIRouter(prefix="/config", tags=["config"])
 
@@ -23,10 +24,10 @@ def _claude_cli_available() -> bool:
 
 @router.get("")
 async def get_config():
-    """Return feature flags — provider availability based on env vars and CLI presence."""
+    """Return feature flags — provider availability based on DB-stored keys, env vars, and CLI presence."""
     return {
         "claude_cli_available": _claude_cli_available(),
-        "claude_api_available": bool(os.environ.get("ANTHROPIC_API_KEY")),
-        "gemini_available": bool(os.environ.get("GEMINI_API_KEY")),
-        "openai_available": bool(os.environ.get("OPENAI_API_KEY")),
+        "claude_api_available": bool(get_api_key("anthropic_api_key")),
+        "gemini_available": bool(get_api_key("gemini_api_key")),
+        "openai_available": bool(get_api_key("openai_api_key")),
     }

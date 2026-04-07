@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-import os
 
 import openai
 
@@ -19,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 class OpenAIProvider(BaseProvider):
     def __init__(self) -> None:
-        api_key = os.environ.get("OPENAI_API_KEY")
+        from backend.settings_cache import get_api_key, get_setting
+        api_key = get_api_key("openai_api_key")
         if not api_key:
-            raise RuntimeError("OPENAI_API_KEY environment variable is not set")
-        from backend.settings_cache import get_setting
+            raise RuntimeError("OPENAI_API_KEY is not set (neither in .env nor in Settings)")
         base_url = get_setting("openai_base_url") or None
         self._model = get_setting("openai_model") or "gpt-4o-mini"
         kwargs: dict[str, str] = {"api_key": api_key}

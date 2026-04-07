@@ -6,6 +6,7 @@ Providers call get_setting(key) which returns the cached value.
 from __future__ import annotations
 
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,16 @@ _DEFAULTS = {
     "openai_model": "gpt-4o-mini",
     "openai_base_url": "",
     "cv_filename": "",
+    "anthropic_api_key": "",
+    "gemini_api_key": "",
+    "openai_api_key": "",
+}
+
+# Mapping from settings key → environment variable name
+_API_KEY_ENV_MAP = {
+    "anthropic_api_key": "ANTHROPIC_API_KEY",
+    "gemini_api_key": "GEMINI_API_KEY",
+    "openai_api_key": "OPENAI_API_KEY",
 }
 
 
@@ -41,6 +52,19 @@ async def load_settings() -> None:
 def get_setting(key: str) -> str:
     """Get a setting value. Returns cached DB value, or default."""
     return _cache.get(key) or _DEFAULTS.get(key, "")
+
+
+def get_api_key(key: str) -> str:
+    """Get an API key with DB-overrides-.env semantics.
+
+    Returns the DB-stored key (via get_setting) if non-empty,
+    otherwise falls back to the corresponding environment variable.
+    """
+    db_val = get_setting(key)
+    if db_val:
+        return db_val
+    env_var = _API_KEY_ENV_MAP.get(key, "")
+    return os.environ.get(env_var, "") if env_var else ""
 
 
 def update_cache(key: str, value: str) -> None:

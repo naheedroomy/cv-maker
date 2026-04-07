@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import logging
-import os
 
 from google import genai
 from google.genai import errors as genai_errors
@@ -22,10 +21,10 @@ class GeminiProvider(BaseProvider):
     DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
 
     def __init__(self) -> None:
-        api_key = os.environ.get("GEMINI_API_KEY")
+        from backend.settings_cache import get_api_key, get_setting
+        api_key = get_api_key("gemini_api_key")
         if not api_key:
-            raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-        from backend.settings_cache import get_setting
+            raise RuntimeError("GEMINI_API_KEY is not set (neither in .env nor in Settings)")
         self._model = get_setting("gemini_model") or self.DEFAULT_MODEL
         self._client = genai.Client(api_key=api_key)
 
