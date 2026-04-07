@@ -169,7 +169,7 @@ def test_render_pdf_raises_file_not_found_when_latexmk_missing(monkeypatch) -> N
     """render_pdf raises FileNotFoundError with install hint when latexmk is absent."""
     monkeypatch.setattr(shutil, "which", lambda _: None)
     monkeypatch.setattr(Path, "exists", lambda self: False)
-    with pytest.raises(FileNotFoundError, match="brew install --cask mactex-no-gui"):
+    with pytest.raises(FileNotFoundError, match="latexmk not found"):
         render_pdf(r"\documentclass{article}\begin{document}hello\end{document}")
 
 

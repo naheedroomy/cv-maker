@@ -57,6 +57,8 @@ def test_init_db_jobs_table_columns(tmp_path: Path) -> None:
         "model",
         "applied",
         "creativity_level",
+        "cover_letter_text",
+        "cover_letter_notes",
     }
 
     async def get_columns() -> set[str]:
