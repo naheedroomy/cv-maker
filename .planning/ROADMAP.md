@@ -79,15 +79,18 @@ Plans:
 
 ### Phase 1001: Frontend UX Revamp & Project Restructure
 
-**Goal:** Revamp the frontend UX for a cleaner, less clunky experience — fix button sizing and placement, improve cover letter generator discoverability, streamline regeneration flow. Also restructure the repo folder layout to flatten src/cv_maker/ into src/ and organize the project more logically.
+**Goal:** Revamp the frontend UX for a cleaner, less clunky experience — 3-tab layout for job detail, unified pill selectors, 3-level button hierarchy, sidebar facelift. Restructure the repo folder layout to flatten src/cv_maker/ into core/ and delete stray files.
 **Scope:**
-- Frontend UX cleanup: button sizing, placement, spacing, visual hierarchy
-- Cover letter section discoverability and generation flow
-- Regenerate panel UX improvements
-- Project folder restructure: flatten src/cv_maker/ nesting, clean up jumbled layout
-**Requirements**: TBD
+- Frontend UX cleanup: 3-tab job detail layout (CV / Cover Letter / Analysis), button hierarchy, selector unification
+- Cover letter section promoted to its own tab for discoverability
+- Regenerate panel button style corrections (Secondary toggle, Primary confirm)
+- Sidebar facelift: active left-border indicator, proper session entry spacing
+- Project folder restructure: rename src/cv_maker/ to core/, update all imports, delete stray files
+**Requirements**: REPO-RENAME, REPO-CLEANUP, UX-SELECTORS, UX-BUTTONS, UX-SIDEBAR, UX-TABS
 **Depends on:** Phase 1000
-**Plans:** 0 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD
+- [ ] 1001-01-PLAN.md — Repo restructure: rename src/cv_maker/ to core/, update imports, delete stray files
+- [ ] 1001-02-PLAN.md — Shared selector CSS, button hierarchy fixes, sidebar redesign
+- [ ] 1001-03-PLAN.md — 3-tab layout in JobDetailView, CoverLetterSection tab adaptation, visual checkpoint
