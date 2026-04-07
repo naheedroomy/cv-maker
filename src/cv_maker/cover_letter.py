@@ -57,27 +57,47 @@ You are writing a cover letter for a job application. You have access to:
 TONE: {tone_instruction}
 
 ---
+WHAT A COVER LETTER IS (AND IS NOT)
+
+A cover letter is NOT a CV summary. The reader already has the CV. If your letter reads \
+like a list of accomplishments with periods instead of bullet points, you have failed. \
+A cover letter does what a CV cannot: it tells a story, shows personality, connects \
+the dots between your experience and their specific needs, and gives the reader a sense \
+of what it would be like to work with you.
+
+Pick 2-3 proof points max. Go deep on each, not wide across many. One well-contextualized \
+achievement is worth more than five listed ones.
+
+Do NOT state obvious things like "I've uploaded my CV" or "as you can see from my resume." \
+They know.
+
+---
 LENGTH AND STRUCTURE
 
-200-300 words. 3-4 paragraphs. Shorter is always better — every sentence must earn its place.
+200-300 words MAXIMUM. Count them. 3 paragraphs (not 4, not 5). \
+Shorter is always better. Every sentence must earn its place. \
+If you are over 300 words, you have too many proof points. Cut.
 
-Paragraph 1 — THE HOOK:
+Paragraph 1 — THE HOOK (3-4 sentences):
 Why this specific role at this specific company. Reference one concrete detail about the \
-company from the job listing — their product, mission, scale, or tech stack. \
+company from the job listing: their product, mission, scale, or tech stack. \
 Do NOT use generic praise like "innovative company" or "industry leader." \
 If the job listing names a hiring manager, address them by name. Otherwise use "Hi" or \
 "Hello" for casual/direct tones, "Dear Hiring Manager" for formal/professional.
 
-Paragraph 2-3 — PROOF POINTS:
-Your 2-3 strongest achievements from the tailored CV, matched to their top requirements. \
-Contextualize and connect — explain WHY these achievements matter for THIS role. \
+Paragraph 2 — PROOF POINTS (4-6 sentences):
+Your 2-3 STRONGEST achievements from the tailored CV, matched to their top requirements. \
+TWO to THREE. Not four. Not five. Not six. Pick the best and cut the rest. \
+Contextualize and connect: explain WHY these achievements matter for THIS role. \
 Do NOT copy bullet points from the CV verbatim. The reader already has your CV. \
-Rephrase, connect, and add context that bullets can't convey.
+Rephrase, connect, and add narrative context that bullets can't convey. \
+Vary how you introduce achievements. Do NOT write "I've [verb]. I've [verb]. I've [verb]." \
+That is a bullet list with periods. Use transitions, compound sentences, and varying subjects.
 
-Final paragraph — CLOSE:
-A concrete next step. Not "I look forward to discussing" — something specific. \
-Mention willingness to learn and grow with the team's stack where genuine. \
-Keep it to 1-2 sentences max.
+Paragraph 3 — CLOSE (1-3 sentences):
+A concrete, specific next step. Not "I look forward to discussing." \
+Reference something specific you could walk them through or discuss. \
+Keep it tight. One sentence is often enough.
 
 ---
 GAP HANDLING
@@ -87,7 +107,7 @@ Use the gap analysis to decide what to emphasize and what to address:
 - "strong" matches: These are your proof points. Feature them prominently.
 - "partial" matches: Where you have adjacent/transferable experience, you MAY briefly \
 acknowledge the specific tool gap while asserting your transferable skill. Frame it as \
-capability, not apology. Example: "Your stack uses GitLab CI — I've built equivalent \
+capability, not apology. Example: "Your stack uses GitLab CI. I've built equivalent \
 pipelines in GitHub Actions and ArgoCD, so the patterns transfer directly." \
 Only do this for 1-2 partial matches max. Do not turn the letter into a list of \
 tool translations.
@@ -115,7 +135,7 @@ ANTI-AI WRITING RULES (mandatory — violations will be caught in the self-criti
 3. SIMPLE VERBS: "I built" not "I spearheaded the development of". "I fixed" not
    "I addressed challenges in". "I connect X and Y" not "I serve as the bridge between X and Y".
    BAD: "I spearheaded the development of a comprehensive observability platform."
-   GOOD: "I built the observability platform — Datadog dashboards, alert routing, the whole stack."
+   GOOD: "I built the observability platform. Datadog dashboards, alert routing, the whole stack."
 
 4. NO RULE-OF-THREE CLUSTERS: Never list three abstract nouns together.
    BAD: "innovation, collaboration, and impact"
@@ -124,7 +144,7 @@ ANTI-AI WRITING RULES (mandatory — violations will be caught in the self-criti
 5. NO GENERIC CONCLUSIONS: Never write "I look forward to the opportunity to discuss"
    or "I would welcome the chance to contribute". End with something specific.
    BAD: "I look forward to discussing how I can contribute to your team."
-   GOOD: "Happy to walk through the K8s migration timeline — my calendar's open."
+   GOOD: "Happy to walk through the K8s migration timeline. My calendar's open."
 
 6. NO PARTICIPIAL PADDING: Never tack on "leveraging", "contributing to",
    "fostering", "showcasing", "emphasizing". These are filler.
@@ -156,13 +176,16 @@ ANTI-AI WRITING RULES (mandatory — violations will be caught in the self-criti
     BAD: "I am eager to learn and grow with your team."
     GOOD: "Keen to dig into Helmfile. I've done similar work with plain Helm charts."
 
-13. NO ACHIEVEMENT CHAINS: Do not string 3+ achievements into one sentence with
-    commas or semicolons. Each achievement gets its own sentence.
+13. NO ACHIEVEMENT CHAINS OR BULLET-LIST-IN-DISGUISE: Do not string 3+ achievements
+    into one sentence with commas or semicolons. Also do not write consecutive
+    "I [verb]..." sentences. That is a bullet list with periods instead of bullet points.
     BAD: "I engineered CI/CD pipelines, built GitOps workflows, and integrated monitoring."
+    BAD: "I've managed clusters. I've built pipelines. I've scaled services. I've operated databases."
     GOOD: "I engineered zero-touch CI/CD pipelines with GitHub Actions. On the IaC side,
     I built GitOps workflows with ArgoCD and Terraform that made every AWS environment
     reproducible."
-    The cover letter is not a bullet list in disguise. Separate. Contextualize. Breathe.
+    The cover letter is not a CV summary. 2-3 proof points max. Go deep, not wide.
+    Vary sentence structure. Use transitions. Connect achievements to their needs.
 
 ---
 PROCESS (execute all steps internally, return only the final JSON):
@@ -174,12 +197,19 @@ STEP 1: Write a 3-4 paragraph cover letter draft.
         If user notes are provided, weave them naturally.
 
 STEP 2: Self-critique. Read your draft as a hostile AI-detection reviewer.
+        STRUCTURE CHECK: Count paragraphs. Must be exactly 3. If you have 4+, merge or cut.
+        WORD COUNT CHECK: Count words. Must be 200-300. If over 300, you have too many
+        proof points. Cut achievements, not context. Go from 5 proof points to 2-3.
         Check every sentence against the 13 anti-AI rules above.
-        Check for CV bullet copying.
+        Check for CV bullet copying or CV summary tone.
         Check for generic company praise.
-        Check em dash count (must be ZERO — not one, zero).
+        Check em dash count (must be ZERO, not one, zero).
         Check for parenthetical mid-sentence injections that simulate em dashes.
         Check for achievement chains (3+ accomplishments in one sentence).
+        Check for consecutive "I [verb]" sentences (bullet list in disguise).
+        Check for dead weight ("I've uploaded my CV", "as you can see from my resume").
+        Check for rule-of-three abstract noun clusters.
+        Does this read like a PERSON wrote it, or like an AI summarized a CV?
         Find at least 3 issues. If you find fewer, look harder.
 
 STEP 3: Rewrite the draft to fix every issue found.
