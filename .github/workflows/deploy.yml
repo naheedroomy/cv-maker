@@ -1,109 +1,60 @@
-name: Build and Deploy
+name: Deploy to VPS
 
 on:
   push:
     branches: [main]
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/naheedroomy/cv-maker
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    strategy:
-      matrix:
-        include:
-          - image: backend
-            dockerfile: Dockerfile.backend
-          - image: frontend
-            dockerfile: Dockerfile.frontend
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.image }}
-          tags: |
-            type=sha,prefix=
-            type=raw,value=latest
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   deploy:
+    name: Deploy
     runs-on: ubuntu-latest
-    needs: build
+    timeout-minutes: 20
+
     steps:
-      - name: Checkout (for compose and nginx files)
-        uses: actions/checkout@v4
-
-      - name: Copy production files to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose.prod.yml"
-          target: "/opt/cv-maker"
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 15m
           script: |
-            set -e
-            cd /opt/cv-maker
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            set -euo pipefail
+
+            APP_DIR="/opt/cv-maker/cv-maker"
+            cd "$APP_DIR"
+
+            echo "==> Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            # .env is created once on the VPS (step 4 in docs/deployment.md)
+            # and persists across deploys — git reset doesn't touch it.
+
+            # ---- Build and deploy ----
+            echo "==> Building and starting containers..."
+            docker compose build
+            docker compose up -d --remove-orphans
             docker image prune -f
 
-      - name: Verify deployment (SSH)
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -e
-            sleep 10
-            cd /opt/cv-maker
-            docker compose -f docker-compose.prod.yml ps
-            curl -sf http://localhost/api/ || (echo "Health check failed" && exit 1)
-            echo "Deployment verified successfully"
+            # ---- Health check ----
+            echo "==> Waiting for backend to start..."
+            for i in 1 2 3 4 5; do
+              sleep 5
+              if curl -sf http://localhost/api/ > /dev/null 2>&1; then
+                echo "==> Health check passed on attempt $i"
+                break
+              fi
+              echo "  Attempt $i: not ready, retrying..."
+              if [ "$i" = "5" ]; then
+                echo "==> Health check failed after 5 attempts"
+                docker compose logs --tail 30
+                exit 1
+              fi
+            done
 
-      - name: Verify public endpoint
-        run: |
-          sleep 5
-          STATUS=$(curl -sf -o /dev/null -w "%{http_code}" https://resume.xenohass.work/api/ || true)
-          if [ "$STATUS" = "200" ]; then
-            echo "Public endpoint verified: HTTP $STATUS"
-          else
-            echo "Warning: Public endpoint returned HTTP $STATUS (may need DNS propagation)"
-          fi
+            echo "==> Deploy complete!"

@@ -57,7 +57,7 @@
 | 1003. Google Auth Backend + JWT Middleware | v3.0 | 2/3 | Complete    | 2026-04-07 |
 | 1004. CV Ingestion & Visual Editor | v3.0 | 3/3 | Complete    | 2026-04-07 |
 | 1005. Dockerization & docker-compose | v3.0 | 2/2 | Complete    | 2026-04-07 |
-| 1006. CI/CD, Domain & HTTPS | v3.0 | 1/2 | In Progress|  |
+| 1006. CI/CD, Domain & HTTPS | v3.0 | 2/2 | Complete    | 2026-04-07 |
 
 ---
 
@@ -196,7 +196,7 @@
 5. GitHub Actions secrets (`VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`) are the only credentials required — GHCR auth uses the automatic `GITHUB_TOKEN`, no hardcoded secrets in the repository
 
 **Plans:**
-1/2 plans executed
+2/2 plans complete
 - [x] 1006-02-PLAN.md — Production Nginx config (Cloudflare), VPS deployment documentation
 
 ---

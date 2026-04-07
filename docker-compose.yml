@@ -10,11 +10,16 @@ services:
     environment:
       - CV_MAKER_DB_PATH=/app/data/cv_maker.db
       - BASE_CV_PATH=/app/data/base_cv.yaml
-      - CORS_ORIGINS=http://localhost
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost}
     volumes:
       - cv-data:/app/data
-      - ~/.claude:/home/appuser/.claude:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
@@ -23,7 +28,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

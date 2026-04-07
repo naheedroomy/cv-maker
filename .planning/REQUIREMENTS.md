@@ -7,7 +7,7 @@
 - [x] **DEPLOY-01**: App runs as Docker containers (backend + frontend) orchestrated by docker-compose
 - [x] **DEPLOY-02**: Backend Docker image includes Python runtime, LaTeX (texlive), and all Python dependencies
 - [x] **DEPLOY-03**: Frontend Docker image builds Vue SPA and serves it via Nginx
-- [ ] **DEPLOY-04**: GitHub Actions workflow builds images and deploys to VPS via SSH on push to main
+- [x] **DEPLOY-04**: GitHub Actions workflow builds images and deploys to VPS via SSH on push to main
 - [x] **DEPLOY-05**: Nginx routes `/api/*` requests to backend container and `/` to frontend SPA
 - [ ] **DEPLOY-06**: App is accessible via a domain name (HTTPS handled by Nginx + certbot or reverse proxy)
 

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
-status: executing
-stopped_at: Completed 1006-02-PLAN.md
-last_updated: "2026-04-07T19:01:24.120Z"
+status: verifying
+stopped_at: Completed 1006-01-PLAN.md
+last_updated: "2026-04-07T19:10:30.896Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 19
-  completed_plans: 18
+  completed_plans: 19
   percent: 100
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 
 ## Current Position
 
-Phase: 1006 (cicd-domain-and-https) — EXECUTING
-Plan: 2 of 2
-Status: Ready to execute
+Phase: 1006
+Plan: Not started
+Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
 Progress: [██████████] 100%
@@ -83,6 +83,7 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1005]: cv-data named volume persists SQLite DB and base_cv.yaml; ~/.claude bind mount maps to /home/appuser/.claude read-only
 - [Phase 1006]: Single nginx.conf for dev+prod — Cloudflare set_real_ip_from directives harmless locally, server_name _ wildcard covers both
 - [Phase 1006]: Cloudflare Flexible SSL — no cert management on VPS, TLS terminates at Cloudflare edge
+- [Phase 1006]: Matrix build + GHCR images with latest+SHA tags, GHA layer caching, SSH deploy with health verification — TeX Live layer ~1.2GB requires parallel builds; dual tags enable rollback; GHA caching avoids rebuilding massive layers
 
 ### Quick Tasks Completed
 
@@ -114,6 +115,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1005 P01 | 94s | 3 tasks | 3 files |
 | Phase 1005 P02 | 87s | 4 tasks | 4 files |
 | Phase 1006 P02 | 1min | 2 tasks | 2 files |
+| Phase 1006 P01 | 1min | 3 tasks | 3 files |
 
 ### Roadmap Evolution
 
@@ -122,6 +124,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T19:01:24.116Z
-Stopped at: Completed 1006-02-PLAN.md
+Last session: 2026-04-07T19:05:12.305Z
+Stopped at: Completed 1006-01-PLAN.md
 Resume file: None
