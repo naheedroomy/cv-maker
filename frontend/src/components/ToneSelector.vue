@@ -9,16 +9,21 @@ const emit = defineEmits<{
 }>()
 
 const options = [
-  { value: 'formal', label: 'Formal' },
-  { value: 'professional', label: 'Professional' },
-  { value: 'confident', label: 'Confident' },
-  { value: 'direct', label: 'Direct' },
-  { value: 'casual', label: 'Casual' },
+  { value: 'formal', label: 'Formal', hint: 'Traditional corporate style with formal greetings and professional closings' },
+  { value: 'professional', label: 'Professional', hint: 'Clear and direct, leads with specifics, no fluff' },
+  { value: 'confident', label: 'Confident', hint: 'Assertive with specific achievements, owns the work' },
+  { value: 'direct', label: 'Direct', hint: 'Facts only, no warmth or flair, lets the work speak' },
+  { value: 'casual', label: 'Casual', hint: 'Conversational with personality, uses contractions' },
 ] as const
 
 function select(tone: string): void {
   if (props.disabled) return
   emit('update:modelValue', tone)
+}
+
+function hintText(): string {
+  const opt = options.find(o => o.value === props.modelValue)
+  return opt ? opt.hint : ''
 }
 </script>
 
@@ -39,6 +44,7 @@ function select(tone: string): void {
         {{ opt.label }}
       </button>
     </div>
+    <p class="tone-hint">{{ hintText() }}</p>
   </div>
 </template>
 
@@ -90,5 +96,12 @@ function select(tone: string): void {
 .tone-option:disabled {
   color: #6b7280;
   cursor: not-allowed;
+}
+
+.tone-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 6px;
+  margin-bottom: 0;
 }
 </style>
