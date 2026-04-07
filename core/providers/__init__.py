@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-async def get_provider(model: str) -> BaseProvider:
+async def get_provider(model: str, user_id: int | None = None) -> BaseProvider:
     """Async factory: resolve per-user settings, then construct the provider.
 
     Supported values:
@@ -29,21 +29,21 @@ async def get_provider(model: str) -> BaseProvider:
     # Server env vars (GEMINI_API_KEY etc.) are for internal use (PDF parsing) only.
     if model == "claude-api":
         from core.providers.claude_api_provider import ClaudeAPIProvider
-        api_key = await get_setting("anthropic_api_key")
-        api_model = await get_setting("claude_api_model")
+        api_key = await get_setting("anthropic_api_key", user_id)
+        api_model = await get_setting("claude_api_model", user_id)
         return ClaudeAPIProvider(api_key=api_key, model=api_model)
     if model == "gemini-flash":
         from core.providers.gemini_provider import GeminiProvider
-        api_key = await get_setting("gemini_api_key")
-        gem_model = await get_setting("gemini_model")
+        api_key = await get_setting("gemini_api_key", user_id)
+        gem_model = await get_setting("gemini_model", user_id)
         return GeminiProvider(api_key=api_key, model=gem_model)
     if model == "openai":
         from core.providers.openai_provider import OpenAIProvider
-        api_key = await get_setting("openai_api_key")
-        oai_model = await get_setting("openai_model")
-        base_url = (await get_setting("openai_base_url")) or None
+        api_key = await get_setting("openai_api_key", user_id)
+        oai_model = await get_setting("openai_model", user_id)
+        base_url = (await get_setting("openai_base_url", user_id)) or None
         return OpenAIProvider(api_key=api_key, model=oai_model, base_url=base_url)
     # Default: "claude-haiku" and any unknown value
     from core.providers.claude_provider import ClaudeProvider
-    cli_model = await get_setting("claude_cli_model")
+    cli_model = await get_setting("claude_cli_model", user_id)
     return ClaudeProvider(cli_model=cli_model)
