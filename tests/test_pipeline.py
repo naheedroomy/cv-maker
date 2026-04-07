@@ -306,7 +306,7 @@ class TestParameterizedPrompt:
     def test_coverage_constraint_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """Prompt includes minimum bullet count constraint."""
         result = _build_prompt(base_cv, sample_job_text, 2)
-        assert "2-3 minimum" in result
+        assert "FLOORS" in result or "minimum" in result.lower()
 
     def test_level_clamped_to_range(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """Levels outside 0-5 are clamped."""

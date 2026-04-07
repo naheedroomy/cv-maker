@@ -264,11 +264,13 @@ _RULES: dict[str, dict[int, str]] = {
     },
     "core_competencies": {
         0: (
-            "Select 6-8 keyword phrases from the job description that the candidate "
-            "demonstrably matches based on their base CV. These are NOT the full skills list — "
-            "they are JD-derived competency labels (e.g., 'Cloud Infrastructure', 'CI/CD Pipelines', "
-            "'Microservices Architecture', 'Team Leadership'). Only include phrases where the base CV "
-            "provides strong or partial evidence. Return as the 'core_competencies' array."
+            "Select 6-8 SHORT keyword phrases from the job description that the candidate "
+            "demonstrably matches based on their base CV. Keep each phrase to 2-3 words MAX "
+            "(e.g., 'AWS Infrastructure', 'CI/CD Pipelines', 'Kubernetes', 'IaC / Terraform'). "
+            "Do NOT write long phrases like 'Cloud Infrastructure Management and Optimization'. "
+            "These are NOT the full skills list — they are JD-derived competency labels. "
+            "Only include phrases where the base CV provides strong or partial evidence. "
+            "Return as the 'core_competencies' array."
         ),
     },
     "pruning": {

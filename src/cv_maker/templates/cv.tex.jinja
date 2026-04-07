@@ -47,10 +47,12 @@
 \BLOCK{if cv.core_competencies}
 \bigskip
 \section{Core Competencies}
+\begin{sloppypar}
 \noindent
 \BLOCK{for comp in cv.core_competencies}
-\pill{\VAR{comp|e}}\hspace{4pt}\allowbreak%
+\pill{\VAR{comp|e}}\hspace{4pt}%
 \BLOCK{endfor}
+\end{sloppypar}
 \BLOCK{endif}
 
 \bigskip
