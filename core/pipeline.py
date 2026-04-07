@@ -39,14 +39,12 @@ class Creativity(IntEnum):
 
 
 def _get_claude_cli_model() -> str:
-    """Get Claude CLI model from settings cache, env, or default."""
-    try:
-        from backend.settings_cache import get_setting
-        model = get_setting("claude_cli_model")
-        if model:
-            return model
-    except ImportError:
-        pass
+    """Get Claude CLI model from env or default.
+
+    NOTE: Per-user settings resolution now happens in the async get_provider()
+    factory (core/providers/__init__.py), which passes cli_model to the
+    ClaudeProvider constructor. This sync fallback only reads env vars.
+    """
     return os.environ.get("CLAUDE_MODEL", "haiku")
 
 

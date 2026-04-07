@@ -45,6 +45,7 @@ def test_init_db_jobs_table_columns(tmp_path: Path) -> None:
 
     expected_columns = {
         "id",
+        "user_id",
         "company_name",
         "job_link",
         "job_text",
