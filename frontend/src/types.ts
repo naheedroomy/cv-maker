@@ -1,14 +1,26 @@
 export interface ContactInfo {
   name: string
   email: string
-  phone: string
-  linkedin: string
-  location: string
+  phone?: string
+  linkedin?: string
+  location?: string
+  github?: string
+}
+
+export interface BaseCV {
+  contact: ContactInfo
+  summary: string
+  experience: ExperienceItem[]
+  skills: string[]
+  education: EducationItem[]
+  projects: ProjectItem[]
+  certifications: string[]
 }
 
 export interface ExperienceItem {
   company: string
   title: string
+  location?: string
   start: string
   end: string | null
   bullets: string[]
@@ -26,7 +38,7 @@ export interface ProjectItem {
   name: string
   description: string
   technologies: string[]
-  url: string
+  url?: string
 }
 
 export interface TailoringNote {
