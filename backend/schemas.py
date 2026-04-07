@@ -63,3 +63,18 @@ class CoverLetterResponse(BaseModel):
 
     cover_letter_text: str
     cover_letter_notes: str = ""
+
+
+class CvUploadResponse(BaseModel):
+    """Response for POST /api/cv/upload."""
+
+    success: bool
+    message: str
+    cv: dict | None = None  # Parsed BaseCV as dict
+
+
+class CvMeResponse(BaseModel):
+    """Response for GET /api/cv/me."""
+
+    has_cv: bool
+    cv: dict | None = None  # BaseCV as dict, None if no CV saved
