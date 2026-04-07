@@ -23,21 +23,23 @@ async def get_provider(model: str) -> BaseProvider:
     - "claude-haiku" → ClaudeProvider (default, uses CLI)
     - any unknown value → ClaudeProvider (fallback)
     """
-    from backend.settings_cache import get_api_key, get_setting
+    from backend.settings_cache import get_setting
 
+    # Only use per-user keys (from DB) for tailoring providers.
+    # Server env vars (GEMINI_API_KEY etc.) are for internal use (PDF parsing) only.
     if model == "claude-api":
         from core.providers.claude_api_provider import ClaudeAPIProvider
-        api_key = await get_api_key("anthropic_api_key")
+        api_key = await get_setting("anthropic_api_key")
         api_model = await get_setting("claude_api_model")
         return ClaudeAPIProvider(api_key=api_key, model=api_model)
     if model == "gemini-flash":
         from core.providers.gemini_provider import GeminiProvider
-        api_key = await get_api_key("gemini_api_key")
+        api_key = await get_setting("gemini_api_key")
         gem_model = await get_setting("gemini_model")
         return GeminiProvider(api_key=api_key, model=gem_model)
     if model == "openai":
         from core.providers.openai_provider import OpenAIProvider
-        api_key = await get_api_key("openai_api_key")
+        api_key = await get_setting("openai_api_key")
         oai_model = await get_setting("openai_model")
         base_url = (await get_setting("openai_base_url")) or None
         return OpenAIProvider(api_key=api_key, model=oai_model, base_url=base_url)
