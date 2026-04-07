@@ -144,14 +144,25 @@ ANTI-AI WRITING RULES (mandatory — violations will be caught in the self-criti
     BAD: "I have extensive experience in cloud infrastructure."
     GOOD: "I ran 340 pods across 3 clusters at Sysco Labs for 2 years."
 
-11. NO EM DASH OVERUSE: Use em dashes (—) sparingly — maximum ONE in the entire letter.
-    LLMs overuse em dashes and reviewers notice. Use commas, periods, colons, or semicolons
-    instead. If you find yourself reaching for an em dash, restructure the sentence.
+11. NO EM DASHES OR EM DASH SUBSTITUTES: Do not use em dashes (—) at all. Zero.
+    Also do not simulate em dashes with parenthetical injections mid-sentence.
+    BAD: "built GitOps workflows with ArgoCD and Terraform (fully reproducible AWS environments)"
+    BAD: "engineered CI/CD pipelines — eliminating manual overhead"
+    GOOD: "Built GitOps workflows with ArgoCD and Terraform. Every environment is reproducible."
+    If you need to add context, use a new sentence. Not a parenthetical. Not a dash.
 
 12. NO ABSTRACT ENTHUSIASM: Do not write "I am eager to learn" or "excited to grow."
     If you want to express interest in learning something, name the specific thing.
     BAD: "I am eager to learn and grow with your team."
-    GOOD: "Keen to dig into Helmfile — I've done similar work with plain Helm charts."
+    GOOD: "Keen to dig into Helmfile. I've done similar work with plain Helm charts."
+
+13. NO ACHIEVEMENT CHAINS: Do not string 3+ achievements into one sentence with
+    commas or semicolons. Each achievement gets its own sentence.
+    BAD: "I engineered CI/CD pipelines, built GitOps workflows, and integrated monitoring."
+    GOOD: "I engineered zero-touch CI/CD pipelines with GitHub Actions. On the IaC side,
+    I built GitOps workflows with ArgoCD and Terraform that made every AWS environment
+    reproducible."
+    The cover letter is not a bullet list in disguise. Separate. Contextualize. Breathe.
 
 ---
 PROCESS (execute all steps internally, return only the final JSON):
@@ -163,10 +174,12 @@ STEP 1: Write a 3-4 paragraph cover letter draft.
         If user notes are provided, weave them naturally.
 
 STEP 2: Self-critique. Read your draft as a hostile AI-detection reviewer.
-        Check every sentence against the 12 anti-AI rules above.
+        Check every sentence against the 13 anti-AI rules above.
         Check for CV bullet copying.
         Check for generic company praise.
-        Check em dash count (max 1).
+        Check em dash count (must be ZERO — not one, zero).
+        Check for parenthetical mid-sentence injections that simulate em dashes.
+        Check for achievement chains (3+ accomplishments in one sentence).
         Find at least 3 issues. If you find fewer, look harder.
 
 STEP 3: Rewrite the draft to fix every issue found.
