@@ -38,8 +38,21 @@ const sortedJobs = computed(() =>
 
 async function fetchCvInfo() {
   try {
-    const res = await apiFetch('/api/cv/info')
-    if (res.ok) cvInfo.value = await res.json()
+    const res = await apiFetch('/api/cv/me')
+    if (res.ok) {
+      const data = await res.json()
+      if (data.has_cv && data.cv) {
+        cvInfo.value = {
+          loaded: true,
+          name: data.cv.contact?.name,
+          roles: data.cv.experience?.length || 0,
+          skills: data.cv.skills?.length || 0,
+          certifications: data.cv.certifications?.length || 0,
+        }
+      } else {
+        cvInfo.value = { loaded: false }
+      }
+    }
   } catch { /* ignore */ }
 }
 
@@ -90,8 +103,8 @@ onUnmounted(() => {
         <p class="cv-info-detail">{{ cvInfo.roles }} roles, {{ cvInfo.skills }} skills, {{ cvInfo.certifications }} certs</p>
       </RouterLink>
       <div v-else class="cv-info-empty">
-        <p class="cv-info-detail">No CV imported</p>
-        <RouterLink to="/convert" class="cv-info-link">Import CV</RouterLink>
+        <p class="cv-info-detail">No CV uploaded</p>
+        <RouterLink to="/base-cv" class="cv-info-link">Upload CV</RouterLink>
       </div>
     </div>
     <div v-if="isAuthenticated && user" class="user-profile">
