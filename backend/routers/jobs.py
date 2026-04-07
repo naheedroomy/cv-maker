@@ -81,7 +81,7 @@ async def create_job(body: JobCreate, user: dict = Depends(get_current_user)) ->
         await db.close()
 
     task = schedule_background_task(
-        job_worker(job_id, body.company_name, body.job_text, body.model, body.creativity_level)
+        job_worker(job_id, body.company_name, body.job_text, body.model, body.creativity_level, user_id=user["id"])
     )
     _job_tasks[job_id] = task
     logger.info("Job %s created for company=%s model=%s creativity=%d", job_id, body.company_name, body.model, body.creativity_level)
