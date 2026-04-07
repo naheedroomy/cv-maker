@@ -75,10 +75,10 @@ onUnmounted(() => {
       </div>
     </nav>
     <div v-if="cvInfo" class="cv-info">
-      <div v-if="cvInfo.loaded" class="cv-info-loaded">
+      <RouterLink v-if="cvInfo.loaded" to="/base-cv" class="cv-info-loaded">
         <p class="cv-info-name">{{ cvInfo.name }}</p>
         <p class="cv-info-detail">{{ cvInfo.roles }} roles, {{ cvInfo.skills }} skills, {{ cvInfo.certifications }} certs</p>
-      </div>
+      </RouterLink>
       <div v-else class="cv-info-empty">
         <p class="cv-info-detail">No CV imported</p>
         <RouterLink to="/convert" class="cv-info-link">Import CV</RouterLink>
@@ -155,6 +155,17 @@ nav {
   padding: 12px 16px;
   border-top: 1px solid #e2e8f0;
   margin-top: auto;
+}
+.cv-info-loaded {
+  display: block;
+  text-decoration: none;
+  transition: background-color 150ms ease;
+  border-radius: 4px;
+  padding: 4px;
+  margin: -4px;
+}
+.cv-info-loaded:hover {
+  background: #f3f4f6;
 }
 .cv-info-name {
   font-size: 13px;

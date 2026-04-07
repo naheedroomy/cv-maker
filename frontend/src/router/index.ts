@@ -3,6 +3,7 @@ import JobFormView from '@/views/JobFormView.vue'
 import JobDetailView from '@/views/JobDetailView.vue'
 
 const CvConverterView = () => import('@/views/CvConverterView.vue')
+const BaseCvView = () => import('@/views/BaseCvView.vue')
 const SettingsView = () => import('@/views/SettingsView.vue')
 
 export const router = createRouter({
@@ -11,6 +12,7 @@ export const router = createRouter({
     { path: '/', component: JobFormView },
     { path: '/jobs/:id', component: JobDetailView },
     { path: '/convert', component: CvConverterView },
+    { path: '/base-cv', component: BaseCvView },
     { path: '/settings', component: SettingsView },
   ],
 })

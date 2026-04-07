@@ -17,7 +17,7 @@ router = APIRouter(prefix="/cv", tags=["cv"])
 
 @router.get("/info")
 async def get_cv_info():
-    """Return summary of the currently loaded base CV."""
+    """Return the full base CV data for preview, plus a loaded flag."""
     from cv_maker.data import DEFAULT_CV_PATH, load_base_cv
 
     if not DEFAULT_CV_PATH.exists():
@@ -31,11 +31,10 @@ async def get_cv_info():
     return {
         "loaded": True,
         "name": cv.contact.name,
-        "email": cv.contact.email,
-        "location": cv.contact.location,
         "roles": len(cv.experience),
         "skills": len(cv.skills),
         "certifications": len(cv.certifications),
+        "cv": cv.model_dump(),
     }
 
 
