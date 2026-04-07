@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
 status: executing
-stopped_at: Completed 1004-01-PLAN.md
-last_updated: "2026-04-07T16:58:22.663Z"
+stopped_at: Completed 1004-03-PLAN.md
+last_updated: "2026-04-07T17:03:28.660Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
-  completed_phases: 4
-  total_plans: 15
-  completed_plans: 13
+  completed_phases: 0
+  total_plans: 6
+  completed_plans: 11
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 1004 (cv-ingestion-and-visual-editor) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -74,6 +74,8 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1003]: apiFetch drop-in replaces all native fetch() in jobStore — Bearer token auto-injected, 401 triggers logout+redirect
 - [Phase 1003]: AppSidebar user profile uses authStore storeToRefs — reactive display of Google avatar, name, sign-out without props
 - [Phase 1004]: Gemini 2.5 Flash-Lite for both OCR and structuring passes in CV parser; inhouse GEMINI_API_KEY from .env; DB CV takes priority over YAML file in GET /cv/info
+- [Phase 1004]: user_id defaults to 1 (ANONYMOUS_USER_ID) in job_worker for backward compat — DB-first CV load with YAML fallback
+- [Phase 1004]: Sidebar fetchCvInfo uses apiFetch (not plain fetch) to carry JWT Bearer token for /api/cv/me
 
 ### Quick Tasks Completed
 
@@ -100,6 +102,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1003 P01 | 230 | 2 tasks | 7 files |
 | Phase 1003 P03 | 15min | 2 tasks | 7 files |
 | Phase 1004 P01 | 216 | 2 tasks | 8 files |
+| Phase 1004 P03 | 166 | 2 tasks | 3 files |
 
 ### Roadmap Evolution
 
@@ -108,6 +111,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T16:58:22.660Z
-Stopped at: Completed 1004-01-PLAN.md
+Last session: 2026-04-07T17:03:28.656Z
+Stopped at: Completed 1004-03-PLAN.md
 Resume file: None

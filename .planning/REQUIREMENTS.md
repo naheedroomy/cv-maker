@@ -32,7 +32,7 @@
 
 - [x] **CVED-01**: User can upload a PDF or DOCX file containing their existing CV
 - [x] **CVED-02**: AI parses the uploaded CV and extracts structured data matching the BaseCV model (experience, skills, education, summary, contact)
-- [ ] **CVED-03**: User sees a visual sectioned editor with their parsed CV (Work Experience, Education, Skills, Summary, Contact)
+- [x] **CVED-03**: User sees a visual sectioned editor with their parsed CV (Work Experience, Education, Skills, Summary, Contact)
 - [ ] **CVED-04**: User can add, edit, and delete individual entries within each CV section
 - [x] **CVED-05**: User can save their CV and it persists in the DB under their account
 - [x] **CVED-06**: The saved CV is used as the base CV when tailoring new job applications
