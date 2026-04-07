@@ -30,6 +30,8 @@ class JobResponse(BaseModel):
     tailored_cv: dict | None = None  # populated on complete (from tailored_cv_json column)
     gap_diff: list | None = None  # populated on complete (from gap_diff_json column)
     pdf_url: str | None = None  # populated on complete, format: /api/jobs/{id}/pdf
+    cover_letter_text: str | None = None  # populated when cover letter is generated
+    cover_letter_notes: str | None = None  # user notes used for generation
 
 
 class CvConvertRequest(BaseModel):
@@ -46,3 +48,18 @@ class CvConvertResponse(BaseModel):
     message: str
     contact_name: str | None = None  # Name parsed from the CV, for confirmation display
     yaml_content: str | None = None  # The generated YAML content for preview
+
+
+class CoverLetterRequest(BaseModel):
+    """Request body for POST /api/jobs/:id/cover-letter."""
+
+    model: str = "claude-haiku"
+    tone: str = Field(default="professional", pattern="^(formal|professional|confident|casual)$")
+    user_notes: str = ""
+
+
+class CoverLetterResponse(BaseModel):
+    """Response model for cover letter generation."""
+
+    cover_letter_text: str
+    cover_letter_notes: str = ""
