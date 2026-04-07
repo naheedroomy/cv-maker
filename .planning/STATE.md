@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
-status: verifying
-stopped_at: Completed 1005-02-PLAN.md
-last_updated: "2026-04-07T17:40:00.514Z"
+status: executing
+stopped_at: Completed 1006-02-PLAN.md
+last_updated: "2026-04-07T19:01:24.120Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
   completed_phases: 6
-  total_plans: 17
-  completed_plans: 17
+  total_plans: 19
+  completed_plans: 18
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 1005 — dockerization-and-docker-compose
+**Current focus:** Phase 1006 — cicd-domain-and-https
 
 ## Current Position
 
-Phase: 1005 (dockerization-and-docker-compose) — EXECUTING
+Phase: 1006 (cicd-domain-and-https) — EXECUTING
 Plan: 2 of 2
-Status: Phase complete — ready for verification
+Status: Ready to execute
 Last activity: 2026-04-07
 
 Progress: [██████████] 100%
@@ -81,6 +81,8 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1005]: Split backend/frontend into separate containers — backend has no frontend code, SPA served by Nginx; npm ci for reproducible builds
 - [Phase 1005]: Backend port 8000 is expose-only (internal), frontend Nginx on port 80 is the single published entry point
 - [Phase 1005]: cv-data named volume persists SQLite DB and base_cv.yaml; ~/.claude bind mount maps to /home/appuser/.claude read-only
+- [Phase 1006]: Single nginx.conf for dev+prod — Cloudflare set_real_ip_from directives harmless locally, server_name _ wildcard covers both
+- [Phase 1006]: Cloudflare Flexible SSL — no cert management on VPS, TLS terminates at Cloudflare edge
 
 ### Quick Tasks Completed
 
@@ -111,6 +113,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1004 P02 | 564 | 2 tasks | 5 files |
 | Phase 1005 P01 | 94s | 3 tasks | 3 files |
 | Phase 1005 P02 | 87s | 4 tasks | 4 files |
+| Phase 1006 P02 | 1min | 2 tasks | 2 files |
 
 ### Roadmap Evolution
 
@@ -119,6 +122,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T17:40:00.510Z
-Stopped at: Completed 1005-02-PLAN.md
+Last session: 2026-04-07T19:01:24.116Z
+Stopped at: Completed 1006-02-PLAN.md
 Resume file: None

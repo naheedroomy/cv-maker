@@ -56,8 +56,8 @@
 | 1002. Multi-Tenant DB Schema | v3.0 | 3/3 | Complete    | 2026-04-07 |
 | 1003. Google Auth Backend + JWT Middleware | v3.0 | 2/3 | Complete    | 2026-04-07 |
 | 1004. CV Ingestion & Visual Editor | v3.0 | 3/3 | Complete    | 2026-04-07 |
-| 1005. Dockerization & docker-compose | v3.0 | 2/2 | Complete   | 2026-04-07 |
-| 1006. CI/CD, Domain & HTTPS | v3.0 | 0/0 | Not Started | — |
+| 1005. Dockerization & docker-compose | v3.0 | 2/2 | Complete    | 2026-04-07 |
+| 1006. CI/CD, Domain & HTTPS | v3.0 | 1/2 | In Progress|  |
 
 ---
 
@@ -186,17 +186,18 @@
 
 **Requirements:**
 - DEPLOY-04: GitHub Actions workflow builds images and deploys to VPS via SSH on push to main
-- DEPLOY-06: App is accessible via a domain name (HTTPS handled by Nginx + certbot or reverse proxy)
+- DEPLOY-06: App is accessible via `resume.xenohass.work` (HTTPS handled by Cloudflare Flexible SSL)
 
 **Success Criteria:**
 1. Pushing a commit to `main` triggers the GitHub Actions workflow — the Actions run log shows build, push, and SSH deploy steps completing successfully
 2. After a successful deploy, the new version is running on the VPS — a changed string in the UI is visible at the public domain without manual intervention
-3. The app is reachable at `https://<domain>` with a valid TLS certificate — the browser shows a secure padlock, not a certificate warning
-4. HTTP requests to `http://<domain>` are automatically redirected to `https://<domain>` — no plain-text access is possible
-5. GitHub Actions secrets (`VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`, `REGISTRY_TOKEN`) are the only credentials required — no hardcoded secrets in the repository
+3. The app is reachable at `https://resume.xenohass.work` with a valid TLS certificate — the browser shows a secure padlock, not a certificate warning
+4. HTTP requests to `http://resume.xenohass.work` are automatically redirected to `https://resume.xenohass.work` — no plain-text access is possible (Cloudflare "Always Use HTTPS")
+5. GitHub Actions secrets (`VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`) are the only credentials required — GHCR auth uses the automatic `GITHUB_TOKEN`, no hardcoded secrets in the repository
 
 **Plans:**
-- [ ] TBD
+1/2 plans executed
+- [x] 1006-02-PLAN.md — Production Nginx config (Cloudflare), VPS deployment documentation
 
 ---
 
