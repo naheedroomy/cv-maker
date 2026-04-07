@@ -1,7 +1,7 @@
-"""In-memory settings cache — avoids DB reads on every provider instantiation.
+"""Per-user settings lookup — queries DB directly (no cache).
 
-Loaded once at startup and refreshed on PUT /api/settings.
-Providers call get_setting(key) which returns the cached value.
+All lookups accept a user_id parameter. When omitted, ANONYMOUS_USER_ID is used.
+Phase 1003 will pass the real JWT user's ID.
 """
 from __future__ import annotations
 
@@ -9,8 +9,6 @@ import logging
 import os
 
 logger = logging.getLogger(__name__)
-
-_cache: dict[str, str] = {}
 
 _DEFAULTS = {
     "claude_cli_model": "haiku",
@@ -24,7 +22,7 @@ _DEFAULTS = {
     "openai_api_key": "",
 }
 
-# Mapping from settings key → environment variable name
+# Mapping from settings key -> environment variable name
 _API_KEY_ENV_MAP = {
     "anthropic_api_key": "ANTHROPIC_API_KEY",
     "gemini_api_key": "GEMINI_API_KEY",
@@ -32,41 +30,29 @@ _API_KEY_ENV_MAP = {
 }
 
 
-async def load_settings() -> None:
-    """Load all settings from DB into memory. Call on startup."""
-    from backend.db import get_db
+async def get_setting(key: str, user_id: int | None = None) -> str:
+    """Get a setting value from DB for the given user. Falls back to default."""
+    from backend.db import ANONYMOUS_USER_ID, get_db
 
+    uid = user_id if user_id is not None else ANONYMOUS_USER_ID
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT key, value FROM settings")
-        rows = await cursor.fetchall()
+        cursor = await db.execute(
+            "SELECT value FROM settings WHERE user_id=? AND key=?",
+            (uid, key),
+        )
+        row = await cursor.fetchone()
     finally:
         await db.close()
-
-    _cache.clear()
-    for row in rows:
-        _cache[row["key"]] = row["value"]
-    logger.info("Settings cache loaded: %d entries", len(_cache))
+    if row:
+        return row["value"]
+    return _DEFAULTS.get(key, "")
 
 
-def get_setting(key: str) -> str:
-    """Get a setting value. Returns cached DB value, or default."""
-    return _cache.get(key) or _DEFAULTS.get(key, "")
-
-
-def get_api_key(key: str) -> str:
-    """Get an API key with DB-overrides-.env semantics.
-
-    Returns the DB-stored key (via get_setting) if non-empty,
-    otherwise falls back to the corresponding environment variable.
-    """
-    db_val = get_setting(key)
+async def get_api_key(key: str, user_id: int | None = None) -> str:
+    """Get an API key: DB value (per user) > env var > empty string."""
+    db_val = await get_setting(key, user_id)
     if db_val:
         return db_val
     env_var = _API_KEY_ENV_MAP.get(key, "")
     return os.environ.get(env_var, "") if env_var else ""
-
-
-def update_cache(key: str, value: str) -> None:
-    """Update a single cached value (called after DB write)."""
-    _cache[key] = value
