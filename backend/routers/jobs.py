@@ -46,6 +46,8 @@ def _row_to_response(row) -> JobResponse:
         tailored_cv=json.loads(row["tailored_cv_json"]) if row["tailored_cv_json"] else None,
         gap_diff=json.loads(row["gap_diff_json"]) if row["gap_diff_json"] else None,
         pdf_url=f"/api/jobs/{row['id']}/pdf" if row["pdf_path"] else None,
+        cover_letter_text=row["cover_letter_text"] if "cover_letter_text" in row.keys() else None,
+        cover_letter_notes=row["cover_letter_notes"] if "cover_letter_notes" in row.keys() else None,
     )
 
 
