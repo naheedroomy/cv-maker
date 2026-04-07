@@ -137,6 +137,30 @@ def test_render_latex_no_bare_percent(
 
 
 # ---------------------------------------------------------------------------
+# render_latex — Core Competencies pills
+# ---------------------------------------------------------------------------
+
+
+def test_render_latex_core_competencies_present(tailored_cv_with_competencies: TailoredCV) -> None:
+    """Core Competencies section appears when core_competencies is populated."""
+    latex = render_latex(tailored_cv_with_competencies)
+    assert r"\section{Core Competencies}" in latex
+    assert r"\pill{Cloud Infrastructure}" in latex
+
+
+def test_render_latex_core_competencies_absent_when_empty(minimal_tailored_cv: TailoredCV) -> None:
+    """Core Competencies section is omitted when core_competencies is empty."""
+    latex = render_latex(minimal_tailored_cv)
+    assert r"\section{Core Competencies}" not in latex
+
+
+def test_render_latex_core_competencies_escapes_ampersand(tailored_cv_with_competencies: TailoredCV) -> None:
+    """Ampersand in competency phrase is LaTeX-escaped inside pill."""
+    latex = render_latex(tailored_cv_with_competencies)
+    assert r"\pill{Python \& FastAPI}" in latex
+
+
+# ---------------------------------------------------------------------------
 # render_pdf — latexmk-absent branch (always runs)
 # ---------------------------------------------------------------------------
 
@@ -182,5 +206,15 @@ def test_render_pdf_special_chars_cv_compiles(
 ) -> None:
     """CV with special chars (%, &, $) must compile without error after escaping."""
     latex = render_latex(tailored_cv_with_special_chars)
+    pdf = render_pdf(latex)
+    assert pdf[:4] == b"%PDF"
+
+
+@pytest.mark.skipif(not LATEXMK_AVAILABLE, reason="latexmk not installed")
+def test_render_pdf_with_competencies_compiles(
+    tailored_cv_with_competencies: TailoredCV,
+) -> None:
+    """CV with Core Competencies pills compiles to valid PDF."""
+    latex = render_latex(tailored_cv_with_competencies)
     pdf = render_pdf(latex)
     assert pdf[:4] == b"%PDF"

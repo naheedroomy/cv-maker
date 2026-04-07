@@ -7,6 +7,20 @@
 \usepackage[scale=0.85]{geometry}
 \usepackage{fontspec}
 \usepackage{needspace}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[most]{tcolorbox}
+
+%# Core Competencies pill styling — light teal background, dark text, rounded
+\newtcbox{\pill}{
+  on line,
+  colback=teal!12,
+  colframe=teal!12,
+  boxrule=0pt,
+  arc=4pt,
+  boxsep=0pt,
+  left=6pt, right=6pt, top=3pt, bottom=3pt,
+  fontupper=\small\sffamily
+}
 
 %# Contact info
 \name{\VAR{cv.contact.name|e}}{}
@@ -29,6 +43,14 @@
 
 \section{Summary}
 \VAR{cv.summary|se}
+
+\BLOCK{if cv.core_competencies}
+\bigskip
+\section{Core Competencies}
+\BLOCK{for comp in cv.core_competencies}
+\pill{\VAR{comp|e}}\hspace{2pt}%
+\BLOCK{endfor}
+\BLOCK{endif}
 
 \bigskip
 \section{Experience}
