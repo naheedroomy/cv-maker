@@ -1,0 +1,60 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+
+            APP_DIR="/opt/cv-maker/cv-maker"
+            cd "$APP_DIR"
+
+            echo "==> Pulling latest code..."
+            git fetch origin master
+            git reset --hard origin/master
+
+            # .env is created once on the VPS (step 4 in docs/deployment.md)
+            # and persists across deploys — git reset doesn't touch it.
+
+            # ---- Build and deploy ----
+            echo "==> Building and starting containers..."
+            docker compose build
+            docker compose up -d --remove-orphans
+            docker image prune -f
+
+            # ---- Health check ----
+            echo "==> Waiting for backend to start..."
+            for i in 1 2 3 4 5; do
+              sleep 5
+              if curl -sf http://localhost/api/ > /dev/null 2>&1; then
+                echo "==> Health check passed on attempt $i"
+                break
+              fi
+              echo "  Attempt $i: not ready, retrying..."
+              if [ "$i" = "5" ]; then
+                echo "==> Health check failed after 5 attempts"
+                docker compose logs --tail 30
+                exit 1
+              fi
+            done
+
+            echo "==> Deploy complete!"

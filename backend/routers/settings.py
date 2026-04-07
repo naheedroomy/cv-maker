@@ -1,11 +1,12 @@
 """Provider settings API — GET/PUT model names and base URLs."""
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from backend.auth import get_current_user
 from backend.db import get_db
-from backend.settings_cache import _DEFAULTS, update_cache
+from backend.settings_cache import _DEFAULTS
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -45,11 +46,14 @@ def _mask_key(key: str) -> str:
 
 
 @router.get("", response_model=SettingsResponse)
-async def get_settings() -> SettingsResponse:
+async def get_settings(user: dict = Depends(get_current_user)) -> SettingsResponse:
     """Return current provider settings (model names + base URLs + masked API keys)."""
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT key, value FROM settings")
+        cursor = await db.execute(
+            "SELECT key, value FROM settings WHERE user_id=?",
+            (user["id"],),
+        )
         rows = await cursor.fetchall()
     finally:
         await db.close()
@@ -69,20 +73,19 @@ async def get_settings() -> SettingsResponse:
 
 
 @router.put("", response_model=SettingsResponse)
-async def update_settings(body: SettingsUpdate) -> SettingsResponse:
+async def update_settings(body: SettingsUpdate, user: dict = Depends(get_current_user)) -> SettingsResponse:
     """Update provider settings. Only provided fields are updated."""
     db = await get_db()
     try:
         updates = body.model_dump(exclude_none=True)
         for key, value in updates.items():
             await db.execute(
-                "INSERT INTO settings (key, value) VALUES (?, ?) "
-                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                (key, value),
+                "INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?) "
+                "ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value",
+                (user["id"], key, value),
             )
-            update_cache(key, value)
         await db.commit()
     finally:
         await db.close()
 
-    return await get_settings()
+    return await get_settings(user=user)

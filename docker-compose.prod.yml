@@ -1,0 +1,2 @@
+# This file has been removed. Use docker-compose.yml for both dev and prod.
+# Production differences are handled via .env (CORS_ORIGINS, API keys).

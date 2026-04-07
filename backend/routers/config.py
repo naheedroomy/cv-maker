@@ -1,6 +1,7 @@
 """Application configuration endpoint — reports feature availability."""
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 
@@ -27,7 +28,8 @@ async def get_config():
     """Return feature flags — provider availability based on DB-stored keys, env vars, and CLI presence."""
     return {
         "claude_cli_available": _claude_cli_available(),
-        "claude_api_available": bool(get_api_key("anthropic_api_key")),
-        "gemini_available": bool(get_api_key("gemini_api_key")),
-        "openai_available": bool(get_api_key("openai_api_key")),
+        "claude_api_available": bool(await get_api_key("anthropic_api_key")),
+        "gemini_available": bool(await get_api_key("gemini_api_key")),
+        "openai_available": bool(await get_api_key("openai_api_key")),
+        "google_client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
     }

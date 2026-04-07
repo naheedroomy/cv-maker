@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from 'vue'
 import ModelSelector from '@/components/ModelSelector.vue'
 import CreativitySlider from '@/components/CreativitySlider.vue'
+import { apiFetch } from '@/utils/apiFetch'
 
 const props = defineProps<{
   currentModel: string
@@ -25,7 +26,7 @@ const openaiAvailable = ref(false)
 
 // Fetch provider config on mount
 onMounted(() => {
-  fetch('/api/config')
+  apiFetch('/api/config')
     .then(r => r.ok ? r.json() : {})
     .then(data => {
       claudeCliAvailable.value = data.claude_cli_available !== false

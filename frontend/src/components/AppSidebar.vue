@@ -4,12 +4,17 @@ import { useRoute, useRouter } from 'vue-router'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useJobStore } from '@/stores/jobStore'
+import { useAuthStore } from '@/stores/authStore'
+import { apiFetch } from '@/utils/apiFetch'
 import SessionEntry from './SessionEntry.vue'
 
 const store = useJobStore()
 const { jobs } = storeToRefs(store)
 const route = useRoute()
 const router = useRouter()
+
+const authStore = useAuthStore()
+const { user, isAuthenticated } = storeToRefs(authStore)
 
 let pollInterval: ReturnType<typeof setInterval> | null = null
 
@@ -33,9 +38,27 @@ const sortedJobs = computed(() =>
 
 async function fetchCvInfo() {
   try {
-    const res = await fetch('/api/cv/info')
-    if (res.ok) cvInfo.value = await res.json()
+    const res = await apiFetch('/api/cv/me')
+    if (res.ok) {
+      const data = await res.json()
+      if (data.has_cv && data.cv) {
+        cvInfo.value = {
+          loaded: true,
+          name: data.cv.contact?.name,
+          roles: data.cv.experience?.length || 0,
+          skills: data.cv.skills?.length || 0,
+          certifications: data.cv.certifications?.length || 0,
+        }
+      } else {
+        cvInfo.value = { loaded: false }
+      }
+    }
   } catch { /* ignore */ }
+}
+
+function handleSignOut() {
+  authStore.logout()
+  router.push('/signin')
 }
 
 onMounted(async () => {
@@ -80,8 +103,24 @@ onUnmounted(() => {
         <p class="cv-info-detail">{{ cvInfo.roles }} roles, {{ cvInfo.skills }} skills, {{ cvInfo.certifications }} certs</p>
       </RouterLink>
       <div v-else class="cv-info-empty">
-        <p class="cv-info-detail">No CV imported</p>
-        <RouterLink to="/convert" class="cv-info-link">Import CV</RouterLink>
+        <p class="cv-info-detail">No CV uploaded</p>
+        <RouterLink to="/base-cv" class="cv-info-link">Upload CV</RouterLink>
+      </div>
+    </div>
+    <div v-if="isAuthenticated && user" class="user-profile">
+      <img
+        v-if="user.picture"
+        :src="user.picture"
+        :alt="user.name"
+        class="user-avatar"
+        referrerpolicy="no-referrer"
+      />
+      <div v-else class="user-avatar-placeholder">
+        {{ user.name?.charAt(0)?.toUpperCase() }}
+      </div>
+      <div class="user-info">
+        <p class="user-name">{{ user.name }}</p>
+        <button class="sign-out-btn" @click="handleSignOut">Sign out</button>
       </div>
     </div>
   </aside>
@@ -190,5 +229,57 @@ nav {
 }
 .cv-info-link:hover {
   text-decoration: underline;
+}
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: auto;
+}
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.user-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sign-out-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+.sign-out-btn:hover {
+  color: #dc2626;
 }
 </style>

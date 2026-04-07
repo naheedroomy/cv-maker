@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
+milestone: v3.0
+milestone_name: Deploy, Auth & CV Editor
 status: verifying
-stopped_at: Completed quick task 260407-qcs
-last_updated: "2026-04-07T13:36:47.493Z"
+stopped_at: Completed 1006-01-PLAN.md
+last_updated: "2026-04-07T19:10:30.896Z"
 last_activity: 2026-04-07
 progress:
-  total_phases: 3
-  completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 8
+  completed_phases: 7
+  total_plans: 19
+  completed_plans: 19
   percent: 100
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 1001 — frontend-ux-revamp-and-restructure
+**Current focus:** Phase 1006 — cicd-domain-and-https
 
 ## Current Position
 
-Phase: 1001 (frontend-ux-revamp-and-restructure) — EXECUTING
-Plan: 3 of 3
+Phase: 1006
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
@@ -63,6 +63,27 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1001]: Tab panels use v-show (not v-if) for instant switching — preserves CoverLetterSection form state across tab switches
 - [Phase 1001]: Cancel Job moved outside tabs to running-actions area — tabs only shown when job is complete/failed/cancelled
 - [Phase quick]: get_api_key() centralizes DB-overrides-.env logic for all 3 API providers
+- [Phase 1002]: Eliminated in-process settings cache - get_setting and get_api_key are now async with per-user DB lookups — Per-user settings require direct DB queries - in-process cache was incompatible with multi-tenant model
+- [Phase 1002]: Provider constructors accept explicit params (api_key, model) — settings resolution moved to async get_provider() factory, decoupling core/ providers from backend/ settings_cache
+- [Phase 1003]: Dynamic import of useAuthStore inside beforeEach guard avoids circular dependency between router and store at module load time
+- [Phase 1003]: window.location.href for 401 redirect instead of router.push — ensures full page reload and state reset
+- [Phase 1003]: apiFetch pattern: auto-Bearer + 401 redirect; plain fetch for pre-auth calls (/api/config, /api/auth/google) to avoid redirect loops
+- [Phase 1003]: asyncio_mode=auto in pytest config removes need for @pytest.mark.asyncio decorator on every async test
+- [Phase 1003]: CORS_ORIGINS env var with comma-split supports multiple origins for staging+production without code changes
+- [Phase 1003]: config endpoint stays public (no get_current_user) — feature flags and google_client_id needed before auth is established
+- [Phase 1003]: apiFetch drop-in replaces all native fetch() in jobStore — Bearer token auto-injected, 401 triggers logout+redirect
+- [Phase 1003]: AppSidebar user profile uses authStore storeToRefs — reactive display of Google avatar, name, sign-out without props
+- [Phase 1004]: Gemini 2.5 Flash-Lite for both OCR and structuring passes in CV parser; inhouse GEMINI_API_KEY from .env; DB CV takes priority over YAML file in GET /cv/info
+- [Phase 1004]: user_id defaults to 1 (ANONYMOUS_USER_ID) in job_worker for backward compat — DB-first CV load with YAML fallback
+- [Phase 1004]: Sidebar fetchCvInfo uses apiFetch (not plain fetch) to carry JWT Bearer token for /api/cv/me
+- [Phase 1004]: Optional chaining + explicit index guard for TypeScript array access: const item = arr?.[i]; if (!item) return — satisfies strict type checker without noUncheckedIndexedAccess
+- [Phase 1004]: v-show for CvEditorSection collapse (not v-if) — preserves form input state when re-expanding collapsed sections
+- [Phase 1005]: Split backend/frontend into separate containers — backend has no frontend code, SPA served by Nginx; npm ci for reproducible builds
+- [Phase 1005]: Backend port 8000 is expose-only (internal), frontend Nginx on port 80 is the single published entry point
+- [Phase 1005]: cv-data named volume persists SQLite DB and base_cv.yaml; ~/.claude bind mount maps to /home/appuser/.claude read-only
+- [Phase 1006]: Single nginx.conf for dev+prod — Cloudflare set_real_ip_from directives harmless locally, server_name _ wildcard covers both
+- [Phase 1006]: Cloudflare Flexible SSL — no cert management on VPS, TLS terminates at Cloudflare edge
+- [Phase 1006]: Matrix build + GHCR images with latest+SHA tags, GHA layer caching, SSH deploy with health verification — TeX Live layer ~1.2GB requires parallel builds; dual tags enable rollback; GHA caching avoids rebuilding massive layers
 
 ### Quick Tasks Completed
 
@@ -82,6 +103,19 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1001 P02 | 131s | 2 tasks | 6 files |
 | Phase 1001 P01 | 720 | 2 tasks | 26 files |
 | Phase 1001 P03 | 167 | 1 tasks | 2 files |
+| Phase 1002 P01 | 1min | 1 tasks | 1 files |
+| Phase 1002 P02 | 1min | 1 tasks | 1 files |
+| Phase 1002 P03 | 3min | 7 tasks | 11 files |
+| Phase 1003 P02 | 2 | 2 tasks | 5 files |
+| Phase 1003 P01 | 230 | 2 tasks | 7 files |
+| Phase 1003 P03 | 15min | 2 tasks | 7 files |
+| Phase 1004 P01 | 216 | 2 tasks | 8 files |
+| Phase 1004 P03 | 166 | 2 tasks | 3 files |
+| Phase 1004 P02 | 564 | 2 tasks | 5 files |
+| Phase 1005 P01 | 94s | 3 tasks | 3 files |
+| Phase 1005 P02 | 87s | 4 tasks | 4 files |
+| Phase 1006 P02 | 1min | 2 tasks | 2 files |
+| Phase 1006 P01 | 1min | 3 tasks | 3 files |
 
 ### Roadmap Evolution
 
@@ -90,6 +124,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T13:36:42.249Z
-Stopped at: Completed quick task 260407-qcs
+Last session: 2026-04-07T19:05:12.305Z
+Stopped at: Completed 1006-01-PLAN.md
 Resume file: None

@@ -39,24 +39,23 @@ class Creativity(IntEnum):
 
 
 def _get_claude_cli_model() -> str:
-    """Get Claude CLI model from settings cache, env, or default."""
-    try:
-        from backend.settings_cache import get_setting
-        model = get_setting("claude_cli_model")
-        if model:
-            return model
-    except ImportError:
-        pass
+    """Get Claude CLI model from env or default.
+
+    NOTE: Per-user settings resolution now happens in the async get_provider()
+    factory (core/providers/__init__.py), which passes cli_model to the
+    ClaudeProvider constructor. This sync fallback only reads env vars.
+    """
     return os.environ.get("CLAUDE_MODEL", "haiku")
 
 
-def _invoke_claude(prompt: str, timeout: int = 300) -> str:
+def _invoke_claude(prompt: str, timeout: int = 300, cli_model: str = "") -> str:
     """Invoke claude -p and return raw stdout. Raises RuntimeError on failure."""
+    model_name = cli_model or _get_claude_cli_model()
     logger.info("Claude CLI: invoking (timeout=%ds, prompt=%d chars)", timeout, len(prompt))
     t0 = time.monotonic()
     try:
         result = subprocess.run(  # noqa: S603
-            ["claude", "-p", "--model", _get_claude_cli_model(), "--no-session-persistence"],  # noqa: S607
+            ["claude", "-p", "--model", model_name, "--no-session-persistence"],  # noqa: S607
             input=prompt,
             capture_output=True,
             text=True,
@@ -120,7 +119,7 @@ def _extract_json(text: str) -> dict:
     return data
 
 
-def _invoke_with_retry(prompt: str, schema_cls, max_attempts: int = 3):
+def _invoke_with_retry(prompt: str, schema_cls, max_attempts: int = 3, cli_model: str = ""):
     """Invoke claude -p with JSON parse-retry. Returns validated Pydantic model instance."""
     last_exc: Exception | None = None
     for attempt in range(max_attempts):
@@ -132,7 +131,7 @@ def _invoke_with_retry(prompt: str, schema_cls, max_attempts: int = 3):
                 prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
             )
         try:
-            raw = _invoke_claude(effective_prompt)
+            raw = _invoke_claude(effective_prompt, cli_model=cli_model)
             data = _extract_json(raw)
             result = schema_cls.model_validate(data)
             logger.info("JSON parse + validation succeeded for %s", schema_cls.__name__)
@@ -629,12 +628,12 @@ as a single JSON object matching this schema:
 # ---------------------------------------------------------------------------
 
 
-def run_pipeline(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> tuple[TailoredCV, list[GapItem]]:
+def run_pipeline(base_cv: BaseCV, job_text: str, creativity_level: int = 2, cli_model: str = "") -> tuple[TailoredCV, list[GapItem]]:
     """Full AI pipeline: analyze job + tailor CV in a single Claude call.
 
     Returns:
         (tailored_cv, gap_diff) where gap_diff is extracted from the combined response.
     """
     prompt = _build_prompt(base_cv, job_text, creativity_level)
-    result = _invoke_with_retry(prompt, TailoredCV)
+    result = _invoke_with_retry(prompt, TailoredCV, cli_model=cli_model)
     return result, result.gap_diff

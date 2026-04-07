@@ -6,6 +6,7 @@ import ErrorBanner from '@/components/ErrorBanner.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
 import CreativitySlider from '@/components/CreativitySlider.vue'
+import { apiFetch } from '@/utils/apiFetch'
 
 const router = useRouter()
 const store = useJobStore()
@@ -28,7 +29,7 @@ const canSubmit = computed(
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/config')
+    const res = await apiFetch('/api/config')
     if (res.ok) {
       const data = await res.json()
       claudeCliAvailable.value = data.claude_cli_available !== false

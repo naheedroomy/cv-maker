@@ -9,10 +9,11 @@ from collections.abc import AsyncIterable
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
+from backend.auth import get_current_user
 from backend.db import get_db
 from backend.schemas import JobCreate, JobResponse
 from backend.tasks import schedule_background_task
@@ -57,7 +58,7 @@ def _row_to_response(row) -> JobResponse:
 
 
 @router.post("", response_model=JobResponse, status_code=201)
-async def create_job(body: JobCreate) -> JobResponse:
+async def create_job(body: JobCreate, user: dict = Depends(get_current_user)) -> JobResponse:
     """Submit a new CV tailoring job.
 
     Inserts a row with status='pending' and returns the job ID immediately.
@@ -71,16 +72,16 @@ async def create_job(body: JobCreate) -> JobResponse:
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             "INSERT INTO jobs "
-            "(id, company_name, job_link, job_text, model, creativity_level, status, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
-            (job_id, body.company_name, body.job_link, body.job_text, body.model, body.creativity_level, now, now),
+            "(id, user_id, company_name, job_link, job_text, model, creativity_level, status, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+            (job_id, user["id"], body.company_name, body.job_link, body.job_text, body.model, body.creativity_level, now, now),
         )
         await db.commit()
     finally:
         await db.close()
 
     task = schedule_background_task(
-        job_worker(job_id, body.company_name, body.job_text, body.model, body.creativity_level)
+        job_worker(job_id, body.company_name, body.job_text, body.model, body.creativity_level, user_id=user["id"])
     )
     _job_tasks[job_id] = task
     logger.info("Job %s created for company=%s model=%s creativity=%d", job_id, body.company_name, body.model, body.creativity_level)
@@ -102,11 +103,14 @@ async def create_job(body: JobCreate) -> JobResponse:
 
 
 @router.get("", response_model=list[JobResponse])
-async def list_jobs() -> list[JobResponse]:
+async def list_jobs(user: dict = Depends(get_current_user)) -> list[JobResponse]:
     """Return all jobs ordered by created_at descending."""
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT * FROM jobs ORDER BY created_at DESC")
+        cursor = await db.execute(
+            "SELECT * FROM jobs WHERE user_id=? ORDER BY created_at DESC",
+            (user["id"],),
+        )
         rows = await cursor.fetchall()
     finally:
         await db.close()
@@ -120,11 +124,14 @@ async def list_jobs() -> list[JobResponse]:
 
 
 @router.get("/{job_id}", response_model=JobResponse)
-async def get_job(job_id: str) -> JobResponse:
+async def get_job(job_id: str, user: dict = Depends(get_current_user)) -> JobResponse:
     """Return a single job by ID. Returns 404 if not found."""
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT * FROM jobs WHERE id=?", (job_id,))
+        cursor = await db.execute(
+            "SELECT * FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
         row = await cursor.fetchone()
     finally:
         await db.close()
@@ -141,14 +148,17 @@ async def get_job(job_id: str) -> JobResponse:
 
 
 @router.delete("/{job_id}", status_code=204)
-async def cancel_job(job_id: str) -> Response:
+async def cancel_job(job_id: str, user: dict = Depends(get_current_user)) -> Response:
     """Cancel a pending or running job.
 
     Returns 204 on success, 404 if not found, 409 if already terminal.
     """
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT status FROM jobs WHERE id=?", (job_id,))
+        cursor = await db.execute(
+            "SELECT status FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
         row = await cursor.fetchone()
     finally:
         await db.close()
@@ -173,7 +183,7 @@ async def cancel_job(job_id: str) -> Response:
 
 
 @router.delete("/{job_id}/remove", status_code=204)
-async def delete_job(job_id: str) -> Response:
+async def delete_job(job_id: str, user: dict = Depends(get_current_user)) -> Response:
     """Permanently delete a job and its output files.
 
     Cancels the job if still running, then removes from database.
@@ -186,7 +196,10 @@ async def delete_job(job_id: str) -> Response:
 
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT pdf_path FROM jobs WHERE id=?", (job_id,))
+        cursor = await db.execute(
+            "SELECT pdf_path FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
         row = await cursor.fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Job not found")
@@ -200,7 +213,10 @@ async def delete_job(job_id: str) -> Response:
             if tex_path.exists():
                 tex_path.unlink()
 
-        await db.execute("DELETE FROM jobs WHERE id=?", (job_id,))
+        await db.execute(
+            "DELETE FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
         await db.commit()
     finally:
         await db.close()
@@ -216,20 +232,29 @@ async def delete_job(job_id: str) -> Response:
 
 
 @router.patch("/{job_id}/applied", response_model=JobResponse)
-async def toggle_applied(job_id: str) -> JobResponse:
+async def toggle_applied(job_id: str, user: dict = Depends(get_current_user)) -> JobResponse:
     """Toggle the applied status of a job."""
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT applied FROM jobs WHERE id=?", (job_id,))
+        cursor = await db.execute(
+            "SELECT applied FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
         row = await cursor.fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Job not found")
 
         new_val = 0 if row["applied"] else 1
-        await db.execute("UPDATE jobs SET applied=? WHERE id=?", (new_val, job_id))
+        await db.execute(
+            "UPDATE jobs SET applied=? WHERE id=? AND user_id=?",
+            (new_val, job_id, user["id"]),
+        )
         await db.commit()
 
-        cursor = await db.execute("SELECT * FROM jobs WHERE id=?", (job_id,))
+        cursor = await db.execute(
+            "SELECT * FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
         row = await cursor.fetchone()
     finally:
         await db.close()
@@ -243,7 +268,7 @@ async def toggle_applied(job_id: str) -> JobResponse:
 
 
 @router.get("/{job_id}/pdf")
-async def get_pdf(job_id: str) -> Response:
+async def get_pdf(job_id: str, user: dict = Depends(get_current_user)) -> Response:
     """Return raw PDF bytes for a completed job.
 
     Returns 404 if not found or PDF not yet available.
@@ -251,7 +276,8 @@ async def get_pdf(job_id: str) -> Response:
     db = await get_db()
     try:
         cursor = await db.execute(
-            "SELECT pdf_path, status FROM jobs WHERE id=?", (job_id,)
+            "SELECT pdf_path, status FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
         )
         row = await cursor.fetchone()
     finally:
@@ -273,7 +299,7 @@ async def get_pdf(job_id: str) -> Response:
 
 
 @router.get("/{job_id}/events", response_class=EventSourceResponse)
-async def job_events(job_id: str) -> AsyncIterable[ServerSentEvent]:
+async def job_events(job_id: str, user: dict = Depends(get_current_user)) -> AsyncIterable[ServerSentEvent]:
     """Stream real-time job status updates via Server-Sent Events.
 
     If the job is already terminal, yields one event and closes the stream.
@@ -282,7 +308,10 @@ async def job_events(job_id: str) -> AsyncIterable[ServerSentEvent]:
     # Validate job existence
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT * FROM jobs WHERE id=?", (job_id,))
+        cursor = await db.execute(
+            "SELECT * FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
         row = await cursor.fetchone()
     finally:
         await db.close()

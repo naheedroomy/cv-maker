@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import AppSidebar from './components/AppSidebar.vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 </script>
 
 <template>
-  <div class="app-shell">
+  <div v-if="route.path === '/signin'" class="signin-layout">
+    <RouterView />
+  </div>
+  <div v-else class="app-shell">
     <AppSidebar />
     <main class="main-content">
       <RouterView />
@@ -40,5 +46,13 @@ import AppSidebar from './components/AppSidebar.vue'
   padding: 32px 24px;
   margin: 0 auto;
   overflow-y: auto;
+}
+
+.signin-layout {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
 }
 </style>

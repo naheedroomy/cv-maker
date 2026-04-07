@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import ModelSelector from '@/components/ModelSelector.vue'
+import { apiFetch } from '@/utils/apiFetch'
 
 const cvText = ref('')
 const converting = ref(false)
@@ -19,7 +20,7 @@ const canConvert = computed(
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/config')
+    const res = await apiFetch('/api/config')
     if (res.ok) {
       const data = await res.json()
       claudeCliAvailable.value = data.claude_cli_available !== false
@@ -62,7 +63,7 @@ async function handleConvert(): Promise<void> {
   yamlContent.value = null
 
   try {
-    const response = await fetch('/api/cv/convert', {
+    const response = await apiFetch('/api/cv/convert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cv_text: cvText.value.trim(), model: selectedModel.value }),

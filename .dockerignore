@@ -1,17 +1,40 @@
+# Version control
 .git
 .gitignore
+
+# IDE
 .idea
+.vscode
+
+# Planning
 .planning
+.claude
+
+# Python
 .venv
 __pycache__
 *.pyc
 *.pyo
 .pytest_cache
 .ruff_cache
-node_modules
+
+# Node
+frontend/node_modules
+
+# Build artifacts
 frontend/dist
+
+# Database (built at runtime)
+*.db
+*.db-wal
+*.db-shm
+
+# Output
 output
-backend/cv_maker.db*
+
+# Secrets (loaded via env_file, not baked into image)
 .env
-*.md
-!frontend/README.md
+
+# Docker
+docker-compose.yml
+Dockerfile.*

@@ -5,8 +5,9 @@ import asyncio
 import logging
 
 import yaml
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from backend.auth import get_current_user
 from backend.schemas import CvConvertRequest, CvConvertResponse
 from core.cv_converter import convert_cv_to_yaml, save_base_cv
 
@@ -16,10 +17,46 @@ router = APIRouter(prefix="/cv", tags=["cv"])
 
 
 @router.get("/info")
-async def get_cv_info():
-    """Return the full base CV data for preview, plus a loaded flag."""
-    from core.data import DEFAULT_CV_PATH, load_base_cv
+async def get_cv_info(user: dict = Depends(get_current_user)):
+    """Return the full base CV data for preview, plus a loaded flag.
 
+    Checks DB first for user's base_cv_yaml (DB CV takes priority).
+    Falls back to YAML file if no CV stored in DB.
+    """
+    from core.data import DEFAULT_CV_PATH, load_base_cv
+    from core.models import BaseCV
+
+    # DB-first: check if user has a saved CV in the database
+    from backend.db import get_db
+
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT base_cv_yaml FROM users WHERE id=?",
+            (user["id"],),
+        )
+        row = await cursor.fetchone()
+    finally:
+        await db.close()
+
+    if row and row["base_cv_yaml"]:
+        try:
+            import yaml as _yaml
+            raw = _yaml.safe_load(row["base_cv_yaml"])
+            cv = BaseCV.model_validate(raw)
+            return {
+                "loaded": True,
+                "name": cv.contact.name,
+                "roles": len(cv.experience),
+                "skills": len(cv.skills),
+                "certifications": len(cv.certifications),
+                "cv": cv.model_dump(),
+                "source": "db",
+            }
+        except Exception:  # noqa: BLE001
+            pass  # Fall through to file fallback
+
+    # File fallback
     if not DEFAULT_CV_PATH.exists():
         return {"loaded": False}
 
@@ -35,11 +72,12 @@ async def get_cv_info():
         "skills": len(cv.skills),
         "certifications": len(cv.certifications),
         "cv": cv.model_dump(),
+        "source": "file",
     }
 
 
 @router.post("/convert", response_model=CvConvertResponse)
-async def convert_cv(body: CvConvertRequest) -> CvConvertResponse:
+async def convert_cv(body: CvConvertRequest, user: dict = Depends(get_current_user)) -> CvConvertResponse:
     """Parse plain-text CV content into BaseCV YAML and save it as base_cv.yaml.
 
     Invokes Claude Code CLI via asyncio.to_thread (subprocess call — must not block the

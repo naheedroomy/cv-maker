@@ -1,22 +1,36 @@
 services:
-  cv-maker:
-    build: .
-    ports:
-      - "8000:8000"
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    expose:
+      - "8000"
     env_file:
       - .env
-    volumes:
-      # Persist database across restarts
-      - cv-data:/app/data
-      # PDFs accessible on host at ./output/
-      - ./output:/app/output
-      # Mount base CV directory — base_cv.yaml is created by the Import CV page
-      - ./data:/app/cv-data
-      # Mount Claude CLI auth from host (run 'claude login' on host first)
-      - ~/.claude:/root/.claude:ro
     environment:
       - CV_MAKER_DB_PATH=/app/data/cv_maker.db
-      - BASE_CV_PATH=/app/cv-data/base_cv.yaml
+      - BASE_CV_PATH=/app/data/base_cv.yaml
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost}
+    volumes:
+      - cv-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   cv-data:

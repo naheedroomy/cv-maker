@@ -8,5 +8,8 @@ from core.providers.base import BaseProvider
 
 
 class ClaudeProvider(BaseProvider):
+    def __init__(self, cli_model: str = "") -> None:
+        self._cli_model = cli_model
+
     def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> tuple[TailoredCV, list[GapItem]]:
-        return run_pipeline(base_cv, job_text, creativity_level)
+        return run_pipeline(base_cv, job_text, creativity_level, cli_model=self._cli_model)
