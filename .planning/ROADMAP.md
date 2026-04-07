@@ -53,7 +53,7 @@
 | 7. Vue Frontend | v2.0 | 3/3 | Complete | 2026-04-04 |
 | 8. Production Wiring | v2.0 | 2/2 | Complete | 2026-04-04 |
 | 9. Gemini Provider | v2.0 | 4/4 | Complete | 2026-04-05 |
-| 1002. Multi-Tenant DB Schema | v3.0 | 3/3 | Complete | 2026-04-07 |
+| 1002. Multi-Tenant DB Schema | v3.0 | 3/3 | Complete    | 2026-04-07 |
 | 1003. Google Auth Backend + JWT Middleware | v3.0 | 0/0 | Not Started | — |
 | 1004. CV Ingestion & Visual Editor | v3.0 | 0/0 | Not Started | — |
 | 1005. Dockerization & docker-compose | v3.0 | 0/0 | Not Started | — |
@@ -90,7 +90,7 @@
 5. A query for one user's jobs returns zero results when executed with a different user's `user_id` (no cross-user leakage)
 
 **Plans:**
-3/3 plans executed
+3/3 plans complete
 - [x] 1002-01-PLAN.md — DB schema rewrite: users table, multi-tenant migration, seed anonymous user
 - [x] 1002-02-PLAN.md — Settings cache rewrite: eliminate cache, async get_setting/get_api_key with user_id
 - [x] 1002-03-PLAN.md — Router & worker wiring: thread user_id through all DB queries, provider refactor
