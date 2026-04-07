@@ -264,13 +264,12 @@ _RULES: dict[str, dict[int, str]] = {
     },
     "core_competencies": {
         0: (
-            "Select 6-8 SPECIFIC competency phrases that differentiate this candidate for THIS role. "
-            "Use concrete tool + capability pairs, not generic categories. "
-            "GOOD: 'AWS Cost Optimization', 'GitHub Actions Pipelines', 'Kubernetes (EKS)', "
-            "'Terraform IaC', 'Datadog Observability', 'Security Remediation Automation'. "
-            "BAD: 'Cloud Infrastructure', 'DevOps Automation', 'CI/CD Pipelines', 'Production Observability' "
-            "— these are generic categories that every DevOps CV claims. "
-            "Keep each phrase to 2-4 words. Only include where the base CV provides evidence. "
+            "Select 6-10 of the candidate's TOP skills/technologies from their base CV, "
+            "ordered by relevance to this job listing. These come from the CANDIDATE'S stack, "
+            "not the JD's language — do NOT parrot JD phrases back. "
+            "Mix concrete tools (Kubernetes, Terraform, AWS, Datadog) with key capabilities "
+            "(CI/CD, GitOps, IaC) that the candidate genuinely has. "
+            "Keep each entry to 1-3 words. Include certification labels if relevant (e.g., 'Kubernetes (CKAD)'). "
             "Return as the 'core_competencies' array."
         ),
     },
