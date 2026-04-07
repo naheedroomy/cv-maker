@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
-status: verifying
-stopped_at: Completed 1003-03-PLAN.md — awaiting human verification checkpoint
-last_updated: "2026-04-07T16:32:27.049Z"
+status: executing
+stopped_at: Completed 1004-01-PLAN.md
+last_updated: "2026-04-07T16:58:22.663Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 1003 — google-auth-backend-jwt-middleware
+**Current focus:** Phase 1004 — cv-ingestion-and-visual-editor
 
 ## Current Position
 
-Phase: 1004
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 1004 (cv-ingestion-and-visual-editor) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-04-07
 
 Progress: [██████████] 100%
@@ -73,6 +73,7 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1003]: config endpoint stays public (no get_current_user) — feature flags and google_client_id needed before auth is established
 - [Phase 1003]: apiFetch drop-in replaces all native fetch() in jobStore — Bearer token auto-injected, 401 triggers logout+redirect
 - [Phase 1003]: AppSidebar user profile uses authStore storeToRefs — reactive display of Google avatar, name, sign-out without props
+- [Phase 1004]: Gemini 2.5 Flash-Lite for both OCR and structuring passes in CV parser; inhouse GEMINI_API_KEY from .env; DB CV takes priority over YAML file in GET /cv/info
 
 ### Quick Tasks Completed
 
@@ -98,6 +99,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1003 P02 | 2 | 2 tasks | 5 files |
 | Phase 1003 P01 | 230 | 2 tasks | 7 files |
 | Phase 1003 P03 | 15min | 2 tasks | 7 files |
+| Phase 1004 P01 | 216 | 2 tasks | 8 files |
 
 ### Roadmap Evolution
 
@@ -106,6 +108,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T16:16:17.055Z
-Stopped at: Completed 1003-03-PLAN.md — awaiting human verification checkpoint
+Last session: 2026-04-07T16:58:22.660Z
+Stopped at: Completed 1004-01-PLAN.md
 Resume file: None
