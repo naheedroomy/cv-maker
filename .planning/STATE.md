@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
-status: completed
-stopped_at: Completed 1002-03-PLAN.md (Phase 1002 complete)
-last_updated: "2026-04-07T15:14:52.485Z"
+status: executing
+stopped_at: Completed 1003-02-PLAN.md
+last_updated: "2026-04-07T15:57:34.431Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 12
+  completed_plans: 10
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 1002 — multi-tenant-db-schema
+**Current focus:** Phase 1003 — google-auth-backend-jwt-middleware
 
 ## Current Position
 
-Phase: 1003
-Plan: Not started
-Status: Phase complete — ready for Phase 1003
+Phase: 1003 (google-auth-backend-jwt-middleware) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-04-07
 
 Progress: [██████████] 100%
@@ -65,6 +65,9 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase quick]: get_api_key() centralizes DB-overrides-.env logic for all 3 API providers
 - [Phase 1002]: Eliminated in-process settings cache - get_setting and get_api_key are now async with per-user DB lookups — Per-user settings require direct DB queries - in-process cache was incompatible with multi-tenant model
 - [Phase 1002]: Provider constructors accept explicit params (api_key, model) — settings resolution moved to async get_provider() factory, decoupling core/ providers from backend/ settings_cache
+- [Phase 1003]: Dynamic import of useAuthStore inside beforeEach guard avoids circular dependency between router and store at module load time
+- [Phase 1003]: window.location.href for 401 redirect instead of router.push — ensures full page reload and state reset
+- [Phase 1003]: apiFetch pattern: auto-Bearer + 401 redirect; plain fetch for pre-auth calls (/api/config, /api/auth/google) to avoid redirect loops
 
 ### Quick Tasks Completed
 
@@ -87,6 +90,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1002 P01 | 1min | 1 tasks | 1 files |
 | Phase 1002 P02 | 1min | 1 tasks | 1 files |
 | Phase 1002 P03 | 3min | 7 tasks | 11 files |
+| Phase 1003 P02 | 2 | 2 tasks | 5 files |
 
 ### Roadmap Evolution
 
@@ -95,6 +99,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T15:02:14.677Z
-Stopped at: Completed 1002-03-PLAN.md (Phase 1002 complete)
-Resume file: .planning/phases/1003-google-auth/
+Last session: 2026-04-07T15:57:34.428Z
+Stopped at: Completed 1003-02-PLAN.md
+Resume file: None
