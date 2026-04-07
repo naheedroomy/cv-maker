@@ -3,6 +3,7 @@ import { ref, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import ToneSelector from '@/components/ToneSelector.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { apiFetch } from '@/utils/apiFetch'
 import { useJobStore } from '@/stores/jobStore'
 
@@ -34,7 +35,7 @@ const openaiAvailable = ref(false)
 onMounted(async () => {
   try {
     const res = await apiFetch('/api/config')
-    const data = await res.json()
+    const data = await res.json() as Record<string, unknown>
     claudeCliAvailable.value = data.claude_cli_available !== false
     claudeApiAvailable.value = data.claude_api_available === true
     geminiAvailable.value = data.gemini_available === true
@@ -42,9 +43,9 @@ onMounted(async () => {
   } catch { /* keep optimistic defaults */ }
 })
 
-// Sync internal state when parent prop changes (job reload)
+// Sync internal state when parent prop changes (job reload) — but not while generating
 watch(() => props.existingCoverLetter, (val) => {
-  if (val !== null && val !== coverLetterText.value) {
+  if (!generating.value && val !== null && val !== coverLetterText.value) {
     coverLetterText.value = val
   }
 })
@@ -57,6 +58,7 @@ watch(() => props.existingNotes, (val) => {
 
 async function handleGenerate(): Promise<void> {
   generating.value = true
+  coverLetterText.value = ''
   try {
     const result = await store.generateCoverLetter(
       props.jobId,
@@ -101,15 +103,21 @@ function handleRegenerate(): void {
 <template>
   <section class="cover-letter-section">
 
+    <!-- Generating state: spinner -->
+    <div v-if="generating" class="generating-state">
+      <LoadingSpinner />
+      <p class="generating-text">Generating cover letter...</p>
+    </div>
+
     <!-- State 1: No cover letter yet, show generate trigger -->
-    <div v-if="!coverLetterText && !showForm">
+    <div v-else-if="!coverLetterText && !showForm">
       <button class="btn-generate-trigger" @click="showForm = true">
         Generate Cover Letter
       </button>
     </div>
 
     <!-- State 2: Form visible (model + tone + generate, then optional notes) -->
-    <div v-if="showForm && !coverLetterText" class="cover-letter-form">
+    <div v-else-if="showForm && !coverLetterText" class="cover-letter-form">
       <div class="form-row">
         <ModelSelector
           v-model="selectedModel"
@@ -126,7 +134,7 @@ function handleRegenerate(): void {
         :disabled="generating"
         @click="handleGenerate"
       >
-        {{ generating ? 'Generating...' : 'Generate Cover Letter' }}
+        Generate Cover Letter
       </button>
       <div class="form-field">
         <label class="field-label">Notes (optional)</label>
@@ -141,7 +149,7 @@ function handleRegenerate(): void {
     </div>
 
     <!-- State 3: Cover letter generated — editable preview -->
-    <div v-if="coverLetterText" class="cover-letter-preview">
+    <div v-else-if="coverLetterText" class="cover-letter-preview">
       <textarea
         v-model="coverLetterText"
         class="cover-letter-editor"
@@ -160,7 +168,6 @@ function handleRegenerate(): void {
         </button>
         <button
           class="btn-regenerate-cl"
-          :disabled="generating"
           @click="handleRegenerate"
         >
           Regenerate
@@ -172,6 +179,19 @@ function handleRegenerate(): void {
 
 <style scoped>
 .cover-letter-section {
+}
+
+.generating-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+}
+
+.generating-text {
+  font-size: 14px;
+  color: #6b7280;
 }
 
 .field-label {
