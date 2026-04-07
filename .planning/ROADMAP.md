@@ -54,7 +54,7 @@
 | 8. Production Wiring | v2.0 | 2/2 | Complete | 2026-04-04 |
 | 9. Gemini Provider | v2.0 | 4/4 | Complete | 2026-04-05 |
 | 1002. Multi-Tenant DB Schema | v3.0 | 3/3 | Complete    | 2026-04-07 |
-| 1003. Google Auth Backend + JWT Middleware | v3.0 | 1/3 | In Progress|  |
+| 1003. Google Auth Backend + JWT Middleware | v3.0 | 2/3 | In Progress|  |
 | 1004. CV Ingestion & Visual Editor | v3.0 | 0/0 | Not Started | — |
 | 1005. Dockerization & docker-compose | v3.0 | 0/0 | Not Started | — |
 | 1006. CI/CD, Domain & HTTPS | v3.0 | 0/0 | Not Started | — |
@@ -118,8 +118,8 @@
 4. Clicking "Sign out" removes the JWT from `localStorage` and redirects to `/signin` — the next page load requires re-authentication
 5. The app header/sidebar displays the signed-in user's Google display name and profile picture after login
 
-**Plans:** 1/3 plans executed
-- [ ] 1003-01-PLAN.md — Backend auth core: Google token verification, JWT issuance/decoding, get_current_user dependency, auth router
+**Plans:** 2/3 plans executed
+- [x] 1003-01-PLAN.md — Backend auth core: Google token verification, JWT issuance/decoding, get_current_user dependency, auth router
 - [x] 1003-02-PLAN.md — Frontend auth: authStore, apiFetch utility, SignInView, Vue Router guards
 - [ ] 1003-03-PLAN.md — Integration wiring: replace ANONYMOUS_USER_ID in all routers, migrate jobStore to apiFetch, user profile in sidebar
 

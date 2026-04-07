@@ -13,8 +13,8 @@
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can sign in using their Google account (Google OAuth 2.0 via ID token)
-- [ ] **AUTH-02**: Backend verifies Google ID token and issues a signed JWT stored in localStorage
+- [x] **AUTH-01**: User can sign in using their Google account (Google OAuth 2.0 via ID token)
+- [x] **AUTH-02**: Backend verifies Google ID token and issues a signed JWT stored in localStorage
 - [ ] **AUTH-03**: All `/api/*` endpoints require a valid JWT (middleware returns 401 if missing/invalid)
 - [x] **AUTH-04**: Frontend Vue Router guards redirect unauthenticated users to the sign-in page
 - [x] **AUTH-05**: User can sign out, which clears the JWT from localStorage
