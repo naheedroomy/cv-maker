@@ -116,10 +116,10 @@ async def _get_job_row(db_path: Path, job_id: str) -> dict:
 
 
 def test_worker_semaphore_limits_concurrency():
-    """Semaphore value must be exactly 2 — limits to 2 concurrent pipeline runs."""
+    """Semaphore value must be exactly 5 — limits to 5 concurrent pipeline runs."""
     from backend.worker import _semaphore
 
-    assert _semaphore._value == 2
+    assert _semaphore._value == 5
 
 
 def test_worker_completes_job_successfully(tmp_path: Path):

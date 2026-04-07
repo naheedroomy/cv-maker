@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -13,14 +13,36 @@ const router = useRouter()
 
 let pollInterval: ReturnType<typeof setInterval> | null = null
 
+interface CvInfo {
+  loaded: boolean
+  name?: string
+  email?: string
+  location?: string
+  roles?: number
+  skills?: number
+  certifications?: number
+}
+
+const cvInfo = ref<CvInfo | null>(null)
+
 const sortedJobs = computed(() =>
   [...jobs.value].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   ),
 )
 
+async function fetchCvInfo() {
+  try {
+    const res = await fetch('/api/cv/info')
+    if (res.ok) cvInfo.value = await res.json()
+  } catch { /* ignore */ }
+}
+
 onMounted(async () => {
-  await store.fetchJobs().catch(() => {})
+  await Promise.all([
+    store.fetchJobs().catch(() => {}),
+    fetchCvInfo(),
+  ])
   pollInterval = setInterval(() => store.fetchJobs().catch(() => {}), 30_000)
 })
 
@@ -52,6 +74,16 @@ onUnmounted(() => {
         <p class="empty-body">Submit a job listing to get started.</p>
       </div>
     </nav>
+    <div v-if="cvInfo" class="cv-info">
+      <div v-if="cvInfo.loaded" class="cv-info-loaded">
+        <p class="cv-info-name">{{ cvInfo.name }}</p>
+        <p class="cv-info-detail">{{ cvInfo.roles }} roles, {{ cvInfo.skills }} skills, {{ cvInfo.certifications }} certs</p>
+      </div>
+      <div v-else class="cv-info-empty">
+        <p class="cv-info-detail">No CV imported</p>
+        <RouterLink to="/convert" class="cv-info-link">Import CV</RouterLink>
+      </div>
+    </div>
   </aside>
 </template>
 
@@ -63,6 +95,8 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 .sidebar-header {
   padding: 16px;
@@ -100,6 +134,10 @@ onUnmounted(() => {
 .header-link:hover {
   color: #111827;
 }
+nav {
+  flex: 1;
+  overflow-y: auto;
+}
 .empty-state {
   padding: 16px;
 }
@@ -112,5 +150,34 @@ onUnmounted(() => {
 .empty-body {
   font-size: 12px;
   color: #6b7280;
+}
+.cv-info {
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: auto;
+}
+.cv-info-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+.cv-info-detail {
+  font-size: 11px;
+  color: #6b7280;
+  margin: 2px 0 0;
+}
+.cv-info-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cv-info-link {
+  font-size: 11px;
+  color: #2563eb;
+  text-decoration: none;
+}
+.cv-info-link:hover {
+  text-decoration: underline;
 }
 </style>

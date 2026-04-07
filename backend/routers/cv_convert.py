@@ -1,4 +1,4 @@
-"""CV converter API endpoint — POST /api/cv/convert."""
+"""CV converter API endpoint — POST /api/cv/convert and GET /api/cv/info."""
 from __future__ import annotations
 
 import asyncio
@@ -13,6 +13,30 @@ from cv_maker.cv_converter import convert_cv_to_yaml, save_base_cv
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cv", tags=["cv"])
+
+
+@router.get("/info")
+async def get_cv_info():
+    """Return summary of the currently loaded base CV."""
+    from cv_maker.data import DEFAULT_CV_PATH, load_base_cv
+
+    if not DEFAULT_CV_PATH.exists():
+        return {"loaded": False}
+
+    try:
+        cv = await asyncio.to_thread(load_base_cv)
+    except Exception:  # noqa: BLE001
+        return {"loaded": False}
+
+    return {
+        "loaded": True,
+        "name": cv.contact.name,
+        "email": cv.contact.email,
+        "location": cv.contact.location,
+        "roles": len(cv.experience),
+        "skills": len(cv.skills),
+        "certifications": len(cv.certifications),
+    }
 
 
 @router.post("/convert", response_model=CvConvertResponse)
