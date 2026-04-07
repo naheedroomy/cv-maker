@@ -264,12 +264,13 @@ _RULES: dict[str, dict[int, str]] = {
     },
     "core_competencies": {
         0: (
-            "Select 6-8 SHORT keyword phrases from the job description that the candidate "
-            "demonstrably matches based on their base CV. Keep each phrase to 2-3 words MAX "
-            "(e.g., 'AWS Infrastructure', 'CI/CD Pipelines', 'Kubernetes', 'IaC / Terraform'). "
-            "Do NOT write long phrases like 'Cloud Infrastructure Management and Optimization'. "
-            "These are NOT the full skills list — they are JD-derived competency labels. "
-            "Only include phrases where the base CV provides strong or partial evidence. "
+            "Select 6-8 SPECIFIC competency phrases that differentiate this candidate for THIS role. "
+            "Use concrete tool + capability pairs, not generic categories. "
+            "GOOD: 'AWS Cost Optimization', 'GitHub Actions Pipelines', 'Kubernetes (EKS)', "
+            "'Terraform IaC', 'Datadog Observability', 'Security Remediation Automation'. "
+            "BAD: 'Cloud Infrastructure', 'DevOps Automation', 'CI/CD Pipelines', 'Production Observability' "
+            "— these are generic categories that every DevOps CV claims. "
+            "Keep each phrase to 2-4 words. Only include where the base CV provides evidence. "
             "Return as the 'core_competencies' array."
         ),
     },
