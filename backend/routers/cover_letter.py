@@ -58,11 +58,15 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, 
     # 3. Load base CV (sync I/O via thread pool)
     base_cv = await asyncio.to_thread(load_base_cv)
 
-    # 4. Generate cover letter (sync LLM call via thread pool)
+    # 4. Resolve provider (async) then generate cover letter (sync in thread pool)
     from core.cover_letter import generate_cover_letter
+    from core.providers import get_provider
+
+    provider = await get_provider(body.model, user_id=user["id"])
 
     cover_letter_text = await asyncio.to_thread(
         generate_cover_letter,
+        provider,
         body.model,
         base_cv,
         row["job_text"],

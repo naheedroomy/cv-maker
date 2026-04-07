@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from core.models import BaseCV, GapItem, TailoredCV
 from core.pipeline import _extract_json, _invoke_with_retry, _serialize_base_cv
-from core.providers import get_provider
+from core.providers.base import BaseProvider
 
 logger = logging.getLogger(__name__)
 
@@ -269,6 +269,7 @@ class CoverLetterOutput(BaseModel):
 
 
 def generate_cover_letter(
+    provider: "BaseProvider | None",
     provider_model: str,
     base_cv: BaseCV,
     job_text: str,
@@ -280,6 +281,7 @@ def generate_cover_letter(
     """Generate a cover letter using the specified provider. Returns plain text.
 
     Args:
+        provider: Pre-resolved provider instance (None for Claude CLI).
         provider_model: One of "claude-haiku", "claude-api", "gemini-flash", "openai".
         base_cv: The candidate's full base CV.
         job_text: The raw job listing text.
@@ -312,7 +314,8 @@ def generate_cover_letter(
         return result.cover_letter_text
 
     # Chat-based providers: use system + user message pattern
-    provider = get_provider(provider_model)
+    if provider is None:
+        raise RuntimeError(f"Provider not resolved for model {provider_model}")
     last_exc: Exception | None = None
 
     for attempt in range(3):
