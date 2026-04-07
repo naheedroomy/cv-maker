@@ -54,7 +54,7 @@ class CoverLetterRequest(BaseModel):
     """Request body for POST /api/jobs/:id/cover-letter."""
 
     model: str = "claude-haiku"
-    tone: str = Field(default="professional", pattern="^(formal|professional|confident|casual)$")
+    tone: str = Field(default="professional", pattern="^(formal|professional|confident|direct|casual)$")
     user_notes: str = ""
 
 

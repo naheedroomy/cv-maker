@@ -12,6 +12,7 @@ const options = [
   { value: 'formal', label: 'Formal' },
   { value: 'professional', label: 'Professional' },
   { value: 'confident', label: 'Confident' },
+  { value: 'direct', label: 'Direct' },
   { value: 'casual', label: 'Casual' },
 ] as const
 
