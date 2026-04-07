@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: verifying
-stopped_at: Completed quick task 260407-qcs
-last_updated: "2026-04-07T13:36:47.493Z"
+milestone: v3.0
+milestone_name: Deploy, Auth & CV Editor
+status: executing
+stopped_at: Completed 1003-01-PLAN.md
+last_updated: "2026-04-07T16:05:11.421Z"
 last_activity: 2026-04-07
 progress:
-  total_phases: 3
-  completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 8
+  completed_phases: 3
+  total_plans: 12
+  completed_plans: 11
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 1001 — frontend-ux-revamp-and-restructure
+**Current focus:** Phase 1003 — google-auth-backend-jwt-middleware
 
 ## Current Position
 
-Phase: 1001 (frontend-ux-revamp-and-restructure) — EXECUTING
+Phase: 1003 (google-auth-backend-jwt-middleware) — EXECUTING
 Plan: 3 of 3
-Status: Phase complete — ready for verification
+Status: Ready to execute
 Last activity: 2026-04-07
 
 Progress: [██████████] 100%
@@ -63,6 +63,13 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1001]: Tab panels use v-show (not v-if) for instant switching — preserves CoverLetterSection form state across tab switches
 - [Phase 1001]: Cancel Job moved outside tabs to running-actions area — tabs only shown when job is complete/failed/cancelled
 - [Phase quick]: get_api_key() centralizes DB-overrides-.env logic for all 3 API providers
+- [Phase 1002]: Eliminated in-process settings cache - get_setting and get_api_key are now async with per-user DB lookups — Per-user settings require direct DB queries - in-process cache was incompatible with multi-tenant model
+- [Phase 1002]: Provider constructors accept explicit params (api_key, model) — settings resolution moved to async get_provider() factory, decoupling core/ providers from backend/ settings_cache
+- [Phase 1003]: Dynamic import of useAuthStore inside beforeEach guard avoids circular dependency between router and store at module load time
+- [Phase 1003]: window.location.href for 401 redirect instead of router.push — ensures full page reload and state reset
+- [Phase 1003]: apiFetch pattern: auto-Bearer + 401 redirect; plain fetch for pre-auth calls (/api/config, /api/auth/google) to avoid redirect loops
+- [Phase 1003]: asyncio_mode=auto in pytest config removes need for @pytest.mark.asyncio decorator on every async test
+- [Phase 1003]: CORS_ORIGINS env var with comma-split supports multiple origins for staging+production without code changes
 
 ### Quick Tasks Completed
 
@@ -82,6 +89,11 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1001 P02 | 131s | 2 tasks | 6 files |
 | Phase 1001 P01 | 720 | 2 tasks | 26 files |
 | Phase 1001 P03 | 167 | 1 tasks | 2 files |
+| Phase 1002 P01 | 1min | 1 tasks | 1 files |
+| Phase 1002 P02 | 1min | 1 tasks | 1 files |
+| Phase 1002 P03 | 3min | 7 tasks | 11 files |
+| Phase 1003 P02 | 2 | 2 tasks | 5 files |
+| Phase 1003 P01 | 230 | 2 tasks | 7 files |
 
 ### Roadmap Evolution
 
@@ -90,6 +102,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T13:36:42.249Z
-Stopped at: Completed quick task 260407-qcs
+Last session: 2026-04-07T16:05:11.418Z
+Stopped at: Completed 1003-01-PLAN.md
 Resume file: None

@@ -20,13 +20,11 @@ logger = logging.getLogger(__name__)
 class GeminiProvider(BaseProvider):
     DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
 
-    def __init__(self) -> None:
-        from backend.settings_cache import get_api_key, get_setting
-        api_key = get_api_key("gemini_api_key")
+    def __init__(self, api_key: str = "", model: str = "") -> None:
         if not api_key:
-            raise RuntimeError("GEMINI_API_KEY is not set (neither in .env nor in Settings)")
-        self._model = get_setting("gemini_model") or self.DEFAULT_MODEL
+            raise RuntimeError("Gemini API key not configured (set in Settings or .env as GEMINI_API_KEY)")
         self._client = genai.Client(api_key=api_key)
+        self._model = model or self.DEFAULT_MODEL
 
     def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> tuple[TailoredCV, list[GapItem]]:
         system_prompt = _build_system_prompt_for_chat(creativity_level)

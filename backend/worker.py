@@ -112,7 +112,7 @@ async def job_worker(
             # Run AI pipeline (provider-routed via async wrapper)
             # ----------------------------------------------------------------
             t0 = time.monotonic()
-            provider = get_provider(model)
+            provider = await get_provider(model)
             logger.info("Job %s: [2/4] Starting %s pipeline...", job_id, type(provider).__name__)
             tailored_cv, gap_diff = await run_provider_async(provider, base_cv, job_text, creativity_level)
             logger.info(
@@ -143,7 +143,7 @@ async def job_worker(
             # ----------------------------------------------------------------
             from backend.settings_cache import get_setting
 
-            cv_name = get_setting("cv_filename").strip()
+            cv_name = (await get_setting("cv_filename")).strip()
             short_id = job_id[:5]
             if cv_name:
                 file_stem = f"{cv_name}-{short_id}"
