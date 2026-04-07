@@ -9,17 +9,28 @@ export interface AuthUser {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const jwt = ref<string | null>(localStorage.getItem('jwt'))
+  const jwt = ref<string | null>(null)
   const user = ref<AuthUser | null>(null)
   const isAuthenticated = computed(() => !!jwt.value)
 
-  // On store creation, restore user from localStorage if JWT exists
-  const savedUser = localStorage.getItem('auth_user')
-  if (savedUser) {
+  // On store creation, restore from localStorage — but validate JWT expiry
+  const savedJwt = localStorage.getItem('jwt')
+  if (savedJwt) {
     try {
-      user.value = JSON.parse(savedUser) as AuthUser
+      const payload = JSON.parse(atob(savedJwt.split('.')[1]!)) as { exp?: number }
+      if (payload.exp && payload.exp * 1000 > Date.now()) {
+        jwt.value = savedJwt
+        const savedUser = localStorage.getItem('auth_user')
+        if (savedUser) user.value = JSON.parse(savedUser) as AuthUser
+      } else {
+        // Expired — clean up
+        localStorage.removeItem('jwt')
+        localStorage.removeItem('auth_user')
+      }
     } catch {
-      /* ignore corrupt data */
+      // Corrupt JWT — clean up
+      localStorage.removeItem('jwt')
+      localStorage.removeItem('auth_user')
     }
   }
 

@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/authStore'
+import { router } from '@/router'
 
 /**
  * Fetch wrapper that auto-adds Authorization: Bearer header.
@@ -23,8 +24,7 @@ export async function apiFetch(
 
   if (res.status === 401) {
     authStore.logout()
-    // Use window.location for hard redirect to ensure full state reset
-    window.location.href = '/signin'
+    await router.push('/signin')
   }
 
   return res
