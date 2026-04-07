@@ -34,7 +34,7 @@
 
 - [x] Phase 1002: Multi-Tenant DB Schema (3/3 plans)
 - [ ] Phase 1003: Google Auth Backend + JWT Middleware (0/3 plans)
-- [ ] Phase 1004: CV Ingestion & Visual Editor (0/0 plans)
+- [ ] Phase 1004: CV Ingestion & Visual Editor (0/3 plans)
 - [ ] Phase 1005: Dockerization & docker-compose (0/0 plans)
 - [ ] Phase 1006: CI/CD, Domain & HTTPS (0/0 plans)
 
@@ -55,7 +55,7 @@
 | 9. Gemini Provider | v2.0 | 4/4 | Complete | 2026-04-05 |
 | 1002. Multi-Tenant DB Schema | v3.0 | 3/3 | Complete    | 2026-04-07 |
 | 1003. Google Auth Backend + JWT Middleware | v3.0 | 2/3 | Complete    | 2026-04-07 |
-| 1004. CV Ingestion & Visual Editor | v3.0 | 0/0 | Not Started | — |
+| 1004. CV Ingestion & Visual Editor | v3.0 | 0/3 | Not Started | — |
 | 1005. Dockerization & docker-compose | v3.0 | 0/0 | Not Started | — |
 | 1006. CI/CD, Domain & HTTPS | v3.0 | 0/0 | Not Started | — |
 
@@ -127,12 +127,12 @@
 
 ### Phase 1004: CV Ingestion & Visual Editor
 
-**Goal:** Let users upload a PDF or DOCX of their existing CV, have AI parse it into the structured `BaseCV` model, then view and edit their parsed CV in a sectioned visual editor (Work Experience, Education, Skills, Summary, Contact). The saved CV persists per user and is used as the base for all tailoring jobs.
+**Goal:** Let users upload a PDF of their existing CV, have AI parse it into the structured BaseCV model via a two-pass Gemini pipeline (OCR + structuring), then view and edit their parsed CV in a sectioned visual editor. The saved CV persists per user and is used as the base for all tailoring jobs.
 
 **Branch:** `gsd/phase-1004-cv-editor`
 
 **Requirements:**
-- CVED-01: User can upload a PDF or DOCX file containing their existing CV
+- CVED-01: User can upload a PDF file containing their existing CV
 - CVED-02: AI parses the uploaded CV and extracts structured data matching the BaseCV model (experience, skills, education, summary, contact)
 - CVED-03: User sees a visual sectioned editor with their parsed CV (Work Experience, Education, Skills, Summary, Contact)
 - CVED-04: User can add, edit, and delete individual entries within each CV section
@@ -140,15 +140,17 @@
 - CVED-06: The saved CV is used as the base CV when tailoring new job applications
 
 **Success Criteria:**
-1. Uploading a PDF or DOCX file triggers AI parsing and the parsed CV populates the visual editor within a few seconds — no raw YAML is shown to the user
+1. Uploading a PDF file triggers AI parsing and the parsed CV populates the visual editor within a few seconds — no raw YAML is shown to the user
 2. Each CV section (Work Experience, Education, Skills, Summary, Contact) is rendered as an independently editable panel — fields match the `BaseCV` Pydantic model
 3. The user can add a new work experience entry, fill in the fields, and see it appear in the editor list; the same is true for Education and Skills
 4. The user can delete an existing entry from any section — the entry is removed from the editor and the change is reflected on save
 5. Clicking "Save CV" persists the current editor state to the DB under the authenticated user's `user_id` — a page reload restores the exact same CV
 6. Submitting a new tailoring job uses the DB-stored CV (not a static YAML file) as the base CV input to the AI pipeline
 
-**Plans:**
-- [ ] TBD
+**Plans:** 3 plans
+- [ ] 1004-01-PLAN.md — Backend: PDF parser (pymupdf + Gemini two-pass), CV CRUD API (upload, get, put, delete), integration tests
+- [ ] 1004-02-PLAN.md — Frontend: BaseCV types, cvStore, PdfDropZone, visual sectioned CV editor (replace BaseCvView)
+- [ ] 1004-03-PLAN.md — Pipeline integration: worker loads CV from DB, sidebar CV status, end-to-end verification
 
 ---
 
