@@ -1,0 +1,46 @@
+# Backend Dockerfile — Python 3.12 + TeX Live + Node.js (Claude CLI) + uv
+# Serves FastAPI backend only; frontend is in a separate container.
+
+FROM python:3.12-slim
+
+# System dependencies — single RUN to minimize layers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    texlive-xetex \
+    texlive-fonts-recommended \
+    texlive-latex-extra \
+    latexmk \
+    fonts-liberation \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Node.js layer (for Claude CLI)
+COPY --from=node:22-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:22-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
+RUN npm install -g @anthropic-ai/claude-code
+
+# uv package manager
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Non-root user
+RUN useradd --create-home --shell /bin/bash appuser
+
+WORKDIR /app
+
+# Python dependencies (cache-optimized layer order)
+# pyproject.toml declares packages = ["core"] in hatchling config,
+# so uv sync needs the core/ directory present.
+COPY pyproject.toml uv.lock ./
+COPY core/ core/
+RUN uv sync --frozen --no-dev
+
+# Application code (after deps for cache)
+COPY backend/ backend/
+
+# Data directory — writable by appuser for SQLite DB
+RUN mkdir -p /app/data && chown appuser:appuser /app/data
+
+# Runtime config
+USER appuser
+EXPOSE 8000
+CMD ["/app/.venv/bin/uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
