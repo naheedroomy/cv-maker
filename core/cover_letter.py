@@ -347,8 +347,7 @@ def generate_cover_letter(
             elif provider_model == "claude-api":
                 response = provider._client.messages.create(
                     model=provider._model,
-                    max_tokens=2000,
-                    temperature=0,
+                    max_tokens=4000,
                     system=system_prompt,
                     messages=[{"role": "user", "content": effective_user}],
                 )
@@ -359,8 +358,6 @@ def generate_cover_letter(
             elif provider_model == "openai":
                 response = provider._client.chat.completions.create(
                     model=provider._model,
-                    max_tokens=2000,
-                    temperature=0,
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": effective_user},
