@@ -11,6 +11,7 @@ import CvPreview from '@/components/CvPreview.vue'
 import GapDiffTable from '@/components/GapDiffTable.vue'
 import TailoringNotes from '@/components/TailoringNotes.vue'
 import RegeneratePanel from '@/components/RegeneratePanel.vue'
+import CoverLetterSection from '@/components/CoverLetterSection.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -215,6 +216,16 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
     <TailoringNotes
       v-if="currentJob.tailored_cv && currentJob.tailored_cv.tailoring_notes && currentJob.tailored_cv.tailoring_notes.length > 0"
       :notes="currentJob.tailored_cv.tailoring_notes"
+    />
+
+    <!-- Cover Letter Section: visible when job is complete (per D-01) -->
+    <CoverLetterSection
+      v-if="currentJob.status === 'complete'"
+      :job-id="jobId"
+      :job-status="currentJob.status"
+      :current-model="currentJob.model"
+      :existing-cover-letter="currentJob.cover_letter_text ?? null"
+      :existing-notes="currentJob.cover_letter_notes ?? null"
     />
 
     <!-- Job Listing Text -->
