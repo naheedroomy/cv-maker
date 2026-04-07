@@ -177,6 +177,66 @@ export const useJobStore = defineStore('jobs', () => {
     }
   }
 
+  // ── Cover Letter Actions ───────────────────────────────────────────────────
+
+  async function generateCoverLetter(
+    jobId: string,
+    model: string,
+    tone: string,
+    userNotes: string,
+  ): Promise<string> {
+    const res = await fetch(`/api/jobs/${jobId}/cover-letter`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, tone, user_notes: userNotes }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error((body as { detail?: string }).detail ?? `Cover letter generation failed: ${res.status}`)
+    }
+    const data = await res.json() as { cover_letter_text: string; cover_letter_notes: string }
+    if (currentJob.value?.id === jobId) {
+      currentJob.value = {
+        ...currentJob.value,
+        cover_letter_text: data.cover_letter_text,
+        cover_letter_notes: data.cover_letter_notes,
+      }
+    }
+    return data.cover_letter_text
+  }
+
+  async function saveCoverLetter(
+    jobId: string,
+    coverLetterText: string,
+    userNotes: string,
+  ): Promise<void> {
+    const res = await fetch(`/api/jobs/${jobId}/cover-letter`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cover_letter_text: coverLetterText, cover_letter_notes: userNotes }),
+    })
+    if (!res.ok) throw new Error(`Save cover letter failed: ${res.status}`)
+    if (currentJob.value?.id === jobId) {
+      currentJob.value = {
+        ...currentJob.value,
+        cover_letter_text: coverLetterText,
+        cover_letter_notes: userNotes,
+      }
+    }
+  }
+
+  async function downloadCoverLetterPdf(jobId: string, companyName: string): Promise<void> {
+    const res = await fetch(`/api/jobs/${jobId}/cover-letter/pdf`)
+    if (!res.ok) throw new Error(`Cover letter PDF not available: ${res.status}`)
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${companyName}-Cover-Letter.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return {
     jobs,
     currentJob,
@@ -191,5 +251,8 @@ export const useJobStore = defineStore('jobs', () => {
     downloadPdf,
     openSSE,
     closeSSE,
+    generateCoverLetter,
+    saveCoverLetter,
+    downloadCoverLetterPdf,
   }
 })

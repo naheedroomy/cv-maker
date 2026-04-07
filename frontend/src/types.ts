@@ -72,6 +72,8 @@ export interface JobResponse {
   tailored_cv: TailoredCV | null
   gap_diff: GapItem[] | null
   pdf_url: string | null
+  cover_letter_text: string | null
+  cover_letter_notes: string | null
 }
 
 export interface JobCreate {
