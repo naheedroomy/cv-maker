@@ -42,7 +42,7 @@ const errorMessage = ref<string | null>(null)
 async function handleCredentialResponse(response: { credential: string }): Promise<void> {
   errorMessage.value = null
   try {
-    const res = await fetch('/api/auth/google', {
+    const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id_token: response.credential }),

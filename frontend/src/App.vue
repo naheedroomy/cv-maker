@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import AppSidebar from './components/AppSidebar.vue'
-import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
-const route = useRoute()
+const authStore = useAuthStore()
 </script>
 
 <template>
-  <div v-if="route.path === '/signin'" class="signin-layout">
+  <div v-if="!authStore.isAuthenticated" class="signin-layout">
     <RouterView />
   </div>
   <div v-else class="app-shell">
