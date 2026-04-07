@@ -134,8 +134,9 @@ export const useJobStore = defineStore('jobs', () => {
         currentJob.value = data
       }
       const idx = jobs.value.findIndex((j) => j.id === jobId)
-      if (idx !== -1) {
-        jobs.value[idx] = { ...jobs.value[idx], ...data, created_at: jobs.value[idx].created_at }
+      const existing = jobs.value[idx]
+      if (idx !== -1 && existing) {
+        jobs.value[idx] = { ...existing, ...data, created_at: existing.created_at }
       }
       closeSSE()
     })

@@ -28,7 +28,7 @@ const openaiAvailable = ref(false)
 onMounted(() => {
   apiFetch('/api/config')
     .then(r => r.ok ? r.json() : {})
-    .then(data => {
+    .then((data: Record<string, unknown>) => {
       claudeCliAvailable.value = data.claude_cli_available !== false
       claudeApiAvailable.value = data.claude_api_available === true
       geminiAvailable.value = data.gemini_available === true
