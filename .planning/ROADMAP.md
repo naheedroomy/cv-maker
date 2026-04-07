@@ -88,9 +88,9 @@ Plans:
 - Project folder restructure: rename src/cv_maker/ to core/, update all imports, delete stray files
 **Requirements**: REPO-RENAME, REPO-CLEANUP, UX-SELECTORS, UX-BUTTONS, UX-SIDEBAR, UX-TABS
 **Depends on:** Phase 1000
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 1001-01-PLAN.md — Repo restructure: rename src/cv_maker/ to core/, update imports, delete stray files
-- [ ] 1001-02-PLAN.md — Shared selector CSS, button hierarchy fixes, sidebar redesign
+- [x] 1001-02-PLAN.md — Shared selector CSS, button hierarchy fixes, sidebar redesign
 - [ ] 1001-03-PLAN.md — 3-tab layout in JobDetailView, CoverLetterSection tab adaptation, visual checkpoint

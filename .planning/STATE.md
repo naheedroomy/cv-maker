@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Checkpoint: 1000-03 Task 3 human-verify (Tasks 1-2 complete)"
-last_updated: "2026-04-07T11:24:10.039Z"
+stopped_at: Completed 1001-02-PLAN.md
+last_updated: "2026-04-07T13:07:23.533Z"
 last_activity: 2026-04-07
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 6
+  completed_plans: 4
   percent: 100
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 1000 — cover-letter-generator
+**Current focus:** Phase 1001 — frontend-ux-revamp-and-restructure
 
 ## Current Position
 
-Phase: 1000 (cover-letter-generator) — EXECUTING
-Plan: 3 of 3
+Phase: 1001 (frontend-ux-revamp-and-restructure) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -56,6 +56,8 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1000]: Standalone generate_cover_letter() function rather than ABC method — different signature avoids forcing all 4 providers to implement a second method
 - [Phase 1000]: fpdf2 for cover letter PDF — pure Python, zero system deps, vs LaTeX (overkill) or WeasyPrint (C libs)
 - [Phase 1000]: CoverLetterSaveRequest defined locally in cover_letter.py router — not shared across routers, avoids cluttering schemas.py
+- [Phase 1001]: Shared selector.css (not base component) for pill-toggle unification per D-05 — avoids prop contract changes, simpler to reason about
+- [Phase 1001]: SessionEntry active state uses left-border indicator (3px solid #2563eb) over blue background — cleaner, aligns with sidebar contract
 
 ### Quick Tasks Completed
 
@@ -71,6 +73,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1000 P02 | 2min | 2 tasks | 4 files |
 | Phase 1000 P01 | 162 | 2 tasks | 6 files |
 | Phase 1000 P03 | 8min | 2 tasks | 4 files |
+| Phase 1001 P02 | 131s | 2 tasks | 6 files |
 
 ### Roadmap Evolution
 
@@ -79,6 +82,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T11:23:56.018Z
-Stopped at: Checkpoint: 1000-03 Task 3 human-verify (Tasks 1-2 complete)
+Last session: 2026-04-07T13:07:23.530Z
+Stopped at: Completed 1001-02-PLAN.md
 Resume file: None
