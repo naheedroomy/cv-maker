@@ -32,8 +32,7 @@ jobs:
             git fetch origin master
             git reset --hard origin/master
 
-            # .env is created once on the VPS (step 4 in docs/deployment.md)
-            # and persists across deploys — git reset doesn't touch it.
+            # .env is created once on the VPS and persists across deploys.
 
             # ---- Build and deploy ----
             echo "==> Building and starting containers..."
