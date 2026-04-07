@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '@/assets/selector.css'
+
 const props = defineProps<{
   modelValue: number
   disabled: boolean
@@ -31,14 +33,14 @@ function hintText(): string {
 <template>
   <div class="creativity-slider">
     <label class="field-label">Creativity level</label>
-    <div class="creativity-toggle" role="group" aria-label="Select creativity level">
+    <div class="pill-group" role="group" aria-label="Select creativity level">
       <button
         v-for="level in levels"
         :key="level.value"
         type="button"
-        class="creativity-option"
+        class="pill-option"
         :class="{
-          'creativity-option--active': modelValue === level.value,
+          'pill-option--active': modelValue === level.value,
         }"
         :disabled="disabled"
         :aria-pressed="modelValue === level.value"
@@ -48,8 +50,8 @@ function hintText(): string {
       </button>
     </div>
     <p
-      class="creativity-hint"
-      :class="{ 'creativity-hint--warning': modelValue >= 4 }"
+      class="field-hint"
+      :class="{ 'field-hint--warning': modelValue >= 4 }"
     >
       {{ hintText() }}
     </p>
@@ -59,61 +61,5 @@ function hintText(): string {
 <style scoped>
 .creativity-slider {
   margin-bottom: 16px;
-}
-
-.field-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 6px;
-}
-
-.creativity-toggle {
-  display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-}
-
-.creativity-option {
-  height: 32px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: #111827;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 150ms ease;
-}
-
-.creativity-option:hover:not(.creativity-option--active):not(:disabled) {
-  background: #f3f4f6;
-}
-
-.creativity-option--active {
-  background: #2563eb;
-  color: #ffffff;
-}
-
-.creativity-option:disabled {
-  color: #6b7280;
-  cursor: not-allowed;
-}
-
-.creativity-hint {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 6px;
-  margin-bottom: 0;
-}
-
-.creativity-hint--warning {
-  color: #dc2626;
 }
 </style>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '@/assets/selector.css'
+
 const props = defineProps<{
   modelValue: string
   disabled: boolean
@@ -30,13 +32,13 @@ function hintText(): string {
 <template>
   <div class="tone-selector">
     <label class="field-label">Tone</label>
-    <div class="tone-toggle" role="group" aria-label="Select cover letter tone">
+    <div class="pill-group" role="group" aria-label="Select cover letter tone">
       <button
         v-for="opt in options"
         :key="opt.value"
         type="button"
-        class="tone-option"
-        :class="{ 'tone-option--active': modelValue === opt.value }"
+        class="pill-option"
+        :class="{ 'pill-option--active': modelValue === opt.value }"
         :disabled="disabled"
         :aria-pressed="modelValue === opt.value"
         @click="select(opt.value)"
@@ -44,64 +46,12 @@ function hintText(): string {
         {{ opt.label }}
       </button>
     </div>
-    <p class="tone-hint">{{ hintText() }}</p>
+    <p class="field-hint">{{ hintText() }}</p>
   </div>
 </template>
 
 <style scoped>
 .tone-selector {
   margin-bottom: 16px;
-}
-
-.field-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 6px;
-}
-
-.tone-toggle {
-  display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-}
-
-.tone-option {
-  height: 32px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: #111827;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 150ms ease;
-}
-
-.tone-option:hover:not(.tone-option--active):not(:disabled) {
-  background: #f3f4f6;
-}
-
-.tone-option--active {
-  background: #2563eb;
-  color: #ffffff;
-}
-
-.tone-option:disabled {
-  color: #6b7280;
-  cursor: not-allowed;
-}
-
-.tone-hint {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 6px;
-  margin-bottom: 0;
 }
 </style>
