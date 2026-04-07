@@ -143,6 +143,8 @@ class TailoredCV(BaseModel):
     tailoring_notes: list[TailoringNote] = []
     # Gap diff: job requirements vs base CV evidence
     gap_diff: list[GapItem] = []
+    # AI-selected keyword phrases from the JD that the candidate demonstrably matches
+    core_competencies: list[str] = []
 
 
 # ---------------------------------------------------------------------------

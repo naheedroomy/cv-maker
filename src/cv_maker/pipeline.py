@@ -256,6 +256,30 @@ _RULES: dict[str, dict[int, str]] = {
             "'improving efficiency and scalability' unless the base CV included them."
         ),
     },
+    "reorder": {
+        0: (
+            "Within each role, REORDER bullets so the most JD-relevant bullets appear first. "
+            "This applies at every creativity level — even when content cannot be changed, order can."
+        ),
+    },
+    "core_competencies": {
+        0: (
+            "Select 6-8 keyword phrases from the job description that the candidate "
+            "demonstrably matches based on their base CV. These are NOT the full skills list — "
+            "they are JD-derived competency labels (e.g., 'Cloud Infrastructure', 'CI/CD Pipelines', "
+            "'Microservices Architecture', 'Team Leadership'). Only include phrases where the base CV "
+            "provides strong or partial evidence. Return as the 'core_competencies' array."
+        ),
+    },
+    "pruning": {
+        0: (
+            "A bullet that doesn't directly match a Tier 1 requirement but demonstrates "
+            "valuable experience, impact, or breadth should be KEPT — its presence does not "
+            "harm the CV, and its absence creates a gap. Only drop bullets that actively "
+            "weaken the CV (e.g., trivially irrelevant to any aspect of the role). "
+            "Bias toward INCLUSION over exclusion."
+        ),
+    },
     "inference": {
         0: "Do NOT make any inferences about implied experience.",
         1: "Do NOT make any inferences about implied responsibilities.",
@@ -302,6 +326,9 @@ def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> 
     summary_rule = _resolve_rule("summary", level)
     inference_rule = _resolve_rule("inference", level)
     tone_rule = _resolve_rule("tone", level)
+    reorder_rule = _resolve_rule("reorder", level)
+    core_comp_rule = _resolve_rule("core_competencies", level)
+    pruning_rule = _resolve_rule("pruning", level)
 
     level_label = Creativity(level).name
 
@@ -348,6 +375,12 @@ Additional constraints:
 - Skills and highlighted_technologies: plain names only — no parenthetical qualifiers or "alternative:" annotations.
 {tone_rule}
 
+BULLET ORDERING:
+{reorder_rule}
+
+PRUNING POLICY:
+{pruning_rule}
+
 IMPLICIT INFERENCE RULES:
 {inference_rule}
 
@@ -355,6 +388,9 @@ SKILLS: Filter and reorder to lead with the most relevant.
 {skills_rule}
 
 HIGHLIGHTED TECHNOLOGIES: Surface technologies from the base CV that the candidate knows but did not lead with. Plain names only.
+
+CORE COMPETENCIES:
+{core_comp_rule}
 
 EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications from the base CV — both earned AND expected/upcoming. NEVER drop a certification. This section is a direct copy.
 
@@ -412,6 +448,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary) matching thi
   "projects": [{{"name": "<str>", "description": "<str>",
                   "technologies": [], "url": "<str or null>"}}],
   "certifications": ["<str>"],
+  "core_competencies": ["<JD-derived keyword phrase>"],
   "highlighted_technologies": ["<surfaced tech>"],
   "tailoring_notes": [
     {{
@@ -451,6 +488,9 @@ def _build_system_prompt_for_chat(creativity_level: int = 2) -> str:
     summary_rule = _resolve_rule("summary", level)
     inference_rule = _resolve_rule("inference", level)
     tone_rule = _resolve_rule("tone", level)
+    reorder_rule = _resolve_rule("reorder", level)
+    core_comp_rule = _resolve_rule("core_competencies", level)
+    pruning_rule = _resolve_rule("pruning", level)
 
     return f"""\
 IMPORTANT — think step-by-step before producing the JSON output:
@@ -487,12 +527,21 @@ EXPERIENCE:
 - Skills and highlighted_technologies: plain names only — no parenthetical qualifiers.
 {tone_rule}
 
+BULLET ORDERING:
+{reorder_rule}
+
+PRUNING POLICY:
+{pruning_rule}
+
 INFERENCE RULES:
 {inference_rule}
 
 SKILLS: {skills_rule}
 
 HIGHLIGHTED TECHNOLOGIES: Surface known-but-not-leading technologies from the base CV. Plain names only.
+
+CORE COMPETENCIES:
+{core_comp_rule}
 
 EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications — both earned AND expected/upcoming. NEVER drop any.
 CONTACT: Pass through unchanged.
@@ -551,6 +600,7 @@ as a single JSON object matching this schema:
   "projects": [{{"name": "<str>", "description": "<str>",
                   "technologies": [], "url": "<str or null>"}}],
   "certifications": ["<str>"],
+  "core_competencies": ["<JD-derived keyword phrase>"],
   "highlighted_technologies": ["<surfaced tech>"],
   "tailoring_notes": [
     {{

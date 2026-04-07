@@ -68,6 +68,21 @@ def tailored_cv_with_special_chars() -> TailoredCV:
 
 
 @pytest.fixture
+def tailored_cv_with_competencies() -> TailoredCV:
+    """TailoredCV with core_competencies populated — for pill rendering tests."""
+    data = {
+        **MINIMAL_CV,
+        "core_competencies": [
+            "Cloud Infrastructure",
+            "CI/CD Pipelines",
+            "Python & FastAPI",
+            "Microservices",
+        ],
+    }
+    return TailoredCV.model_validate(data)
+
+
+@pytest.fixture
 def base_cv() -> BaseCV:
     """Minimal BaseCV instance for pipeline tests — no filesystem dependency."""
     return BaseCV.model_validate({
