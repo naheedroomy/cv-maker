@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 1001-03-PLAN.md Task 1 — awaiting human verify checkpoint Task 2
-last_updated: "2026-04-07T13:21:39.184Z"
+stopped_at: Completed quick task 260407-qcs
+last_updated: "2026-04-07T13:36:47.493Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 3
@@ -62,6 +62,7 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1001]: Add [tool.hatch.build.targets.wheel] packages = ['core'] so hatchling finds the package at repo root (not under src/)
 - [Phase 1001]: Tab panels use v-show (not v-if) for instant switching — preserves CoverLetterSection form state across tab switches
 - [Phase 1001]: Cancel Job moved outside tabs to running-actions area — tabs only shown when job is complete/failed/cancelled
+- [Phase quick]: get_api_key() centralizes DB-overrides-.env logic for all 3 API providers
 
 ### Quick Tasks Completed
 
@@ -74,6 +75,7 @@ Archived to PROJECT.md Key Decisions table.
 | 260406-jb6 | Add creativity slider (0-5) to control AI tailoring liberty | 2026-04-06 | faad203 | [260406-jb6-add-creativity-slider-to-control-ai-tail](./quick/260406-jb6-add-creativity-slider-to-control-ai-tail/) |
 | 260406-k1w | Redesign regenerate UI with model and creativity controls | 2026-04-06 | 1e7355e | [260406-k1w-redesign-regenerate-ui-with-model-and-cr](./quick/260406-k1w-redesign-regenerate-ui-with-model-and-cr/) |
 | 260407-hg6 | Add Core Competencies pills, bullet reordering, anti-pruning | 2026-04-07 | 3d451c2 | [260407-hg6-add-core-competencies-pills-bullet-reord](./quick/260407-hg6-add-core-competencies-pills-bullet-reord/) |
+| 260407-qcs | API key management in Settings + Job Listing tab in JobDetailView | 2026-04-07 | 442bb5d | [260407-qcs-api-key-management-in-settings-enable-di](./quick/260407-qcs-api-key-management-in-settings-enable-di/) |
 | Phase 1000 P02 | 2min | 2 tasks | 4 files |
 | Phase 1000 P01 | 162 | 2 tasks | 6 files |
 | Phase 1000 P03 | 8min | 2 tasks | 4 files |
@@ -88,6 +90,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T13:21:39.181Z
-Stopped at: Completed 1001-03-PLAN.md Task 1 — awaiting human verify checkpoint Task 2
+Last session: 2026-04-07T13:36:42.249Z
+Stopped at: Completed quick task 260407-qcs
 Resume file: None
