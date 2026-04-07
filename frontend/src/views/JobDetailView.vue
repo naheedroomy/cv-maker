@@ -2,7 +2,7 @@
 import { ref, watch, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useJobStore } from '@/stores/jobStore'
+import { useJobStore, type JobResponse } from '@/stores/jobStore'
 import StatusBadge from '@/components/StatusBadge.vue'
 import ErrorBanner from '@/components/ErrorBanner.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -38,7 +38,9 @@ async function loadJob(id: string) {
   currentJob.value = null
   activeTab.value = 'cv'
   await store.fetchJob(id)
-  const loaded = currentJob.value
+  // Re-read from store — fetchJob sets currentJob.value internally.
+  // Cast needed because vue-tsc narrows to 'never' after the null assignment above.
+  const loaded = store.currentJob as JobResponse | null
   if (loaded && !['complete', 'failed', 'cancelled'].includes(loaded.status)) {
     store.openSSE(id)
   }
