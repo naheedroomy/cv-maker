@@ -3,7 +3,7 @@
 The worker coroutine drives the entire CV generation pipeline:
   pending -> running -> complete (or failed / cancelled)
 
-Concurrency is limited to 2 simultaneous pipeline runs via asyncio.Semaphore(2).
+Concurrency is limited to 5 simultaneous pipeline runs via asyncio.Semaphore(5).
 SSE subscribers register queues in _sse_queues; the worker pushes events at each
 status transition. CancelledError is caught, DB updated, then re-raised.
 """
@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 # Module-level state
 # ---------------------------------------------------------------------------
 
-# Semaphore: at most 2 concurrent pipeline runs (Claude CLI is CPU/IO-heavy)
-_semaphore = asyncio.Semaphore(2)
+# Semaphore: at most 5 concurrent pipeline runs
+_semaphore = asyncio.Semaphore(5)
 
 # Job ID -> asyncio.Task; populated by the router on submit, used for cancellation
 _job_tasks: dict[str, asyncio.Task] = {}
