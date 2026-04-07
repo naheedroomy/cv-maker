@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from cv_maker.models import BaseCV
 
-DEFAULT_CV_PATH = Path(os.environ.get("BASE_CV_PATH", "base_cv.yaml"))
+DEFAULT_CV_PATH = Path(os.environ.get("BASE_CV_PATH", "data/base_cv.yaml"))
 
 
 def ensure_base_cv_exists(path: Path = DEFAULT_CV_PATH) -> None:
