@@ -55,7 +55,7 @@
 | 9. Gemini Provider | v2.0 | 4/4 | Complete | 2026-04-05 |
 | 1002. Multi-Tenant DB Schema | v3.0 | 3/3 | Complete    | 2026-04-07 |
 | 1003. Google Auth Backend + JWT Middleware | v3.0 | 2/3 | Complete    | 2026-04-07 |
-| 1004. CV Ingestion & Visual Editor | v3.0 | 1/3 | In Progress|  |
+| 1004. CV Ingestion & Visual Editor | v3.0 | 3/3 | Complete   | 2026-04-07 |
 | 1005. Dockerization & docker-compose | v3.0 | 0/0 | Not Started | — |
 | 1006. CI/CD, Domain & HTTPS | v3.0 | 0/0 | Not Started | — |
 
@@ -147,10 +147,10 @@
 5. Clicking "Save CV" persists the current editor state to the DB under the authenticated user's `user_id` — a page reload restores the exact same CV
 6. Submitting a new tailoring job uses the DB-stored CV (not a static YAML file) as the base CV input to the AI pipeline
 
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 - [x] 1004-01-PLAN.md — Backend: PDF parser (pymupdf + Gemini two-pass), CV CRUD API (upload, get, put, delete), integration tests
-- [ ] 1004-02-PLAN.md — Frontend: BaseCV types, cvStore, PdfDropZone, visual sectioned CV editor (replace BaseCvView)
-- [ ] 1004-03-PLAN.md — Pipeline integration: worker loads CV from DB, sidebar CV status, end-to-end verification
+- [x] 1004-02-PLAN.md — Frontend: BaseCV types, cvStore, PdfDropZone, visual sectioned CV editor (replace BaseCvView)
+- [x] 1004-03-PLAN.md — Pipeline integration: worker loads CV from DB, sidebar CV status, end-to-end verification
 
 ---
 

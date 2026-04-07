@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
-status: executing
-stopped_at: Completed 1004-03-PLAN.md
-last_updated: "2026-04-07T17:03:28.660Z"
+status: verifying
+stopped_at: Completed 1004-02-PLAN.md
+last_updated: "2026-04-07T17:16:37.164Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
-  completed_phases: 0
-  total_plans: 6
-  completed_plans: 11
+  completed_phases: 5
+  total_plans: 15
+  completed_plans: 15
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 
 Phase: 1004 (cv-ingestion-and-visual-editor) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
 Progress: [██████████] 100%
@@ -76,6 +76,8 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1004]: Gemini 2.5 Flash-Lite for both OCR and structuring passes in CV parser; inhouse GEMINI_API_KEY from .env; DB CV takes priority over YAML file in GET /cv/info
 - [Phase 1004]: user_id defaults to 1 (ANONYMOUS_USER_ID) in job_worker for backward compat — DB-first CV load with YAML fallback
 - [Phase 1004]: Sidebar fetchCvInfo uses apiFetch (not plain fetch) to carry JWT Bearer token for /api/cv/me
+- [Phase 1004]: Optional chaining + explicit index guard for TypeScript array access: const item = arr?.[i]; if (!item) return — satisfies strict type checker without noUncheckedIndexedAccess
+- [Phase 1004]: v-show for CvEditorSection collapse (not v-if) — preserves form input state when re-expanding collapsed sections
 
 ### Quick Tasks Completed
 
@@ -103,6 +105,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1003 P03 | 15min | 2 tasks | 7 files |
 | Phase 1004 P01 | 216 | 2 tasks | 8 files |
 | Phase 1004 P03 | 166 | 2 tasks | 3 files |
+| Phase 1004 P02 | 564 | 2 tasks | 5 files |
 
 ### Roadmap Evolution
 
@@ -111,6 +114,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T17:03:28.656Z
-Stopped at: Completed 1004-03-PLAN.md
+Last session: 2026-04-07T17:16:37.161Z
+Stopped at: Completed 1004-02-PLAN.md
 Resume file: None
