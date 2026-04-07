@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 1000-01-PLAN.md
-last_updated: "2026-04-07T11:14:21.849Z"
+stopped_at: "Checkpoint: 1000-03 Task 3 human-verify (Tasks 1-2 complete)"
+last_updated: "2026-04-07T11:24:10.039Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 100
 ---
 
@@ -55,6 +55,7 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1000]: CoverLetterSection uses storeToRefs for reactive currentJob to resolve company name for PDF download filename without extra prop
 - [Phase 1000]: Standalone generate_cover_letter() function rather than ABC method — different signature avoids forcing all 4 providers to implement a second method
 - [Phase 1000]: fpdf2 for cover letter PDF — pure Python, zero system deps, vs LaTeX (overkill) or WeasyPrint (C libs)
+- [Phase 1000]: CoverLetterSaveRequest defined locally in cover_letter.py router — not shared across routers, avoids cluttering schemas.py
 
 ### Quick Tasks Completed
 
@@ -69,6 +70,7 @@ Archived to PROJECT.md Key Decisions table.
 | 260407-hg6 | Add Core Competencies pills, bullet reordering, anti-pruning | 2026-04-07 | 3d451c2 | [260407-hg6-add-core-competencies-pills-bullet-reord](./quick/260407-hg6-add-core-competencies-pills-bullet-reord/) |
 | Phase 1000 P02 | 2min | 2 tasks | 4 files |
 | Phase 1000 P01 | 162 | 2 tasks | 6 files |
+| Phase 1000 P03 | 8min | 2 tasks | 4 files |
 
 ### Roadmap Evolution
 
@@ -77,6 +79,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T11:14:21.846Z
-Stopped at: Completed 1000-01-PLAN.md
+Last session: 2026-04-07T11:23:56.018Z
+Stopped at: Checkpoint: 1000-03 Task 3 human-verify (Tasks 1-2 complete)
 Resume file: None

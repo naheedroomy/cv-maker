@@ -70,9 +70,9 @@ Plans:
 **Branch:** `feature/cover-letter` (not master direct)
 **Requirements**: CL-CORE, CL-PROMPT, CL-PDF, CL-DB, CL-TONE, CL-UI, CL-NOTES, CL-EDIT, CL-API, CL-WIRE, CL-BRANCH
 **Depends on:** Current codebase (no phase dependency)
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 1000-01-PLAN.md — Backend core: cover letter generation module, fpdf2 renderer, DB migration, API schemas
 - [x] 1000-02-PLAN.md — Frontend: ToneSelector, CoverLetterSection components, types, store actions
-- [ ] 1000-03-PLAN.md — Integration: API router, main.py wiring, JobDetailView integration, end-to-end verification
+- [x] 1000-03-PLAN.md — Integration: API router, main.py wiring, JobDetailView integration, end-to-end verification
