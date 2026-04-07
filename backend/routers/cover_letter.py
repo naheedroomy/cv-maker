@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from backend.db import get_db
+from backend.db import ANONYMOUS_USER_ID, get_db
 from backend.schemas import CoverLetterRequest, CoverLetterResponse
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,10 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest) 
     # 1. Fetch job, verify complete status
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT * FROM jobs WHERE id=?", (job_id,))
+        cursor = await db.execute(
+            "SELECT * FROM jobs WHERE id=? AND user_id=?",
+            (job_id, ANONYMOUS_USER_ID),
+        )
         row = await cursor.fetchone()
     finally:
         await db.close()
@@ -73,8 +76,8 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest) 
     try:
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
-            "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=? WHERE id=?",
-            (cover_letter_text, body.user_notes, job_id),
+            "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=? WHERE id=? AND user_id=?",
+            (cover_letter_text, body.user_notes, job_id, ANONYMOUS_USER_ID),
         )
         await db.commit()
     finally:
@@ -102,15 +105,18 @@ async def save_cover_letter(job_id: str, body: CoverLetterSaveRequest) -> CoverL
     """Save edited cover letter text back to the database."""
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT id FROM jobs WHERE id=?", (job_id,))
+        cursor = await db.execute(
+            "SELECT id FROM jobs WHERE id=? AND user_id=?",
+            (job_id, ANONYMOUS_USER_ID),
+        )
         row = await cursor.fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Job not found")
 
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
-            "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=? WHERE id=?",
-            (body.cover_letter_text, body.cover_letter_notes, job_id),
+            "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=? WHERE id=? AND user_id=?",
+            (body.cover_letter_text, body.cover_letter_notes, job_id, ANONYMOUS_USER_ID),
         )
         await db.commit()
     finally:
@@ -133,7 +139,8 @@ async def get_cover_letter_pdf(job_id: str) -> Response:
     db = await get_db()
     try:
         cursor = await db.execute(
-            "SELECT cover_letter_text, tailored_cv_json FROM jobs WHERE id=?", (job_id,)
+            "SELECT cover_letter_text, tailored_cv_json FROM jobs WHERE id=? AND user_id=?",
+            (job_id, ANONYMOUS_USER_ID),
         )
         row = await cursor.fetchone()
     finally:
