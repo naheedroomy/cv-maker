@@ -366,7 +366,7 @@ Additional constraints:
 - Keep reverse chronological order.
 - Write natural, professional bullets — avoid keyword-stuffing or directly reusing phrases from the job listing.
 - Preserve ownership levels from the base CV. Do not upgrade verbs ("worked on" -> "led") unless clearly supported.
-- Bullet count per role: 4-6 for highly relevant, 3-5 for moderate, 2-3 minimum for any included role. Do NOT compress below these minimums.
+- Bullet count per role: MINIMUMS are 4-6 for highly relevant, 3-5 for moderate, 2-3 for any included role. These are FLOORS, not ceilings. If the base CV has 7 bullets for a role, you may keep all 7 — do NOT drop bullets just to fit a number. Only remove a bullet if it actively adds zero value for this specific application.
 - Signal density: prefer a technology, an action, and an outcome per bullet. Avoid "worked on", "involved in", "helped with". But do NOT merge or remove bullets just to increase density — preserving meaningful experience matters more.
 - **Bold** key technologies in bullets.
 - Keep bullets concise — one accomplishment each, 1-2 lines max.
@@ -520,7 +520,7 @@ EXPERIENCE:
 - Preserve exact role structure from base CV. One entry per company = one output entry. Do NOT split roles.
 - Preserve dates and reverse chronological order. Natural, professional language — no keyword-stuffing.
 - Preserve ownership levels. Don't upgrade verbs unless supported.
-- Bullet count: 4-6 (high relevance), 3-5 (moderate), 2-3 minimum. Do NOT compress below minimums.
+- Bullet count MINIMUMS: 4-6 (high relevance), 3-5 (moderate), 2-3 (any role). These are FLOORS, not ceilings — if the base CV has more bullets, keep them unless a bullet adds zero value.
 - Signal density: prefer technology + action + outcome per bullet. But do NOT merge/remove bullets just for density.
 - **Bold** key technologies. Concise — 1 accomplishment per bullet, 1-2 lines max.
 - "technologies" field per role: only tools referenced in that role's bullets.
