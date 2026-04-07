@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 1001-02-PLAN.md
-last_updated: "2026-04-07T13:07:23.533Z"
+stopped_at: Completed 1001-01-PLAN.md
+last_updated: "2026-04-07T13:15:18.648Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 1001 (frontend-ux-revamp-and-restructure) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -58,6 +58,8 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1000]: CoverLetterSaveRequest defined locally in cover_letter.py router — not shared across routers, avoids cluttering schemas.py
 - [Phase 1001]: Shared selector.css (not base component) for pill-toggle unification per D-05 — avoids prop contract changes, simpler to reason about
 - [Phase 1001]: SessionEntry active state uses left-border indicator (3px solid #2563eb) over blue background — cleaner, aligns with sidebar contract
+- [Phase 1001]: Use git mv src/cv_maker core to preserve git history for all moved files
+- [Phase 1001]: Add [tool.hatch.build.targets.wheel] packages = ['core'] so hatchling finds the package at repo root (not under src/)
 
 ### Quick Tasks Completed
 
@@ -74,6 +76,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1000 P01 | 162 | 2 tasks | 6 files |
 | Phase 1000 P03 | 8min | 2 tasks | 4 files |
 | Phase 1001 P02 | 131s | 2 tasks | 6 files |
+| Phase 1001 P01 | 720 | 2 tasks | 26 files |
 
 ### Roadmap Evolution
 
@@ -82,6 +85,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T13:07:23.530Z
-Stopped at: Completed 1001-02-PLAN.md
+Last session: 2026-04-07T13:15:18.644Z
+Stopped at: Completed 1001-01-PLAN.md
 Resume file: None

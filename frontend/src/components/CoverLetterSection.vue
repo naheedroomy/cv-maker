@@ -98,8 +98,7 @@ function handleRegenerate(): void {
 </script>
 
 <template>
-  <section v-if="jobStatus === 'complete'" class="cover-letter-section">
-    <h3 class="section-heading">Cover Letter</h3>
+  <section class="cover-letter-section">
 
     <!-- State 1: No cover letter yet, show generate trigger -->
     <div v-if="!coverLetterText && !showForm">
@@ -172,14 +171,6 @@ function handleRegenerate(): void {
 
 <style scoped>
 .cover-letter-section {
-  margin-top: 32px;
-}
-
-.section-heading {
-  font-size: 20px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 16px;
 }
 
 .field-label {
@@ -194,19 +185,18 @@ function handleRegenerate(): void {
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #374151;
+  background: #2563eb;
+  border: none;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 150ms ease, color 150ms ease;
+  transition: background-color 150ms ease;
 }
 
 .btn-generate-trigger:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  background: #1d4ed8;
 }
 
 .cover-letter-form {
