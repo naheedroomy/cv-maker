@@ -192,19 +192,40 @@ export const useJobStore = defineStore('jobs', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, tone, user_notes: userNotes }),
     })
-    if (!res.ok) {
+    if (!res.ok && res.status !== 202) {
       const body = await res.json().catch(() => ({}))
       throw new Error((body as { detail?: string }).detail ?? `Cover letter generation failed: ${res.status}`)
     }
-    const data = await res.json() as { cover_letter_text: string; cover_letter_notes: string }
+
+    // Clear cover letter in local state immediately
     if (currentJob.value?.id === jobId) {
-      currentJob.value = {
-        ...currentJob.value,
-        cover_letter_text: data.cover_letter_text,
-        cover_letter_notes: data.cover_letter_notes,
+      currentJob.value = { ...currentJob.value, cover_letter_text: '', cover_letter_notes: userNotes }
+    }
+
+    // Poll until cover letter appears (background generation)
+    const text = await _pollCoverLetter(jobId)
+    return text
+  }
+
+  async function _pollCoverLetter(jobId: string): Promise<string> {
+    for (let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 3000))
+      const res = await apiFetch(`/api/jobs/${jobId}`)
+      if (!res.ok) continue
+      const job = await res.json() as JobResponse
+      if (currentJob.value?.id === jobId) {
+        currentJob.value = job
+      }
+      // null = never generated, '' = generating, non-empty = done
+      if (job.cover_letter_text === null) {
+        // Generation failed — worker reset to null
+        throw new Error('Cover letter generation failed. Check your API key in Settings.')
+      }
+      if (job.cover_letter_text && job.cover_letter_text.length > 0) {
+        return job.cover_letter_text
       }
     }
-    return data.cover_letter_text
+    throw new Error('Cover letter generation timed out')
   }
 
   async function saveCoverLetter(

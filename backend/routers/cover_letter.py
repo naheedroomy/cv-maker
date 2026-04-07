@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from backend.auth import get_current_user
 from backend.db import get_db
 from backend.schemas import CoverLetterRequest, CoverLetterResponse
+from backend.tasks import schedule_background_task
 
 logger = logging.getLogger(__name__)
 
@@ -19,22 +20,100 @@ router = APIRouter(prefix="/jobs", tags=["cover-letter"])
 
 
 # ---------------------------------------------------------------------------
-# Endpoint 1: POST /{job_id}/cover-letter — generate cover letter (D-07)
+# Background cover letter worker
+# ---------------------------------------------------------------------------
+
+async def _cover_letter_worker(
+    job_id: str,
+    user_id: int,
+    model: str,
+    user_notes: str,
+    tone: str,
+) -> None:
+    """Run cover letter generation in the background, update DB on completion."""
+    try:
+        from core.cover_letter import generate_cover_letter
+        from core.data import load_base_cv
+        from core.models import GapItem, TailoredCV
+        from core.providers import get_provider
+
+        # Load job data
+        db = await get_db()
+        try:
+            cursor = await db.execute(
+                "SELECT job_text, tailored_cv_json, gap_diff_json FROM jobs WHERE id=? AND user_id=?",
+                (job_id, user_id),
+            )
+            row = await cursor.fetchone()
+        finally:
+            await db.close()
+
+        if row is None:
+            logger.error("Cover letter worker: job %s not found", job_id)
+            return
+
+        tailored_cv = TailoredCV.model_validate(json.loads(row["tailored_cv_json"]))
+        gap_diff = [GapItem.model_validate(g) for g in json.loads(row["gap_diff_json"])]
+        base_cv = await asyncio.to_thread(load_base_cv)
+        provider = await get_provider(model, user_id=user_id)
+
+        cover_letter_text = await asyncio.to_thread(
+            generate_cover_letter,
+            provider,
+            model,
+            base_cv,
+            row["job_text"],
+            tailored_cv,
+            gap_diff,
+            user_notes,
+            tone,
+        )
+
+        # Save result
+        db = await get_db()
+        try:
+            await db.execute("BEGIN IMMEDIATE")
+            await db.execute(
+                "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=? WHERE id=? AND user_id=?",
+                (cover_letter_text, user_notes, job_id, user_id),
+            )
+            await db.commit()
+        finally:
+            await db.close()
+
+        logger.info("Cover letter generated for job %s (tone=%s, model=%s)", job_id, tone, model)
+
+    except Exception:
+        # On failure, clear the generating marker so user can retry
+        logger.exception("Cover letter generation failed for job %s", job_id)
+        db = await get_db()
+        try:
+            await db.execute(
+                "UPDATE jobs SET cover_letter_text=NULL WHERE id=? AND user_id=?",
+                (job_id, user_id),
+            )
+            await db.commit()
+        finally:
+            await db.close()
+
+
+# ---------------------------------------------------------------------------
+# Endpoint 1: POST /{job_id}/cover-letter — generate cover letter (background)
 # ---------------------------------------------------------------------------
 
 
-@router.post("/{job_id}/cover-letter", response_model=CoverLetterResponse)
-async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, user: dict = Depends(get_current_user)) -> CoverLetterResponse:
-    """Generate a cover letter for a completed job.
+@router.post("/{job_id}/cover-letter", status_code=202)
+async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, user: dict = Depends(get_current_user)):
+    """Start cover letter generation as a background task.
 
-    Requires job status == 'complete' with tailored_cv_json and gap_diff_json populated.
-    Runs inline (not background) — cover letter generation is fast (~5-15s).
+    Immediately clears old cover letter and returns 202. Frontend polls
+    GET /api/jobs/{id} to detect completion (cover_letter_text goes from
+    empty string to actual content).
     """
-    # 1. Fetch job, verify complete status
     db = await get_db()
     try:
         cursor = await db.execute(
-            "SELECT * FROM jobs WHERE id=? AND user_id=?",
+            "SELECT status, tailored_cv_json, gap_diff_json FROM jobs WHERE id=? AND user_id=?",
             (job_id, user["id"]),
         )
         row = await cursor.fetchone()
@@ -48,51 +127,23 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, 
     if not row["tailored_cv_json"] or not row["gap_diff_json"]:
         raise HTTPException(status_code=409, detail="Job has no tailored CV data")
 
-    # 2. Parse stored data
-    from core.models import GapItem, TailoredCV
-    from core.data import load_base_cv
-
-    tailored_cv = TailoredCV.model_validate(json.loads(row["tailored_cv_json"]))
-    gap_diff = [GapItem.model_validate(g) for g in json.loads(row["gap_diff_json"])]
-
-    # 3. Load base CV (sync I/O via thread pool)
-    base_cv = await asyncio.to_thread(load_base_cv)
-
-    # 4. Resolve provider (async) then generate cover letter (sync in thread pool)
-    from core.cover_letter import generate_cover_letter
-    from core.providers import get_provider
-
-    provider = await get_provider(body.model, user_id=user["id"])
-
-    cover_letter_text = await asyncio.to_thread(
-        generate_cover_letter,
-        provider,
-        body.model,
-        base_cv,
-        row["job_text"],
-        tailored_cv,
-        gap_diff,
-        body.user_notes,
-        body.tone,
-    )
-
-    # 5. Store in DB
+    # Clear old cover letter immediately — signals "generating" to frontend
     db = await get_db()
     try:
-        await db.execute("BEGIN IMMEDIATE")
         await db.execute(
-            "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=? WHERE id=? AND user_id=?",
-            (cover_letter_text, body.user_notes, job_id, user["id"]),
+            "UPDATE jobs SET cover_letter_text='', cover_letter_notes=? WHERE id=? AND user_id=?",
+            (body.user_notes, job_id, user["id"]),
         )
         await db.commit()
     finally:
         await db.close()
 
-    logger.info("Cover letter generated for job %s (tone=%s, model=%s)", job_id, body.tone, body.model)
-    return CoverLetterResponse(
-        cover_letter_text=cover_letter_text,
-        cover_letter_notes=body.user_notes,
+    # Fire and forget
+    schedule_background_task(
+        _cover_letter_worker(job_id, user["id"], body.model, body.user_notes, body.tone)
     )
+
+    return {"status": "generating"}
 
 
 # ---------------------------------------------------------------------------

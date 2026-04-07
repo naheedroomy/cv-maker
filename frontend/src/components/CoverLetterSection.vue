@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import ToneSelector from '@/components/ToneSelector.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
@@ -32,7 +32,18 @@ const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
 
+// Detect if cover letter is generating in background (empty string = generating)
+const isGeneratingInBackground = computed(() =>
+  props.existingCoverLetter === '' && !coverLetterText.value
+)
+
 onMounted(async () => {
+  // If we load the page and cover letter is generating, show spinner
+  if (props.existingCoverLetter === '') {
+    generating.value = true
+    coverLetterText.value = ''
+  }
+
   try {
     const res = await apiFetch('/api/config')
     const data = await res.json() as Record<string, unknown>
@@ -43,19 +54,16 @@ onMounted(async () => {
   } catch { /* keep optimistic defaults */ }
 })
 
-// Warn before navigating away while generating
-function onBeforeUnload(e: BeforeUnloadEvent) {
-  if (generating.value) {
-    e.preventDefault()
-  }
-}
-onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
-onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
-
-// Sync internal state when parent prop changes (job reload) — but not while generating
+// Sync cover letter from props — detect when background generation completes
 watch(() => props.existingCoverLetter, (val) => {
-  if (!generating.value && val !== null && val !== coverLetterText.value) {
+  if (val && val.length > 0) {
+    // Cover letter arrived — generation complete
     coverLetterText.value = val
+    generating.value = false
+    showForm.value = false
+  } else if (val === null && generating.value) {
+    // Generation failed — worker reset to null
+    generating.value = false
   }
 })
 
