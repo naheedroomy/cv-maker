@@ -337,6 +337,9 @@ def generate_cover_letter(
                     contents=effective_user,
                     config=genai_types.GenerateContentConfig(
                         system_instruction=system_prompt,
+                        # Disable thinking — the prompt already has a self-critique step.
+                        # Thinking adds 30-60s of latency for no benefit here.
+                        thinking_config=genai_types.ThinkingConfig(thinking_budget=0),
                     ),
                 )
                 raw_text = response.text
