@@ -393,7 +393,7 @@ HIGHLIGHTED TECHNOLOGIES: Surface technologies from the base CV that the candida
 CORE COMPETENCIES:
 {core_comp_rule}
 
-EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications from the base CV — both earned AND expected/upcoming. NEVER drop a certification. This section is a direct copy.
+EDUCATION, PROJECTS, CERTIFICATIONS, LANGUAGES: Pass through unchanged. Include ALL certifications from the base CV — both earned AND expected/upcoming. NEVER drop a certification. Languages and work_authorization are direct copies — never modify them.
 
 CONTACT: Pass through unchanged.
 
@@ -430,7 +430,8 @@ Return ONLY a valid JSON object (no markdown fences, no commentary) matching thi
 
 {{
   "contact": {{"name": "<str>", "email": "<str>", "linkedin": "<str or null>",
-               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>"}},
+               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>",
+               "work_authorization": "<str or null — pass through unchanged>"}},
   "summary": "<tailored summary>",
   "experience": [
     {{
@@ -449,6 +450,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary) matching thi
   "projects": [{{"name": "<str>", "description": "<str>",
                   "technologies": [], "url": "<str or null>"}}],
   "certifications": ["<str>"],
+  "languages": [{{"language": "<str>", "level": "<str>"}}],
   "core_competencies": ["<JD-derived keyword phrase>"],
   "highlighted_technologies": ["<surfaced tech>"],
   "tailoring_notes": [
@@ -544,7 +546,7 @@ HIGHLIGHTED TECHNOLOGIES: Surface known-but-not-leading technologies from the ba
 CORE COMPETENCIES:
 {core_comp_rule}
 
-EDUCATION, PROJECTS, CERTIFICATIONS: Pass through unchanged. Include ALL certifications — both earned AND expected/upcoming. NEVER drop any.
+EDUCATION, PROJECTS, CERTIFICATIONS, LANGUAGES: Pass through unchanged. Include ALL certifications — both earned AND expected/upcoming. NEVER drop any. Languages and work_authorization are direct copies.
 CONTACT: Pass through unchanged.
 
 TAILORING NOTES (5-10): Each with section, change, reason, action (modified/added/removed/reordered/unchanged), source.
@@ -582,7 +584,8 @@ as a single JSON object matching this schema:
 
 {{
   "contact": {{"name": "<str>", "email": "<str>", "linkedin": "<str or null>",
-               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>"}},
+               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>",
+               "work_authorization": "<str or null — pass through unchanged>"}},
   "summary": "<tailored summary>",
   "experience": [
     {{
@@ -601,6 +604,7 @@ as a single JSON object matching this schema:
   "projects": [{{"name": "<str>", "description": "<str>",
                   "technologies": [], "url": "<str or null>"}}],
   "certifications": ["<str>"],
+  "languages": [{{"language": "<str>", "level": "<str>"}}],
   "core_competencies": ["<JD-derived keyword phrase>"],
   "highlighted_technologies": ["<surfaced tech>"],
   "tailoring_notes": [
