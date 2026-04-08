@@ -5,6 +5,12 @@ export interface ContactInfo {
   linkedin?: string
   location?: string
   github?: string
+  work_authorization?: string
+}
+
+export interface LanguageItem {
+  language: string
+  level: string
 }
 
 export interface BaseCV {
@@ -15,6 +21,7 @@ export interface BaseCV {
   education: EducationItem[]
   projects: ProjectItem[]
   certifications: string[]
+  languages: LanguageItem[]
 }
 
 export interface ExperienceItem {
@@ -56,6 +63,7 @@ export interface TailoredCV {
   education: EducationItem[]
   projects: ProjectItem[]
   certifications: string[]
+  languages: LanguageItem[]
   highlighted_technologies: string[]
   tailoring_notes: TailoringNote[]
 }

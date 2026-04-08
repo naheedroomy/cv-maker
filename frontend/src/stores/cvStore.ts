@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { BaseCV, ExperienceItem, EducationItem, ProjectItem } from '@/types'
+import type { BaseCV, ExperienceItem, EducationItem, ProjectItem, LanguageItem } from '@/types'
 import { apiFetch } from '@/utils/apiFetch'
 
 export const useCvStore = defineStore('cv', () => {
@@ -116,6 +116,7 @@ export const useCvStore = defineStore('cv', () => {
       education: [] as EducationItem[],
       projects: [] as ProjectItem[],
       certifications: [] as string[],
+      languages: [] as LanguageItem[],
     }
   }
 

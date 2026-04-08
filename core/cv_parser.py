@@ -68,7 +68,8 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
     "linkedin": "<LinkedIn URL or null>",
     "github": "<GitHub URL or null>",
     "phone": "<phone number or null>",
-    "location": "<city, country or null>"
+    "location": "<city, country or null>",
+    "work_authorization": "<work permit/visa status if mentioned, or null>"
   }},
   "summary": "<professional summary — extract from CV or infer from overall experience>",
   "experience": [
@@ -99,7 +100,13 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
       "url": "<URL or null>"
     }}
   ],
-  "certifications": ["<certification name>"]
+  "certifications": ["<certification name>"],
+  "languages": [
+    {{
+      "language": "<language name, e.g. English>",
+      "level": "<proficiency level, e.g. Native, C2, B1, A1>"
+    }}
+  ]
 }}"""
 
 

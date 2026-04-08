@@ -37,6 +37,9 @@
 \BLOCK{if cv.contact.location}
 \address{\VAR{cv.contact.location|e}}{}{}
 \BLOCK{endif}
+\BLOCK{if cv.contact.work_authorization}
+\extrainfo{\VAR{cv.contact.work_authorization|e}}
+\BLOCK{endif}
 
 \begin{document}
 \makecvtitle
@@ -105,6 +108,14 @@
 \bigskip
 \section{Technologies}
 \VAR{", ".join(cv.highlighted_technologies)|e}
+\BLOCK{endif}
+
+\BLOCK{if cv.languages}
+\bigskip
+\section{Languages}
+\BLOCK{for lang in cv.languages}
+\cvitem{\VAR{lang.language|e}}{\VAR{lang.level|e}}
+\BLOCK{endfor}
 \BLOCK{endif}
 
 \BLOCK{if cv.projects}

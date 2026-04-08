@@ -2,6 +2,7 @@
 defineProps<{
   title: string
   collapsed?: boolean
+  draggableHint?: boolean
 }>()
 
 defineEmits<{
@@ -17,7 +18,10 @@ defineEmits<{
       @click="$emit('toggle')"
       :aria-expanded="!collapsed"
     >
-      <span class="section-title">{{ title }}</span>
+      <span class="section-title">
+        <span v-if="draggableHint" class="drag-handle" title="Drag to reorder">&#x2630;</span>
+        {{ title }}
+      </span>
       <svg
         class="chevron"
         :class="{ 'chevron--collapsed': collapsed }"
@@ -68,6 +72,15 @@ defineEmits<{
   font-size: 15px;
   font-weight: 600;
   color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drag-handle {
+  color: #9ca3af;
+  font-size: 14px;
+  cursor: grab;
 }
 
 .chevron {

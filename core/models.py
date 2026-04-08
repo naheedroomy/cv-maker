@@ -18,6 +18,12 @@ class ContactInfo(BaseModel):
     github: str | None = None
     phone: str | None = None
     location: str | None = None
+    work_authorization: str | None = None  # e.g. "Possess a valid work permit in Germany (National Visa Type D)"
+
+
+class LanguageItem(BaseModel):
+    language: str  # e.g. "English"
+    level: str  # e.g. "C2", "Native", "B1"
 
 
 class ExperienceItem(BaseModel):
@@ -77,6 +83,7 @@ class BaseCV(BaseModel):
     education: list[EducationItem]
     projects: list[ProjectItem] = []
     certifications: list[str] = []
+    languages: list[LanguageItem] = []
 
 
 class JobRequirements(BaseModel):
@@ -137,6 +144,7 @@ class TailoredCV(BaseModel):
     education: list[EducationItem]  # Pass-through from BaseCV
     projects: list[ProjectItem] = []
     certifications: list[str] = []
+    languages: list[LanguageItem] = []
     # AI-surfaced tools user knows but did not lead with in their base CV
     highlighted_technologies: list[str] = []
     # AI reasoning: structured notes on what was changed and why

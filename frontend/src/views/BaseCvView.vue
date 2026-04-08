@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCvStore } from '@/stores/cvStore'
 import PdfDropZone from '@/components/PdfDropZone.vue'
 import CvEditorSection from '@/components/CvEditorSection.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import type { ExperienceItem, EducationItem, ProjectItem } from '@/types'
+import type { ExperienceItem, EducationItem, ProjectItem, LanguageItem } from '@/types'
 
 const store = useCvStore()
 const { cv, loading, saving, uploading, uploadProgress, error } = storeToRefs(store)
@@ -18,7 +18,32 @@ const collapsed = reactive({
   skills: false,
   certifications: false,
   projects: false,
+  languages: false,
 })
+
+// Section ordering for drag-and-drop
+const sectionOrder = ref([
+  'contact', 'summary', 'experience', 'education', 'skills', 'certifications', 'projects', 'languages',
+])
+const draggedSection = ref<string | null>(null)
+
+function onDragStartSection(section: string) {
+  draggedSection.value = section
+}
+
+function onDropSection(targetSection: string) {
+  if (!draggedSection.value || draggedSection.value === targetSection) return
+  const fromIdx = sectionOrder.value.indexOf(draggedSection.value)
+  const toIdx = sectionOrder.value.indexOf(targetSection)
+  if (fromIdx === -1 || toIdx === -1) return
+  sectionOrder.value.splice(fromIdx, 1)
+  sectionOrder.value.splice(toIdx, 0, draggedSection.value)
+  draggedSection.value = null
+}
+
+function onDragOverSection(e: DragEvent) {
+  e.preventDefault()
+}
 
 onMounted(() => {
   store.fetchCv()
@@ -147,6 +172,18 @@ function removeProjectTech(projectIndex: number, techIndex: number) {
   if (!proj) return
   proj.technologies.splice(techIndex, 1)
 }
+
+// ── Languages ─────────────────────────────────────────────────────────────
+
+function addLanguage() {
+  if (!cv.value) return
+  if (!cv.value.languages) cv.value.languages = []
+  cv.value.languages.push({ language: '', level: '' } as LanguageItem)
+}
+
+function removeLanguage(index: number) {
+  cv.value?.languages?.splice(index, 1)
+}
 </script>
 
 <template>
@@ -234,239 +271,140 @@ function removeProjectTech(projectIndex: number, techIndex: number) {
             <label>GitHub</label>
             <input v-model="cv.contact.github" type="url" placeholder="https://github.com/you" />
           </div>
+          <div class="form-field form-field--full">
+            <label>Work Authorization</label>
+            <input v-model="cv.contact.work_authorization" type="text" placeholder="e.g. Possess a valid work permit in Germany (National Visa Type D)" />
+          </div>
         </div>
       </CvEditorSection>
 
-      <!-- Summary Section -->
-      <CvEditorSection
-        title="Summary"
-        :collapsed="collapsed.summary"
-        @toggle="collapsed.summary = !collapsed.summary"
+      <div
+        v-for="section in sectionOrder"
+        :key="section"
+        class="draggable-section"
+        draggable="true"
+        @dragstart="onDragStartSection(section)"
+        @dragover="onDragOverSection"
+        @drop="onDropSection(section)"
       >
-        <textarea
-          v-model="cv.summary"
-          rows="4"
-          class="full-width"
-          placeholder="Brief professional summary..."
-        />
-      </CvEditorSection>
+        <!-- Summary -->
+        <CvEditorSection v-if="section === 'summary'" title="Summary" :collapsed="collapsed.summary" @toggle="collapsed.summary = !collapsed.summary" draggable-hint>
+          <textarea v-model="cv.summary" rows="4" class="full-width" placeholder="Brief professional summary..." />
+        </CvEditorSection>
 
-      <!-- Work Experience Section -->
-      <CvEditorSection
-        title="Work Experience"
-        :collapsed="collapsed.experience"
-        @toggle="collapsed.experience = !collapsed.experience"
-      >
-        <div
-          v-for="(exp, i) in cv.experience"
-          :key="i"
-          class="entry-card"
-        >
-          <div class="entry-header">
-            <span class="entry-label">{{ exp.company || 'New Position' }}</span>
-            <button type="button" class="btn-icon-danger" @click="removeExperience(i)">Remove</button>
-          </div>
-          <div class="form-grid">
-            <div class="form-field">
-              <label>Company</label>
-              <input v-model="exp.company" type="text" placeholder="Acme Corp" />
+        <!-- Work Experience -->
+        <CvEditorSection v-else-if="section === 'experience'" title="Work Experience" :collapsed="collapsed.experience" @toggle="collapsed.experience = !collapsed.experience" draggable-hint>
+          <div v-for="(exp, i) in cv.experience" :key="i" class="entry-card">
+            <div class="entry-header">
+              <span class="entry-label">{{ exp.company || 'New Position' }}</span>
+              <button type="button" class="btn-icon-danger" @click="removeExperience(i)">Remove</button>
             </div>
-            <div class="form-field">
-              <label>Title</label>
-              <input v-model="exp.title" type="text" placeholder="Senior Engineer" />
+            <div class="form-grid">
+              <div class="form-field"><label>Company</label><input v-model="exp.company" type="text" placeholder="Acme Corp" /></div>
+              <div class="form-field"><label>Title</label><input v-model="exp.title" type="text" placeholder="Senior Engineer" /></div>
+              <div class="form-field"><label>Location</label><input v-model="exp.location" type="text" placeholder="Remote / City" /></div>
+              <div class="form-field"><label>Start</label><input v-model="exp.start" type="text" placeholder="YYYY-MM" /></div>
+              <div class="form-field"><label>End</label><input :value="exp.end ?? ''" @input="exp.end = ($event.target as HTMLInputElement).value || null" type="text" placeholder="YYYY-MM or blank for current" /></div>
             </div>
-            <div class="form-field">
-              <label>Location</label>
-              <input v-model="exp.location" type="text" placeholder="Remote / City" />
-            </div>
-            <div class="form-field">
-              <label>Start</label>
-              <input v-model="exp.start" type="text" placeholder="YYYY-MM" />
-            </div>
-            <div class="form-field">
-              <label>End</label>
-              <input
-                :value="exp.end ?? ''"
-                @input="exp.end = ($event.target as HTMLInputElement).value || null"
-                type="text"
-                placeholder="YYYY-MM or blank for current"
-              />
-            </div>
-          </div>
-
-          <div class="list-editor">
-            <label class="list-label">Bullets</label>
-            <div
-              v-for="(_, bi) in exp.bullets"
-              :key="bi"
-              class="list-item"
-            >
-              <textarea
-                v-model="exp.bullets[bi]"
-                rows="2"
-                class="list-input"
-                placeholder="Describe your achievement..."
-              />
-              <button type="button" class="btn-icon-danger btn-icon-small" @click="removeBullet(i, bi)">x</button>
-            </div>
-            <button type="button" class="btn-text" @click="addBullet(i)">+ Add bullet</button>
-          </div>
-
-          <div class="list-editor">
-            <label class="list-label">Technologies</label>
-            <div class="tag-editor">
-              <div
-                v-for="(_, ti) in exp.technologies"
-                :key="ti"
-                class="tag-item"
-              >
-                <input v-model="exp.technologies[ti]" class="tag-input" placeholder="React" />
-                <button type="button" class="btn-icon-danger btn-icon-small" @click="removeTechnology(i, ti)">x</button>
+            <div class="list-editor">
+              <label class="list-label">Bullets</label>
+              <div v-for="(_, bi) in exp.bullets" :key="bi" class="list-item">
+                <textarea v-model="exp.bullets[bi]" rows="2" class="list-input" placeholder="Describe your achievement..." />
+                <button type="button" class="btn-icon-danger btn-icon-small" @click="removeBullet(i, bi)">x</button>
               </div>
-              <button type="button" class="btn-text" @click="addTechnology(i)">+ Add tech</button>
+              <button type="button" class="btn-text" @click="addBullet(i)">+ Add bullet</button>
             </div>
-          </div>
-        </div>
-
-        <button type="button" class="btn-secondary" @click="addExperience">+ Add Position</button>
-      </CvEditorSection>
-
-      <!-- Education Section -->
-      <CvEditorSection
-        title="Education"
-        :collapsed="collapsed.education"
-        @toggle="collapsed.education = !collapsed.education"
-      >
-        <div
-          v-for="(edu, i) in cv.education"
-          :key="i"
-          class="entry-card"
-        >
-          <div class="entry-header">
-            <span class="entry-label">{{ edu.institution || 'New Institution' }}</span>
-            <button type="button" class="btn-icon-danger" @click="removeEducation(i)">Remove</button>
-          </div>
-          <div class="form-grid">
-            <div class="form-field">
-              <label>Institution</label>
-              <input v-model="edu.institution" type="text" placeholder="University of..." />
-            </div>
-            <div class="form-field">
-              <label>Degree</label>
-              <input v-model="edu.degree" type="text" placeholder="Bachelor of Science" />
-            </div>
-            <div class="form-field">
-              <label>Field</label>
-              <input
-                :value="edu.field ?? ''"
-                @input="edu.field = ($event.target as HTMLInputElement).value || null"
-                type="text"
-                placeholder="Computer Science"
-              />
-            </div>
-            <div class="form-field">
-              <label>Year</label>
-              <input
-                :value="edu.year ?? ''"
-                @input="edu.year = Number(($event.target as HTMLInputElement).value) || null"
-                type="number"
-                placeholder="2020"
-              />
-            </div>
-          </div>
-        </div>
-        <button type="button" class="btn-secondary" @click="addEducation">+ Add Education</button>
-      </CvEditorSection>
-
-      <!-- Skills Section -->
-      <CvEditorSection
-        title="Skills"
-        :collapsed="collapsed.skills"
-        @toggle="collapsed.skills = !collapsed.skills"
-      >
-        <div class="tag-editor">
-          <div
-            v-for="(_, i) in cv.skills"
-            :key="i"
-            class="tag-item"
-          >
-            <input v-model="cv.skills[i]" class="tag-input" placeholder="Python" />
-            <button type="button" class="btn-icon-danger btn-icon-small" @click="removeSkill(i)">x</button>
-          </div>
-          <button type="button" class="btn-text" @click="addSkill">+ Add skill</button>
-        </div>
-      </CvEditorSection>
-
-      <!-- Certifications Section -->
-      <CvEditorSection
-        title="Certifications"
-        :collapsed="collapsed.certifications"
-        @toggle="collapsed.certifications = !collapsed.certifications"
-      >
-        <div class="list-editor">
-          <div
-            v-for="(_, i) in cv.certifications"
-            :key="i"
-            class="list-item list-item--inline"
-          >
-            <input v-model="cv.certifications[i]" type="text" class="list-input" placeholder="AWS Solutions Architect" />
-            <button type="button" class="btn-icon-danger btn-icon-small" @click="removeCertification(i)">x</button>
-          </div>
-          <button type="button" class="btn-text" @click="addCertification">+ Add certification</button>
-        </div>
-      </CvEditorSection>
-
-      <!-- Projects Section -->
-      <CvEditorSection
-        title="Projects"
-        :collapsed="collapsed.projects"
-        @toggle="collapsed.projects = !collapsed.projects"
-      >
-        <div
-          v-for="(proj, i) in cv.projects"
-          :key="i"
-          class="entry-card"
-        >
-          <div class="entry-header">
-            <span class="entry-label">{{ proj.name || 'New Project' }}</span>
-            <button type="button" class="btn-icon-danger" @click="removeProject(i)">Remove</button>
-          </div>
-          <div class="form-grid">
-            <div class="form-field">
-              <label>Name</label>
-              <input v-model="proj.name" type="text" placeholder="My Project" />
-            </div>
-            <div class="form-field">
-              <label>URL</label>
-              <input
-                :value="proj.url ?? ''"
-                @input="proj.url = ($event.target as HTMLInputElement).value || undefined"
-                type="url"
-                placeholder="https://github.com/..."
-              />
-            </div>
-            <div class="form-field form-field--full">
-              <label>Description</label>
-              <textarea v-model="proj.description" rows="2" class="full-width" placeholder="What did you build?" />
-            </div>
-          </div>
-          <div class="list-editor">
-            <label class="list-label">Technologies</label>
-            <div class="tag-editor">
-              <div
-                v-for="(_, ti) in proj.technologies"
-                :key="ti"
-                class="tag-item"
-              >
-                <input v-model="proj.technologies[ti]" class="tag-input" placeholder="Vue" />
-                <button type="button" class="btn-icon-danger btn-icon-small" @click="removeProjectTech(i, ti)">x</button>
+            <div class="list-editor">
+              <label class="list-label">Technologies</label>
+              <div class="tag-editor">
+                <div v-for="(_, ti) in exp.technologies" :key="ti" class="tag-item">
+                  <input v-model="exp.technologies[ti]" class="tag-input" placeholder="React" />
+                  <button type="button" class="btn-icon-danger btn-icon-small" @click="removeTechnology(i, ti)">x</button>
+                </div>
+                <button type="button" class="btn-text" @click="addTechnology(i)">+ Add tech</button>
               </div>
-              <button type="button" class="btn-text" @click="addProjectTech(i)">+ Add tech</button>
             </div>
           </div>
-        </div>
-        <button type="button" class="btn-secondary" @click="addProject">+ Add Project</button>
-      </CvEditorSection>
+          <button type="button" class="btn-secondary" @click="addExperience">+ Add Position</button>
+        </CvEditorSection>
+
+        <!-- Education -->
+        <CvEditorSection v-else-if="section === 'education'" title="Education" :collapsed="collapsed.education" @toggle="collapsed.education = !collapsed.education" draggable-hint>
+          <div v-for="(edu, i) in cv.education" :key="i" class="entry-card">
+            <div class="entry-header">
+              <span class="entry-label">{{ edu.institution || 'New Institution' }}</span>
+              <button type="button" class="btn-icon-danger" @click="removeEducation(i)">Remove</button>
+            </div>
+            <div class="form-grid">
+              <div class="form-field"><label>Institution</label><input v-model="edu.institution" type="text" placeholder="University of..." /></div>
+              <div class="form-field"><label>Degree</label><input v-model="edu.degree" type="text" placeholder="Bachelor of Science" /></div>
+              <div class="form-field"><label>Field</label><input :value="edu.field ?? ''" @input="edu.field = ($event.target as HTMLInputElement).value || null" type="text" placeholder="Computer Science" /></div>
+              <div class="form-field"><label>Year</label><input :value="edu.year ?? ''" @input="edu.year = Number(($event.target as HTMLInputElement).value) || null" type="number" placeholder="2020" /></div>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary" @click="addEducation">+ Add Education</button>
+        </CvEditorSection>
+
+        <!-- Skills -->
+        <CvEditorSection v-else-if="section === 'skills'" title="Skills" :collapsed="collapsed.skills" @toggle="collapsed.skills = !collapsed.skills" draggable-hint>
+          <div class="tag-editor">
+            <div v-for="(_, i) in cv.skills" :key="i" class="tag-item">
+              <input v-model="cv.skills[i]" class="tag-input" placeholder="Python" />
+              <button type="button" class="btn-icon-danger btn-icon-small" @click="removeSkill(i)">x</button>
+            </div>
+            <button type="button" class="btn-text" @click="addSkill">+ Add skill</button>
+          </div>
+        </CvEditorSection>
+
+        <!-- Certifications -->
+        <CvEditorSection v-else-if="section === 'certifications'" title="Certifications" :collapsed="collapsed.certifications" @toggle="collapsed.certifications = !collapsed.certifications" draggable-hint>
+          <div class="list-editor">
+            <div v-for="(_, i) in cv.certifications" :key="i" class="list-item list-item--inline">
+              <input v-model="cv.certifications[i]" type="text" class="list-input" placeholder="AWS Solutions Architect" />
+              <button type="button" class="btn-icon-danger btn-icon-small" @click="removeCertification(i)">x</button>
+            </div>
+            <button type="button" class="btn-text" @click="addCertification">+ Add certification</button>
+          </div>
+        </CvEditorSection>
+
+        <!-- Projects -->
+        <CvEditorSection v-else-if="section === 'projects'" title="Projects" :collapsed="collapsed.projects" @toggle="collapsed.projects = !collapsed.projects" draggable-hint>
+          <div v-for="(proj, i) in cv.projects" :key="i" class="entry-card">
+            <div class="entry-header">
+              <span class="entry-label">{{ proj.name || 'New Project' }}</span>
+              <button type="button" class="btn-icon-danger" @click="removeProject(i)">Remove</button>
+            </div>
+            <div class="form-grid">
+              <div class="form-field"><label>Name</label><input v-model="proj.name" type="text" placeholder="My Project" /></div>
+              <div class="form-field"><label>URL</label><input :value="proj.url ?? ''" @input="proj.url = ($event.target as HTMLInputElement).value || undefined" type="url" placeholder="https://github.com/..." /></div>
+              <div class="form-field form-field--full"><label>Description</label><textarea v-model="proj.description" rows="2" class="full-width" placeholder="What did you build?" /></div>
+            </div>
+            <div class="list-editor">
+              <label class="list-label">Technologies</label>
+              <div class="tag-editor">
+                <div v-for="(_, ti) in proj.technologies" :key="ti" class="tag-item">
+                  <input v-model="proj.technologies[ti]" class="tag-input" placeholder="Vue" />
+                  <button type="button" class="btn-icon-danger btn-icon-small" @click="removeProjectTech(i, ti)">x</button>
+                </div>
+                <button type="button" class="btn-text" @click="addProjectTech(i)">+ Add tech</button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary" @click="addProject">+ Add Project</button>
+        </CvEditorSection>
+
+        <!-- Languages -->
+        <CvEditorSection v-else-if="section === 'languages'" title="Languages" :collapsed="collapsed.languages" @toggle="collapsed.languages = !collapsed.languages" draggable-hint>
+          <div class="list-editor">
+            <div v-for="(lang, i) in cv.languages" :key="i" class="list-item list-item--inline">
+              <input v-model="lang.language" type="text" class="list-input" style="flex: 1" placeholder="English" />
+              <input v-model="lang.level" type="text" class="list-input" style="flex: 0.5" placeholder="C2 / Native" />
+              <button type="button" class="btn-icon-danger btn-icon-small" @click="removeLanguage(i)">x</button>
+            </div>
+            <button type="button" class="btn-text" @click="addLanguage">+ Add language</button>
+          </div>
+        </CvEditorSection>
+      </div>
     </template>
   </div>
 </template>
@@ -695,6 +633,15 @@ function removeProjectTech(projectIndex: number, techIndex: number) {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* Draggable sections */
+.draggable-section {
+  cursor: grab;
+}
+
+.draggable-section:active {
+  cursor: grabbing;
 }
 
 /* Entry cards */
