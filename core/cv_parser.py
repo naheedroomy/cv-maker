@@ -103,12 +103,12 @@ Return ONLY a valid JSON object matching this exact schema — no markdown fence
 }}"""
 
 
-def _pdf_to_images(pdf_bytes: bytes, dpi: int = 200) -> list[bytes]:
+def _pdf_to_images(pdf_bytes: bytes, dpi: int = 300) -> list[bytes]:
     """Convert each page of a PDF to a PNG byte array.
 
     Args:
         pdf_bytes: Raw PDF file bytes.
-        dpi: Resolution for page rendering (200 DPI is a good balance of quality/size).
+        dpi: Resolution for page rendering (300 DPI for accurate OCR).
 
     Returns:
         List of PNG byte arrays, one per page.
@@ -236,7 +236,7 @@ async def parse_pdf_to_base_cv(pdf_bytes: bytes) -> BaseCV:
         raise RuntimeError("GEMINI_API_KEY not configured for CV parsing")
 
     client = genai.Client(api_key=api_key)
-    model = "gemini-2.5-flash-lite"
+    model = "gemini-2.5-flash"
 
     # All three sync steps wrapped in asyncio.to_thread since they do I/O
     images = await asyncio.to_thread(_pdf_to_images, pdf_bytes)
