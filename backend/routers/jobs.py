@@ -49,6 +49,8 @@ def _row_to_response(row) -> JobResponse:
         pdf_url=f"/api/jobs/{row['id']}/pdf" if row["pdf_path"] else None,
         cover_letter_text=row["cover_letter_text"] if "cover_letter_text" in row.keys() else None,
         cover_letter_notes=row["cover_letter_notes"] if "cover_letter_notes" in row.keys() else None,
+        cover_letter_model=row["cover_letter_model"] if "cover_letter_model" in row.keys() else None,
+        cover_letter_tone=row["cover_letter_tone"] if "cover_letter_tone" in row.keys() else None,
     )
 
 

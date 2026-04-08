@@ -86,6 +86,8 @@ export interface JobResponse {
   pdf_url: string | null
   cover_letter_text: string | null
   cover_letter_notes: string | null
+  cover_letter_model: string | null
+  cover_letter_tone: string | null
 }
 
 export interface JobCreate {

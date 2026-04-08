@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     applied          INTEGER NOT NULL DEFAULT 0,
     cover_letter_text TEXT,
     cover_letter_notes TEXT,
+    cover_letter_model TEXT,
+    cover_letter_tone TEXT,
     created_at       TEXT NOT NULL,
     updated_at       TEXT NOT NULL
 );
@@ -93,6 +95,14 @@ async def init_db(db_path: Path | None = None) -> None:
         await db.execute("PRAGMA busy_timeout=5000")
         await db.execute("PRAGMA foreign_keys=ON")
         await db.executescript(_SCHEMA)
+
+        # Migrate: add cover_letter_model and cover_letter_tone columns if missing
+        cursor = await db.execute("PRAGMA table_info(jobs)")
+        columns = {row[1] for row in await cursor.fetchall()}
+        if "cover_letter_model" not in columns:
+            await db.execute("ALTER TABLE jobs ADD COLUMN cover_letter_model TEXT")
+        if "cover_letter_tone" not in columns:
+            await db.execute("ALTER TABLE jobs ADD COLUMN cover_letter_tone TEXT")
 
         # Seed placeholder local user (idempotent)
         await db.execute(

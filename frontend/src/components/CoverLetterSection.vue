@@ -13,6 +13,8 @@ const props = defineProps<{
   currentModel: string
   existingCoverLetter: string | null
   existingNotes: string | null
+  existingClModel: string | null
+  existingClTone: string | null
 }>()
 
 const store = useJobStore()
@@ -167,6 +169,10 @@ function handleRegenerate(): void {
 
     <!-- State 3: Cover letter generated — editable preview -->
     <div v-else-if="coverLetterText" class="cover-letter-preview">
+      <div v-if="existingClModel || existingClTone" class="cl-meta">
+        <span v-if="existingClModel" class="cl-badge">{{ { 'claude-haiku': 'Claude CLI', 'claude-api': 'Claude API', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[existingClModel] || existingClModel }}</span>
+        <span v-if="existingClTone" class="cl-badge">{{ existingClTone.charAt(0).toUpperCase() + existingClTone.slice(1) }}</span>
+      </div>
       <textarea
         v-model="coverLetterText"
         class="cover-letter-editor"
@@ -295,6 +301,22 @@ function handleRegenerate(): void {
 .btn-generate:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.cl-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cl-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 2px 8px;
 }
 
 .cover-letter-preview {

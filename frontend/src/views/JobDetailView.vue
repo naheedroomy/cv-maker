@@ -250,6 +250,8 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
         :current-model="currentJob.model"
         :existing-cover-letter="currentJob.cover_letter_text ?? null"
         :existing-notes="currentJob.cover_letter_notes ?? null"
+        :existing-cl-model="currentJob.cover_letter_model ?? null"
+        :existing-cl-tone="currentJob.cover_letter_tone ?? null"
       />
       <p v-else class="tab-empty-state">No cover letter yet. Paste in your notes and generate one.</p>
     </div>

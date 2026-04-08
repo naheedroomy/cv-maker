@@ -32,6 +32,8 @@ class JobResponse(BaseModel):
     pdf_url: str | None = None  # populated on complete, format: /api/jobs/{id}/pdf
     cover_letter_text: str | None = None  # populated when cover letter is generated
     cover_letter_notes: str | None = None  # user notes used for generation
+    cover_letter_model: str | None = None  # model used for cover letter generation
+    cover_letter_tone: str | None = None  # tone used for cover letter generation
 
 
 class CvConvertRequest(BaseModel):

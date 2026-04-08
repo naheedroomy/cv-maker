@@ -74,8 +74,8 @@ async def _cover_letter_worker(
         try:
             await db.execute("BEGIN IMMEDIATE")
             await db.execute(
-                "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=? WHERE id=? AND user_id=?",
-                (cover_letter_text, user_notes, job_id, user_id),
+                "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=?, cover_letter_model=?, cover_letter_tone=? WHERE id=? AND user_id=?",
+                (cover_letter_text, user_notes, model, tone, job_id, user_id),
             )
             await db.commit()
         finally:
@@ -131,8 +131,8 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, 
     db = await get_db()
     try:
         await db.execute(
-            "UPDATE jobs SET cover_letter_text='', cover_letter_notes=? WHERE id=? AND user_id=?",
-            (body.user_notes, job_id, user["id"]),
+            "UPDATE jobs SET cover_letter_text='', cover_letter_notes=?, cover_letter_model=?, cover_letter_tone=? WHERE id=? AND user_id=?",
+            (body.user_notes, body.model, body.tone, job_id, user["id"]),
         )
         await db.commit()
     finally:
