@@ -119,6 +119,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
       <StatusBadge :status="currentJob.status" />
       <span class="model-badge">{{ { 'claude-haiku': 'Claude CLI', 'claude-api': 'Claude API', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[currentJob.model] || currentJob.model }}</span>
       <span class="model-badge">Level {{ currentJob.creativity_level ?? 2 }}</span>
+      <span class="model-badge">{{ new Date(currentJob.updated_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</span>
       <button
         class="applied-toggle"
         :class="{ 'applied-toggle--active': currentJob.applied }"

@@ -200,6 +200,7 @@ function handleRegenerate(): void {
       <div v-if="existingClModel || existingClTone" class="cl-meta">
         <span v-if="existingClModel" class="cl-badge">{{ { 'claude-haiku': 'Claude CLI', 'claude-api': 'Claude API', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[existingClModel] || existingClModel }}</span>
         <span v-if="existingClTone" class="cl-badge">{{ existingClTone.charAt(0).toUpperCase() + existingClTone.slice(1) }}</span>
+        <span v-if="currentJob?.updated_at" class="cl-badge">{{ new Date(currentJob.updated_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</span>
       </div>
       <textarea
         v-model="coverLetterText"

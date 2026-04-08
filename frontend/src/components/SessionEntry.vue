@@ -22,7 +22,7 @@ function formatDate(iso: string): string {
       <span v-if="job.applied" class="applied-badge">Applied</span>
     </div>
     <div class="session-bottom">
-      <span class="created-date">{{ formatDate(job.created_at) }}</span>
+      <span class="created-date">{{ formatDate(job.updated_at) }}</span>
       <div class="status-indicators">
         <!-- CV status -->
         <span v-if="job.status === 'complete'" class="indicator indicator--done" title="CV ready">CV</span>
