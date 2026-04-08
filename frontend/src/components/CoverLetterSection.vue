@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import type { ClHistoryEntry } from '@/types'
 import ToneSelector from '@/components/ToneSelector.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -15,6 +16,7 @@ const props = defineProps<{
   existingNotes: string | null
   existingClModel: string | null
   existingClTone: string | null
+  clHistory: ClHistoryEntry[] | null
 }>()
 
 const store = useJobStore()
@@ -113,6 +115,12 @@ async function handleSaveAndDownload(): Promise<void> {
   }
 }
 
+async function copyHistoryVersion(entry: ClHistoryEntry): Promise<void> {
+  await navigator.clipboard.writeText(entry.text)
+  copied.value = true
+  setTimeout(() => { copied.value = false }, 2000)
+}
+
 function handleRegenerate(): void {
   coverLetterText.value = ''
   showForm.value = true
@@ -195,6 +203,26 @@ function handleRegenerate(): void {
         >
           Regenerate
         </button>
+      </div>
+
+      <!-- Version history -->
+      <div v-if="clHistory && clHistory.length > 0" class="cl-history">
+        <h4 class="history-heading">Previous Versions</h4>
+        <div class="history-list">
+          <button
+            v-for="entry in clHistory"
+            :key="entry.version"
+            class="history-btn"
+            @click="copyHistoryVersion(entry)"
+          >
+            Copy V{{ entry.version }}
+            <span class="history-meta">
+              {{ entry.model ? ({ 'claude-haiku': 'CLI', 'claude-api': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[entry.model] || entry.model) : '' }}
+              {{ entry.tone ? '· ' + entry.tone.charAt(0).toUpperCase() + entry.tone.slice(1) : '' }}
+              · {{ new Date(entry.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   </section>
@@ -413,5 +441,52 @@ function handleRegenerate(): void {
 .btn-regenerate-cl:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.cl-history {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.history-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+  text-align: left;
+}
+
+.history-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.history-meta {
+  font-weight: 400;
+  font-size: 11px;
+  color: #9ca3af;
 }
 </style>

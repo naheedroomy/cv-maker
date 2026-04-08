@@ -240,6 +240,26 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
         message="Generation failed. Try a different model or lower the creativity level."
         @retry="handleRegenerate"
       />
+
+      <!-- Version history -->
+      <div v-if="currentJob.cv_history && currentJob.cv_history.length > 0" class="cv-history">
+        <h4 class="history-heading">Previous Versions</h4>
+        <div class="history-list">
+          <button
+            v-for="entry in currentJob.cv_history"
+            :key="entry.version"
+            class="history-btn"
+            @click="store.downloadPdf(jobId, currentJob.company_name, entry.version)"
+          >
+            Download V{{ entry.version }}
+            <span class="history-meta">
+              {{ { 'claude-haiku': 'CLI', 'claude-api': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[entry.model] || entry.model }}
+              · L{{ entry.creativity_level }}
+              · {{ new Date(entry.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Cover Letter Tab -->
@@ -253,6 +273,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
         :existing-notes="currentJob.cover_letter_notes ?? null"
         :existing-cl-model="currentJob.cover_letter_model ?? null"
         :existing-cl-tone="currentJob.cover_letter_tone ?? null"
+        :cl-history="currentJob.cl_history ?? null"
       />
       <p v-else class="tab-empty-state">No cover letter yet. Paste in your notes and generate one.</p>
     </div>
@@ -512,6 +533,54 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   width: 16px !important;
   height: 16px !important;
   border-width: 2px !important;
+}
+
+/* CV version history */
+.cv-history {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.history-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+  text-align: left;
+}
+
+.history-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.history-meta {
+  font-weight: 400;
+  font-size: 11px;
+  color: #9ca3af;
 }
 
 /* Analysis section headings */

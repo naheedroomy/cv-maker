@@ -113,7 +113,7 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, 
     db = await get_db()
     try:
         cursor = await db.execute(
-            "SELECT status, tailored_cv_json, gap_diff_json FROM jobs WHERE id=? AND user_id=?",
+            "SELECT * FROM jobs WHERE id=? AND user_id=?",
             (job_id, user["id"]),
         )
         row = await cursor.fetchone()
@@ -127,12 +127,27 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, 
     if not row["tailored_cv_json"] or not row["gap_diff_json"]:
         raise HTTPException(status_code=409, detail="Job has no tailored CV data")
 
+    # Archive existing cover letter into history (if it exists and is non-empty)
+    cl_history: list[dict] = []
+    if "cl_history_json" in row.keys() and row["cl_history_json"]:
+        cl_history = json.loads(row["cl_history_json"])
+    if row["cover_letter_text"] and len(row["cover_letter_text"]) > 0:
+        version = len(cl_history) + 1
+        cl_history.append({
+            "version": version,
+            "text": row["cover_letter_text"],
+            "model": row["cover_letter_model"] if "cover_letter_model" in row.keys() else None,
+            "tone": row["cover_letter_tone"] if "cover_letter_tone" in row.keys() else None,
+            "created_at": row["updated_at"],
+        })
+    cl_history_json = json.dumps(cl_history) if cl_history else None
+
     # Clear old cover letter immediately — signals "generating" to frontend
     db = await get_db()
     try:
         await db.execute(
-            "UPDATE jobs SET cover_letter_text='', cover_letter_notes=?, cover_letter_model=?, cover_letter_tone=? WHERE id=? AND user_id=?",
-            (body.user_notes, body.model, body.tone, job_id, user["id"]),
+            "UPDATE jobs SET cover_letter_text='', cover_letter_notes=?, cover_letter_model=?, cover_letter_tone=?, cl_history_json=? WHERE id=? AND user_id=?",
+            (body.user_notes, body.model, body.tone, cl_history_json, job_id, user["id"]),
         )
         await db.commit()
     finally:

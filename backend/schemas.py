@@ -34,6 +34,8 @@ class JobResponse(BaseModel):
     cover_letter_notes: str | None = None  # user notes used for generation
     cover_letter_model: str | None = None  # model used for cover letter generation
     cover_letter_tone: str | None = None  # tone used for cover letter generation
+    cv_history: list[dict] | None = None  # previous CV versions
+    cl_history: list[dict] | None = None  # previous cover letter versions
 
 
 class CvConvertRequest(BaseModel):

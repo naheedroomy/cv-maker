@@ -106,14 +106,16 @@ export const useJobStore = defineStore('jobs', () => {
     return job.id
   }
 
-  async function downloadPdf(jobId: string, companyName: string): Promise<void> {
-    const res = await apiFetch(`/api/jobs/${jobId}/pdf`)
+  async function downloadPdf(jobId: string, companyName: string, version?: number): Promise<void> {
+    const url_path = version ? `/api/jobs/${jobId}/pdf/${version}` : `/api/jobs/${jobId}/pdf`
+    const res = await apiFetch(url_path)
     if (!res.ok) throw new Error(`PDF not available: ${res.status}`)
     const blob = await res.blob()
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${companyName}-CV.pdf`
+    const suffix = version ? `-V${version}` : ''
+    a.download = `${companyName}${suffix}-CV.pdf`
     a.click()
     URL.revokeObjectURL(url) // Free memory immediately after click
   }

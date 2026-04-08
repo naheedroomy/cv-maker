@@ -88,6 +88,24 @@ export interface JobResponse {
   cover_letter_notes: string | null
   cover_letter_model: string | null
   cover_letter_tone: string | null
+  cv_history: CvHistoryEntry[] | null
+  cl_history: ClHistoryEntry[] | null
+}
+
+export interface CvHistoryEntry {
+  version: number
+  model: string
+  creativity_level: number
+  pdf_path: string | null
+  created_at: string
+}
+
+export interface ClHistoryEntry {
+  version: number
+  text: string
+  model: string | null
+  tone: string | null
+  created_at: string
 }
 
 export interface JobCreate {

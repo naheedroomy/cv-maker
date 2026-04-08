@@ -52,6 +52,8 @@ def _row_to_response(row) -> JobResponse:
         cover_letter_notes=row["cover_letter_notes"] if "cover_letter_notes" in row.keys() else None,
         cover_letter_model=row["cover_letter_model"] if "cover_letter_model" in row.keys() else None,
         cover_letter_tone=row["cover_letter_tone"] if "cover_letter_tone" in row.keys() else None,
+        cv_history=json.loads(row["cv_history_json"]) if "cv_history_json" in row.keys() and row["cv_history_json"] else None,
+        cl_history=json.loads(row["cl_history_json"]) if "cl_history_json" in row.keys() and row["cl_history_json"] else None,
     )
 
 
@@ -297,6 +299,41 @@ async def get_pdf(job_id: str, user: dict = Depends(get_current_user)) -> Respon
 
 
 # ---------------------------------------------------------------------------
+# Endpoint 5a: GET /{job_id}/pdf/{version} — download historical PDF
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{job_id}/pdf/{version}")
+async def get_pdf_version(job_id: str, version: int, user: dict = Depends(get_current_user)) -> Response:
+    """Return PDF for a specific CV version from history."""
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT cv_history_json FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
+        row = await cursor.fetchone()
+    finally:
+        await db.close()
+
+    if row is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if not row["cv_history_json"]:
+        raise HTTPException(status_code=404, detail="No version history")
+
+    history = json.loads(row["cv_history_json"])
+    entry = next((h for h in history if h["version"] == version), None)
+    if entry is None or not entry.get("pdf_path"):
+        raise HTTPException(status_code=404, detail=f"Version {version} not found")
+
+    pdf_path = Path(entry["pdf_path"])
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail="PDF file no longer available")
+
+    return Response(content=pdf_path.read_bytes(), media_type="application/pdf")
+
+
+# ---------------------------------------------------------------------------
 # Endpoint 5b: POST /{job_id}/regenerate — re-run CV pipeline on same job
 # ---------------------------------------------------------------------------
 
@@ -332,23 +369,32 @@ async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depe
         creativity = body.creativity_level if body.creativity_level is not None else row["creativity_level"]
         now = datetime.now(timezone.utc).isoformat()
 
-        # Delete old PDF/tex files
-        if row["pdf_path"]:
-            pdf_path = Path(row["pdf_path"])
-            if pdf_path.exists():
-                pdf_path.unlink()
-            tex_path = pdf_path.with_suffix(".tex")
-            if tex_path.exists():
-                tex_path.unlink()
+        # Archive current CV into history (if it exists)
+        history: list[dict] = []
+        if row["cv_history_json"]:
+            history = json.loads(row["cv_history_json"])
+        if row["tailored_cv_json"]:
+            version = len(history) + 1
+            history.append({
+                "version": version,
+                "model": row["model"],
+                "creativity_level": row["creativity_level"],
+                "pdf_path": row["pdf_path"],
+                "created_at": row["updated_at"],
+            })
+        history_json = json.dumps(history) if history else None
+
+        # Don't delete old PDF files — they're now referenced by history
 
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             """UPDATE jobs SET
                 status='pending', model=?, creativity_level=?,
                 tailored_cv_json=NULL, gap_diff_json=NULL, pdf_path=NULL,
+                cv_history_json=?,
                 updated_at=?
             WHERE id=? AND user_id=?""",
-            (model, creativity, now, job_id, user["id"]),
+            (model, creativity, history_json, now, job_id, user["id"]),
         )
         await db.commit()
 
