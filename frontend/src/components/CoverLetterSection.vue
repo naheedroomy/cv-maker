@@ -130,6 +130,26 @@ function handleRegenerate(): void {
 <template>
   <section class="cover-letter-section">
 
+    <!-- Version history (always visible on top) -->
+    <div v-if="clHistory && clHistory.length > 0" class="cl-history cl-history--top">
+      <h4 class="history-heading">Previous Versions</h4>
+      <div class="history-list">
+        <button
+          v-for="entry in clHistory"
+          :key="entry.version"
+          class="history-btn"
+          @click="copyHistoryVersion(entry)"
+        >
+          Copy V{{ entry.version }}
+          <span class="history-meta">
+            {{ entry.model ? ({ 'claude-haiku': 'CLI', 'claude-api': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[entry.model] || entry.model) : '' }}
+            {{ entry.tone ? '· ' + entry.tone.charAt(0).toUpperCase() + entry.tone.slice(1) : '' }}
+            · {{ new Date(entry.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
+          </span>
+        </button>
+      </div>
+    </div>
+
     <!-- Generating state: spinner -->
     <div v-if="generating" class="generating-state">
       <LoadingSpinner />
@@ -205,25 +225,6 @@ function handleRegenerate(): void {
         </button>
       </div>
 
-      <!-- Version history -->
-      <div v-if="clHistory && clHistory.length > 0" class="cl-history">
-        <h4 class="history-heading">Previous Versions</h4>
-        <div class="history-list">
-          <button
-            v-for="entry in clHistory"
-            :key="entry.version"
-            class="history-btn"
-            @click="copyHistoryVersion(entry)"
-          >
-            Copy V{{ entry.version }}
-            <span class="history-meta">
-              {{ entry.model ? ({ 'claude-haiku': 'CLI', 'claude-api': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[entry.model] || entry.model) : '' }}
-              {{ entry.tone ? '· ' + entry.tone.charAt(0).toUpperCase() + entry.tone.slice(1) : '' }}
-              · {{ new Date(entry.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
-            </span>
-          </button>
-        </div>
-      </div>
     </div>
   </section>
 </template>
@@ -443,10 +444,10 @@ function handleRegenerate(): void {
   cursor: not-allowed;
 }
 
-.cl-history {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+.cl-history--top {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .history-heading {

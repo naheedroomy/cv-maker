@@ -140,39 +140,8 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
       @retry="handleRegenerate"
     />
 
-    <!-- Zone 2: LOADING/RUNNING STATE (replaces tab area when not complete/failed/cancelled) -->
-    <template v-if="!['complete', 'failed', 'cancelled'].includes(currentJob.status)">
-      <!-- Spinner + status text: pending or running -->
-      <div
-        v-if="currentJob.status === 'pending' || currentJob.status === 'running'"
-        class="spinner-container"
-      >
-        <LoadingSpinner />
-        <p class="status-text">{{ statusText[currentJob.status] }}</p>
-      </div>
-
-      <!-- Skeleton sections: running -->
-      <template v-if="currentJob.status === 'running'">
-        <SkeletonSection title="Summary" :lines="3" />
-        <SkeletonSection title="Experience" :lines="5" />
-        <SkeletonSection title="Skills" :lines="2" />
-        <SkeletonSection title="Education" :lines="3" />
-      </template>
-
-      <!-- Cancel Job button -->
-      <div v-if="currentJob.status === 'pending' || currentJob.status === 'running'" class="running-actions">
-        <button
-          class="btn-secondary"
-          :disabled="cancelling"
-          @click="handleCancel"
-        >
-          {{ cancelling ? 'Cancelling...' : 'Cancel Job' }}
-        </button>
-      </div>
-    </template>
-
-    <!-- Zone 3: TAB BAR (only when complete, failed, or cancelled) -->
-    <div v-if="['complete', 'failed', 'cancelled'].includes(currentJob.status)" class="tab-bar">
+    <!-- Zone 3: TAB BAR (always visible once job exists) -->
+    <div class="tab-bar">
       <button
         class="tab-btn"
         :class="{ 'tab-btn--active': activeTab === 'cv' }"
@@ -198,51 +167,9 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
     <!-- Zone 4: TAB PANELS -->
 
     <!-- CV Tab -->
-    <div v-show="activeTab === 'cv' && ['complete', 'failed', 'cancelled'].includes(currentJob.status)" class="tab-panel">
-      <!-- Action buttons -->
-      <div class="action-buttons">
-        <button
-          v-if="currentJob.status === 'complete'"
-          class="btn-primary"
-          :disabled="downloading"
-          @click="handleDownload"
-        >
-          <LoadingSpinner v-if="downloading" class="btn-spinner" />
-          {{ downloading ? 'Downloading...' : 'Download PDF' }}
-        </button>
-
-        <RegeneratePanel
-          v-if="['complete', 'failed', 'cancelled'].includes(currentJob.status)"
-          :current-model="currentJob.model"
-          :current-creativity-level="currentJob.creativity_level"
-          :disabled="regenerating"
-          @regenerate="handleRegenerate"
-        />
-
-        <button
-          class="btn-danger"
-          :disabled="deleting"
-          @click="handleDelete"
-        >
-          {{ deleting ? 'Deleting...' : 'Delete' }}
-        </button>
-      </div>
-
-      <!-- CV Preview -->
-      <CvPreview
-        v-if="currentJob.status === 'complete' && currentJob.tailored_cv"
-        :cv="currentJob.tailored_cv"
-      />
-
-      <!-- Failed state error -->
-      <ErrorBanner
-        v-if="currentJob.status === 'failed'"
-        message="Generation failed. Try a different model or lower the creativity level."
-        @retry="handleRegenerate"
-      />
-
-      <!-- Version history -->
-      <div v-if="currentJob.cv_history && currentJob.cv_history.length > 0" class="cv-history">
+    <div v-show="activeTab === 'cv'" class="tab-panel">
+      <!-- Version history (show on top so it's visible during regeneration) -->
+      <div v-if="currentJob.cv_history && currentJob.cv_history.length > 0" class="cv-history cv-history--top">
         <h4 class="history-heading">Previous Versions</h4>
         <div class="history-list">
           <button
@@ -260,10 +187,73 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
           </button>
         </div>
       </div>
+
+      <!-- Generating state (pending/running) -->
+      <template v-if="currentJob.status === 'pending' || currentJob.status === 'running'">
+        <div class="spinner-container">
+          <LoadingSpinner />
+          <p class="status-text">{{ statusText[currentJob.status] }}</p>
+        </div>
+        <template v-if="currentJob.status === 'running'">
+          <SkeletonSection title="Summary" :lines="3" />
+          <SkeletonSection title="Experience" :lines="5" />
+          <SkeletonSection title="Skills" :lines="2" />
+          <SkeletonSection title="Education" :lines="3" />
+        </template>
+        <div class="running-actions">
+          <button class="btn-secondary" :disabled="cancelling" @click="handleCancel">
+            {{ cancelling ? 'Cancelling...' : 'Cancel Job' }}
+          </button>
+        </div>
+      </template>
+
+      <!-- Complete/failed/cancelled state -->
+      <template v-else>
+        <!-- Action buttons -->
+        <div class="action-buttons">
+          <button
+            v-if="currentJob.status === 'complete'"
+            class="btn-primary"
+            :disabled="downloading"
+            @click="handleDownload"
+          >
+            <LoadingSpinner v-if="downloading" class="btn-spinner" />
+            {{ downloading ? 'Downloading...' : 'Download PDF' }}
+          </button>
+
+          <RegeneratePanel
+            :current-model="currentJob.model"
+            :current-creativity-level="currentJob.creativity_level"
+            :disabled="regenerating"
+            @regenerate="handleRegenerate"
+          />
+
+          <button
+            class="btn-danger"
+            :disabled="deleting"
+            @click="handleDelete"
+          >
+            {{ deleting ? 'Deleting...' : 'Delete' }}
+          </button>
+        </div>
+
+        <!-- CV Preview -->
+        <CvPreview
+          v-if="currentJob.status === 'complete' && currentJob.tailored_cv"
+          :cv="currentJob.tailored_cv"
+        />
+
+        <!-- Failed state error -->
+        <ErrorBanner
+          v-if="currentJob.status === 'failed'"
+          message="Generation failed. Try a different model or lower the creativity level."
+          @retry="handleRegenerate"
+        />
+      </template>
     </div>
 
     <!-- Cover Letter Tab -->
-    <div v-show="activeTab === 'cover-letter' && ['complete', 'failed', 'cancelled'].includes(currentJob.status)" class="tab-panel">
+    <div v-show="activeTab === 'cover-letter'" class="tab-panel">
       <CoverLetterSection
         v-if="currentJob.status === 'complete'"
         :job-id="jobId"
@@ -536,10 +526,10 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 }
 
 /* CV version history */
-.cv-history {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+.cv-history--top {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .history-heading {
