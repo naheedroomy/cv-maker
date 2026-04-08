@@ -31,7 +31,11 @@ export const useJobStore = defineStore('jobs', () => {
   async function fetchJob(jobId: string): Promise<void> {
     const res = await apiFetch(`/api/jobs/${jobId}`)
     if (!res.ok) throw new Error(`GET /api/jobs/${jobId} failed: ${res.status}`)
-    currentJob.value = await res.json()
+    const job: JobResponse = await res.json()
+    currentJob.value = job
+    // Also update the jobs list so sidebar reflects the change
+    const idx = jobs.value.findIndex((j) => j.id === jobId)
+    if (idx !== -1) jobs.value[idx] = job
   }
 
   async function submitJob(payload: JobCreate): Promise<string> {
@@ -220,6 +224,8 @@ export const useJobStore = defineStore('jobs', () => {
       if (currentJob.value?.id === jobId) {
         currentJob.value = job
       }
+      const idx = jobs.value.findIndex((j) => j.id === jobId)
+      if (idx !== -1) jobs.value[idx] = job
       // null = never generated, '' = generating, non-empty = done
       if (job.cover_letter_text === null) {
         // Generation failed — worker reset to null
