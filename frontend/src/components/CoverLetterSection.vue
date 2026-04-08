@@ -115,10 +115,9 @@ async function handleSaveAndDownload(): Promise<void> {
   }
 }
 
-async function copyHistoryVersion(entry: ClHistoryEntry): Promise<void> {
-  await navigator.clipboard.writeText(entry.text)
-  copied.value = true
-  setTimeout(() => { copied.value = false }, 2000)
+function loadHistoryVersion(entry: ClHistoryEntry): void {
+  coverLetterText.value = entry.text
+  showForm.value = false
 }
 
 function handleRegenerate(): void {
@@ -138,9 +137,9 @@ function handleRegenerate(): void {
           v-for="entry in clHistory"
           :key="entry.version"
           class="history-btn"
-          @click="copyHistoryVersion(entry)"
+          @click="loadHistoryVersion(entry)"
         >
-          Copy V{{ entry.version }}
+          View V{{ entry.version }}
           <span class="history-meta">
             {{ entry.model ? ({ 'claude-haiku': 'CLI', 'claude-api': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[entry.model] || entry.model) : '' }}
             {{ entry.tone ? '· ' + entry.tone.charAt(0).toUpperCase() + entry.tone.slice(1) : '' }}
