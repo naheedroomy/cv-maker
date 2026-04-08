@@ -158,8 +158,8 @@ function handleRegenerate(): void {
 
     <!-- State 1: No cover letter yet, show generate trigger -->
     <div v-else-if="!coverLetterText && !showForm">
-      <button class="btn-generate-trigger" @click="showForm = true">
-        Generate Cover Letter
+      <button class="btn-generate-trigger" :disabled="jobStatus !== 'complete'" @click="showForm = true">
+        {{ jobStatus !== 'complete' ? 'Waiting for CV...' : 'Generate Cover Letter' }}
       </button>
     </div>
 
@@ -269,8 +269,12 @@ function handleRegenerate(): void {
   transition: background-color 150ms ease;
 }
 
-.btn-generate-trigger:hover {
+.btn-generate-trigger:hover:not(:disabled) {
   background: #1d4ed8;
+}
+.btn-generate-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .cover-letter-form {

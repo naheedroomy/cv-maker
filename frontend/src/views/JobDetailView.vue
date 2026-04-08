@@ -256,7 +256,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
     <!-- Cover Letter Tab -->
     <div v-show="activeTab === 'cover-letter'" class="tab-panel">
       <CoverLetterSection
-        v-if="currentJob.status === 'complete'"
+        v-if="currentJob.status === 'complete' || currentJob.cover_letter_text || currentJob.cl_history?.length"
         :job-id="jobId"
         :job-status="currentJob.status"
         :current-model="currentJob.model"
@@ -266,7 +266,8 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
         :existing-cl-tone="currentJob.cover_letter_tone ?? null"
         :cl-history="currentJob.cl_history ?? null"
       />
-      <p v-else class="tab-empty-state">No cover letter yet. Paste in your notes and generate one.</p>
+      <p v-else-if="currentJob.status === 'complete'" class="tab-empty-state">No cover letter yet. Paste in your notes and generate one.</p>
+      <p v-else class="tab-empty-state">CV is still generating. Cover letter will be available after.</p>
     </div>
 
     <!-- Analysis Tab -->
