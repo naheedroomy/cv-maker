@@ -266,7 +266,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
         :existing-cl-tone="currentJob.cover_letter_tone ?? null"
         :cl-history="currentJob.cl_history ?? null"
       />
-      <p v-else-if="currentJob.status === 'complete'" class="tab-empty-state">No cover letter yet. Paste in your notes and generate one.</p>
+      <p v-else-if="['complete', 'failed', 'cancelled'].includes(currentJob.status)" class="tab-empty-state">No cover letter yet. Paste in your notes and generate one.</p>
       <p v-else class="tab-empty-state">CV is still generating. Cover letter will be available after.</p>
     </div>
 
