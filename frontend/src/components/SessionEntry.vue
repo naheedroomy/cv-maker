@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { JobResponse } from '@/types'
-import StatusBadge from './StatusBadge.vue'
 
 defineProps<{ job: JobResponse; active: boolean }>()
 
@@ -20,19 +19,28 @@ function formatDate(iso: string): string {
   >
     <div class="session-top">
       <span class="company-name">{{ job.company_name }}</span>
-      <div class="session-badges">
-        <span v-if="job.applied" class="applied-badge">Applied</span>
-        <StatusBadge :status="job.status" />
+      <span v-if="job.applied" class="applied-badge">Applied</span>
+    </div>
+    <div class="session-bottom">
+      <span class="created-date">{{ formatDate(job.created_at) }}</span>
+      <div class="status-indicators">
+        <!-- CV status -->
+        <span v-if="job.status === 'complete'" class="indicator indicator--done" title="CV ready">CV</span>
+        <span v-else-if="job.status === 'pending' || job.status === 'running'" class="indicator indicator--pending" title="CV generating">CV</span>
+        <span v-else-if="job.status === 'failed'" class="indicator indicator--failed" title="CV failed">CV</span>
+
+        <!-- Cover letter status -->
+        <span v-if="job.cover_letter_text && job.cover_letter_text.length > 0" class="indicator indicator--done" title="Cover letter ready">CL</span>
+        <span v-else-if="job.cover_letter_text === ''" class="indicator indicator--pending" title="Cover letter generating">CL</span>
       </div>
     </div>
-    <span class="created-date">{{ formatDate(job.created_at) }}</span>
   </router-link>
 </template>
 
 <style scoped>
 .session-entry {
   display: block;
-  padding: 12px 16px;
+  padding: 10px 16px;
   min-height: 48px;
   text-decoration: none;
   color: #111827;
@@ -53,30 +61,53 @@ function formatDate(iso: string): string {
   gap: 8px;
 }
 .company-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #111827;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.session-badges {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 .applied-badge {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   color: #16a34a;
   background: #dcfce7;
   border-radius: 3px;
   padding: 1px 5px;
+  flex-shrink: 0;
+}
+.session-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 3px;
 }
 .created-date {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 2px;
-  display: block;
+  font-size: 11px;
+  color: #9ca3af;
+}
+.status-indicators {
+  display: flex;
+  gap: 4px;
+}
+.indicator {
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 1px 4px;
+  letter-spacing: 0.02em;
+}
+.indicator--done {
+  color: #16a34a;
+  background: #dcfce7;
+}
+.indicator--pending {
+  color: #d97706;
+  background: #fef3c7;
+}
+.indicator--failed {
+  color: #dc2626;
+  background: #fee2e2;
 }
 </style>
