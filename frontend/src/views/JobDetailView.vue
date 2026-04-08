@@ -3,6 +3,7 @@ import { ref, watch, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useJobStore, type JobResponse } from '@/stores/jobStore'
+import { apiFetch } from '@/utils/apiFetch'
 import StatusBadge from '@/components/StatusBadge.vue'
 import ErrorBanner from '@/components/ErrorBanner.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -23,6 +24,7 @@ const cancelling = ref(false)
 const downloading = ref(false)
 const deleting = ref(false)
 const regenerating = ref(false)
+const savingListing = ref(false)
 const activeTab = ref<'cv' | 'cover-letter' | 'analysis' | 'job-listing'>('cv')
 
 const statusText: Record<string, string> = {
@@ -85,6 +87,28 @@ async function handleDelete() {
     store.error = err instanceof Error ? err.message : 'Delete failed'
   } finally {
     deleting.value = false
+  }
+}
+
+async function handleSaveListing() {
+  if (!currentJob.value) return
+  savingListing.value = true
+  try {
+    const res = await apiFetch(`/api/jobs/${jobId.value}/listing`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        job_link: currentJob.value.job_link,
+        job_text: currentJob.value.job_text,
+      }),
+    })
+    if (!res.ok) {
+      store.error = `Save failed: ${res.status}`
+    }
+  } catch (err) {
+    store.error = err instanceof Error ? err.message : 'Save failed'
+  } finally {
+    savingListing.value = false
   }
 }
 
@@ -290,19 +314,35 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
     </div>
 
     <!-- Job Listing Tab -->
-    <div v-show="activeTab === 'job-listing' && ['complete', 'failed', 'cancelled'].includes(currentJob.status)" class="tab-panel">
-      <section v-if="currentJob.job_text" class="analysis-section">
+    <div v-show="activeTab === 'job-listing'" class="tab-panel">
+      <section class="analysis-section">
         <h3 class="section-heading">Job Listing</h3>
-        <a
-          v-if="currentJob.job_link"
-          :href="currentJob.job_link"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="job-link"
-        >{{ currentJob.job_link }}</a>
-        <pre class="job-text-content">{{ currentJob.job_text }}</pre>
+        <div class="listing-field">
+          <label class="listing-label">Job Link</label>
+          <input
+            v-model="currentJob.job_link"
+            type="url"
+            class="listing-input"
+            placeholder="https://..."
+          />
+        </div>
+        <div class="listing-field">
+          <label class="listing-label">Job Description</label>
+          <textarea
+            v-model="currentJob.job_text"
+            class="listing-textarea"
+            rows="16"
+            placeholder="Paste the job listing here..."
+          />
+        </div>
+        <button
+          class="btn-secondary"
+          :disabled="savingListing"
+          @click="handleSaveListing"
+        >
+          {{ savingListing ? 'Saving...' : 'Save Changes' }}
+        </button>
       </section>
-      <p v-else class="tab-empty-state">No job listing text available.</p>
     </div>
 
   </div>
@@ -585,6 +625,53 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   font-weight: 600;
   color: #111827;
   margin-bottom: 16px;
+}
+
+/* Job listing editor */
+.listing-field {
+  margin-bottom: 12px;
+}
+
+.listing-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.listing-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111827;
+  box-sizing: border-box;
+}
+
+.listing-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.listing-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #374151;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.listing-textarea:focus {
+  outline: none;
+  border-color: #2563eb;
 }
 
 /* Job listing text */

@@ -232,7 +232,44 @@ async def delete_job(job_id: str, user: dict = Depends(get_current_user)) -> Res
 
 
 # ---------------------------------------------------------------------------
-# Endpoint 4c: PATCH /{job_id}/applied — toggle applied status
+# Endpoint 4c: PATCH /{job_id}/listing — update job link and text
+# ---------------------------------------------------------------------------
+
+
+class JobListingUpdate(BaseModel):
+    job_link: str | None = None
+    job_text: str | None = None
+
+
+@router.patch("/{job_id}/listing", response_model=JobResponse)
+async def update_job_listing(job_id: str, body: JobListingUpdate, user: dict = Depends(get_current_user)) -> JobResponse:
+    """Update the job link and/or job listing text."""
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT id FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
+        if await cursor.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        updates = body.model_dump(exclude_none=True)
+        if updates:
+            set_clause = ", ".join(f"{k}=?" for k in updates)
+            values = list(updates.values()) + [job_id, user["id"]]
+            await db.execute(f"UPDATE jobs SET {set_clause} WHERE id=? AND user_id=?", values)
+            await db.commit()
+
+        cursor = await db.execute("SELECT * FROM jobs WHERE id=? AND user_id=?", (job_id, user["id"]))
+        row = await cursor.fetchone()
+    finally:
+        await db.close()
+
+    return _row_to_response(row)
+
+
+# ---------------------------------------------------------------------------
+# Endpoint 4d: PATCH /{job_id}/applied — toggle applied status
 # ---------------------------------------------------------------------------
 
 
