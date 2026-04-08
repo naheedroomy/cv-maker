@@ -236,7 +236,7 @@ async def parse_pdf_to_base_cv(pdf_bytes: bytes) -> BaseCV:
         raise RuntimeError("GEMINI_API_KEY not configured for CV parsing")
 
     client = genai.Client(api_key=api_key)
-    model = "gemini-2.5-flash"
+    model = "gemini-2.5-flash-lite"
 
     # All three sync steps wrapped in asyncio.to_thread since they do I/O
     images = await asyncio.to_thread(_pdf_to_images, pdf_bytes)
