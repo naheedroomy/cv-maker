@@ -139,20 +139,10 @@ export const useJobStore = defineStore('jobs', () => {
       if (idx !== -1) jobs.value[idx] = { ...jobs.value[idx], ...data } as JobResponse
     })
 
-    _sse.addEventListener('complete', (e: MessageEvent) => {
-      const data = JSON.parse(e.data) as JobResponse
-      // Merge with existing job to preserve fields the SSE payload may not include (e.g. created_at)
-      if (currentJob.value?.id === jobId) {
-        currentJob.value = { ...currentJob.value, ...data, created_at: currentJob.value.created_at }
-      } else {
-        currentJob.value = data
-      }
-      const idx = jobs.value.findIndex((j) => j.id === jobId)
-      const existing = jobs.value[idx]
-      if (idx !== -1 && existing) {
-        jobs.value[idx] = { ...existing, ...data, created_at: existing.created_at }
-      }
+    _sse.addEventListener('complete', () => {
+      // Full fetch on complete — SSE payload is partial and missing cover letter/history fields
       closeSSE()
+      fetchJob(jobId).catch(() => {})
     })
 
     _sse.onerror = () => {
