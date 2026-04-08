@@ -92,8 +92,9 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   if (!currentJob.value) return
   regenerating.value = true
   try {
-    const newId = await store.regenerateJob(currentJob.value, model, creativityLevel)
-    router.push(`/jobs/${newId}`)
+    await store.regenerateJob(currentJob.value, model, creativityLevel)
+    // Job is now pending — open SSE to track progress
+    store.openSSE(jobId.value)
   } catch (err) {
     store.error = err instanceof Error ? err.message : 'Regenerate failed'
   } finally {

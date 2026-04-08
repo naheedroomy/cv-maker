@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
@@ -293,6 +294,77 @@ async def get_pdf(job_id: str, user: dict = Depends(get_current_user)) -> Respon
 
     pdf_bytes = Path(row["pdf_path"]).read_bytes()
     return Response(content=pdf_bytes, media_type="application/pdf")
+
+
+# ---------------------------------------------------------------------------
+# Endpoint 5b: POST /{job_id}/regenerate — re-run CV pipeline on same job
+# ---------------------------------------------------------------------------
+
+
+class RegenerateRequest(BaseModel):
+    model: str | None = None
+    creativity_level: int | None = None
+
+
+@router.post("/{job_id}/regenerate", response_model=JobResponse)
+async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depends(get_current_user)) -> JobResponse:
+    """Re-run CV tailoring on an existing job, preserving cover letter and metadata.
+
+    Resets status to pending, clears CV output (tailored_cv, gap_diff, pdf),
+    optionally updates model/creativity, and kicks off the worker.
+    """
+    # Cancel existing task if still running
+    task = _job_tasks.get(job_id)
+    if task and not task.done():
+        task.cancel()
+
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT * FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        model = body.model or row["model"]
+        creativity = body.creativity_level if body.creativity_level is not None else row["creativity_level"]
+        now = datetime.now(timezone.utc).isoformat()
+
+        # Delete old PDF/tex files
+        if row["pdf_path"]:
+            pdf_path = Path(row["pdf_path"])
+            if pdf_path.exists():
+                pdf_path.unlink()
+            tex_path = pdf_path.with_suffix(".tex")
+            if tex_path.exists():
+                tex_path.unlink()
+
+        await db.execute("BEGIN IMMEDIATE")
+        await db.execute(
+            """UPDATE jobs SET
+                status='pending', model=?, creativity_level=?,
+                tailored_cv_json=NULL, gap_diff_json=NULL, pdf_path=NULL,
+                updated_at=?
+            WHERE id=? AND user_id=?""",
+            (model, creativity, now, job_id, user["id"]),
+        )
+        await db.commit()
+
+        cursor = await db.execute("SELECT * FROM jobs WHERE id=?", (job_id,))
+        updated_row = await cursor.fetchone()
+    finally:
+        await db.close()
+
+    # Kick off worker
+    new_task = schedule_background_task(
+        job_worker(job_id, row["company_name"], row["job_text"], model, creativity, user_id=user["id"])
+    )
+    _job_tasks[job_id] = new_task
+    logger.info("Job %s regenerating with model=%s creativity=%d", job_id, model, creativity)
+
+    return _row_to_response(updated_row)
 
 
 # ---------------------------------------------------------------------------

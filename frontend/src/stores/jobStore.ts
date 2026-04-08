@@ -84,14 +84,26 @@ export const useJobStore = defineStore('jobs', () => {
   }
 
   async function regenerateJob(job: JobResponse, model?: string, creativityLevel?: number): Promise<string> {
-    if (!job.job_text) throw new Error('Job text not available for regeneration')
-    return submitJob({
-      company_name: job.company_name,
-      job_link: job.job_link ?? undefined,
-      job_text: job.job_text,
-      model: model ?? job.model,
-      creativity_level: creativityLevel ?? job.creativity_level,
+    const res = await apiFetch(`/api/jobs/${job.id}/regenerate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: model ?? null,
+        creativity_level: creativityLevel ?? null,
+      }),
     })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error((body as { detail?: string }).detail ?? `Regenerate failed: ${res.status}`)
+    }
+    const updated: JobResponse = await res.json()
+    // Update store
+    if (currentJob.value?.id === job.id) {
+      currentJob.value = updated
+    }
+    const idx = jobs.value.findIndex((j) => j.id === job.id)
+    if (idx !== -1) jobs.value[idx] = updated
+    return job.id
   }
 
   async function downloadPdf(jobId: string, companyName: string): Promise<void> {
