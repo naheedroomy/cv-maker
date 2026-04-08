@@ -122,20 +122,30 @@ team's specific stack is fine. Frame as enthusiasm, not deficiency. \
 ---
 ANTI-AI WRITING RULES (mandatory — violations will be caught in the self-critique step):
 
+IMPORTANT: The GOOD examples below illustrate patterns, not templates to copy. \
+Write your own sentences using the CANDIDATE'S actual experience from the tailored CV. \
+Never echo these example phrases in your output.
+
 1. NO SIGNIFICANCE INFLATION: Never use "pivotal", "testament to", "underscores",
    "crucial role", "shaping the future of". Say what happened, not how important it was.
    BAD: "This role is a pivotal opportunity to shape the future of cloud infrastructure."
-   GOOD: "You need someone to migrate 200 services to Kubernetes. I did that at Sysco."
+   GOOD: "You need someone to migrate 200 services to Kubernetes. I did exactly that at my last role."
+   GOOD: "Your team needs a data pipeline that handles 50M events/day. I built one at my previous company."
+   GOOD: "The job description mentions scaling API traffic. I took our gateway from 2K to 40K RPS."
 
 2. NO PROMOTIONAL LANGUAGE: Never use "passionate about", "thrilled to apply",
    "committed to excellence", "vibrant", "showcase". These are AI tells.
    BAD: "I am passionate about cloud-native technologies and thrilled to apply."
-   GOOD: "I like building things that stay up. Kubernetes and I get along."
+   GOOD: "I like building things that stay up."
+   GOOD: "Distributed systems are what I do best."
+   GOOD: "I've spent 3 years making deploys boring. That's a compliment."
 
 3. SIMPLE VERBS: "I built" not "I spearheaded the development of". "I fixed" not
    "I addressed challenges in". "I connect X and Y" not "I serve as the bridge between X and Y".
    BAD: "I spearheaded the development of a comprehensive observability platform."
-   GOOD: "I built the observability platform. Datadog dashboards, alert routing, the whole stack."
+   GOOD: "I built the observability stack. Dashboards, alert routing, on-call runbooks."
+   GOOD: "I wrote the migration script and ran it in prod on a Tuesday afternoon."
+   GOOD: "I set up the CI pipeline. Took two days, saved the team four hours a week."
 
 4. NO RULE-OF-THREE CLUSTERS: Never list three abstract nouns together.
    BAD: "innovation, collaboration, and impact"
@@ -144,7 +154,10 @@ ANTI-AI WRITING RULES (mandatory — violations will be caught in the self-criti
 5. NO GENERIC CONCLUSIONS: Never write "I look forward to the opportunity to discuss"
    or "I would welcome the chance to contribute". End with something specific.
    BAD: "I look forward to discussing how I can contribute to your team."
-   GOOD: "Happy to walk through the K8s migration timeline. My calendar's open."
+   GOOD: "Happy to walk through the GitOps migration in detail."
+   GOOD: "Let me know if you want to dig into the CI/CD architecture."
+   GOOD: "I can demo the self-healing cluster setup if that's useful."
+   Pick a closing that references YOUR specific work, not a template.
 
 6. NO PARTICIPIAL PADDING: Never tack on "leveraging", "contributing to",
    "fostering", "showcasing", "emphasizing". These are filler.
@@ -162,7 +175,10 @@ ANTI-AI WRITING RULES (mandatory — violations will be caught in the self-criti
 
 10. SPECIFICITY OVER SCOPE: Concrete facts beat broad claims.
     BAD: "I have extensive experience in cloud infrastructure."
-    GOOD: "I ran 340 pods across 3 clusters at Sysco Labs for 2 years."
+    GOOD: "I managed 12 microservices across two regions for 18 months."
+    GOOD: "Our team shipped weekly to 50K users. I owned the release pipeline."
+    GOOD: "I cut deploy time from 45 minutes to 6 by rewriting the build step."
+    Use numbers, timeframes, and outcomes from the candidate's actual experience.
 
 11. NO EM DASHES OR EM DASH SUBSTITUTES: Do not use em dashes (—) at all. Zero.
     Also do not simulate em dashes with parenthetical injections mid-sentence.
@@ -174,16 +190,17 @@ ANTI-AI WRITING RULES (mandatory — violations will be caught in the self-criti
 12. NO ABSTRACT ENTHUSIASM: Do not write "I am eager to learn" or "excited to grow."
     If you want to express interest in learning something, name the specific thing.
     BAD: "I am eager to learn and grow with your team."
-    GOOD: "Keen to dig into Helmfile. I've done similar work with plain Helm charts."
+    GOOD: "Keen to dig into your service mesh setup. I've done similar work with Istio."
+    GOOD: "Haven't used Pulumi yet but I've written enough Terraform to pick it up fast."
 
 13. NO ACHIEVEMENT CHAINS OR BULLET-LIST-IN-DISGUISE: Do not string 3+ achievements
     into one sentence with commas or semicolons. Also do not write consecutive
     "I [verb]..." sentences. That is a bullet list with periods instead of bullet points.
     BAD: "I engineered CI/CD pipelines, built GitOps workflows, and integrated monitoring."
     BAD: "I've managed clusters. I've built pipelines. I've scaled services. I've operated databases."
-    GOOD: "I engineered zero-touch CI/CD pipelines with GitHub Actions. On the IaC side,
-    I built GitOps workflows with ArgoCD and Terraform that made every AWS environment
-    reproducible."
+    GOOD: "I set up the CI/CD pipeline with GitHub Actions. On the infrastructure side,
+    I wrote Terraform modules that made every environment reproducible from a single
+    config file."
     The cover letter is not a CV summary. 2-3 proof points max. Go deep, not wide.
     Vary sentence structure. Use transitions. Connect achievements to their needs.
 
