@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     model            TEXT NOT NULL DEFAULT 'claude-haiku',
     creativity_level INTEGER NOT NULL DEFAULT 2,
     applied          INTEGER NOT NULL DEFAULT 0,
+    applied_at       TEXT,
     cover_letter_text TEXT,
     cover_letter_notes TEXT,
     cover_letter_model TEXT,
@@ -109,6 +110,8 @@ async def init_db(db_path: Path | None = None) -> None:
             await db.execute("ALTER TABLE jobs ADD COLUMN cv_history_json TEXT")
         if "cl_history_json" not in columns:
             await db.execute("ALTER TABLE jobs ADD COLUMN cl_history_json TEXT")
+        if "applied_at" not in columns:
+            await db.execute("ALTER TABLE jobs ADD COLUMN applied_at TEXT")
 
         # Seed placeholder local user (idempotent)
         await db.execute(

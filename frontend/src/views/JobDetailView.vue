@@ -149,6 +149,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
         :class="{ 'applied-toggle--active': currentJob.applied }"
         @click="store.toggleApplied(jobId)"
       >{{ currentJob.applied ? 'Applied' : 'Not Applied' }}</button>
+      <span v-if="currentJob.applied && currentJob.applied_at" class="applied-date">{{ new Date(currentJob.applied_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</span>
     </div>
     <a
       v-if="currentJob.job_link"
@@ -414,6 +415,16 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   background: #dcfce7;
   border-color: #16a34a;
   color: #16a34a;
+}
+
+.applied-date {
+  font-size: 11px;
+  font-weight: 600;
+  color: #16a34a;
+  background: #dcfce7;
+  border: 1px solid #16a34a;
+  border-radius: 4px;
+  padding: 2px 8px;
 }
 
 .company-heading {

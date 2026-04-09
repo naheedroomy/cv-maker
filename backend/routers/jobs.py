@@ -42,6 +42,7 @@ def _row_to_response(row) -> JobResponse:
         model=row["model"],
         creativity_level=row["creativity_level"],
         applied=bool(row["applied"]),
+        applied_at=row["applied_at"] if "applied_at" in row.keys() else None,
         status=row["status"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],
@@ -287,9 +288,10 @@ async def toggle_applied(job_id: str, user: dict = Depends(get_current_user)) ->
             raise HTTPException(status_code=404, detail="Job not found")
 
         new_val = 0 if row["applied"] else 1
+        applied_at = None if new_val == 0 else datetime.now(timezone.utc).isoformat()
         await db.execute(
-            "UPDATE jobs SET applied=? WHERE id=? AND user_id=?",
-            (new_val, job_id, user["id"]),
+            "UPDATE jobs SET applied=?, applied_at=? WHERE id=? AND user_id=?",
+            (new_val, applied_at, job_id, user["id"]),
         )
         await db.commit()
 

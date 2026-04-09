@@ -86,6 +86,7 @@ export interface JobResponse {
   model: string
   creativity_level: number
   applied: boolean
+  applied_at: string | null
   status: JobStatus
   created_at: string
   updated_at: string

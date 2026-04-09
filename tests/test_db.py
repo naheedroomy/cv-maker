@@ -57,6 +57,7 @@ def test_init_db_jobs_table_columns(tmp_path: Path) -> None:
         "updated_at",
         "model",
         "applied",
+        "applied_at",
         "creativity_level",
         "cover_letter_text",
         "cover_letter_notes",

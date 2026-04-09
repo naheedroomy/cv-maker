@@ -24,6 +24,7 @@ class JobResponse(BaseModel):
     model: str = "claude-haiku"
     creativity_level: int = 2
     applied: bool = False
+    applied_at: str | None = None  # ISO 8601 timestamp when applied was toggled to true
     status: str  # one of: pending, running, complete, failed, cancelled
     created_at: str  # ISO 8601 timestamp
     updated_at: str  # ISO 8601 timestamp
