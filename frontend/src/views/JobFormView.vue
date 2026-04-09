@@ -23,7 +23,7 @@ const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
 
 const canSubmit = computed(
-  () => companyName.value.trim() !== '' && jobText.value.trim() !== '' && !submitting.value,
+  () => companyName.value.trim() !== '' && jobLink.value.trim() !== '' && jobText.value.trim() !== '' && !submitting.value,
 )
 
 onMounted(async () => {
@@ -52,7 +52,7 @@ async function handleSubmit(): Promise<void> {
   try {
     const id = await store.submitJob({
       company_name: companyName.value.trim(),
-      job_link: jobLink.value.trim() || undefined,
+      job_link: jobLink.value.trim(),
       job_text: jobText.value.trim(),
       model: selectedModel.value,
       creativity_level: selectedCreativity.value,

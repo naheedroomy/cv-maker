@@ -119,7 +119,7 @@ export interface ClHistoryEntry {
 
 export interface JobCreate {
   company_name: string
-  job_link?: string
+  job_link: string
   job_text: string
   model?: string  // "claude-haiku" (default) or "gemini-flash"
   creativity_level?: number  // 0-5, default 2 (Moderate)

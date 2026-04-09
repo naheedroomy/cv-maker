@@ -29,12 +29,17 @@ interface CvInfo {
 }
 
 const cvInfo = ref<CvInfo | null>(null)
+const searchQuery = ref('')
 
-const sortedJobs = computed(() =>
-  [...jobs.value].sort(
+const sortedJobs = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  const filtered = q
+    ? jobs.value.filter(j => j.company_name.toLowerCase().includes(q))
+    : jobs.value
+  return [...filtered].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  ),
-)
+  )
+})
 
 async function fetchCvInfo() {
   try {
@@ -83,6 +88,14 @@ onUnmounted(() => {
         <RouterLink to="/settings" class="header-link">Settings</RouterLink>
       </div>
     </div>
+    <div v-if="jobs.length > 0" class="search-box">
+      <input
+        v-model="searchQuery"
+        type="text"
+        class="search-input"
+        placeholder="Search jobs..."
+      />
+    </div>
     <nav aria-label="Job sessions">
       <template v-if="sortedJobs.length > 0">
         <SessionEntry
@@ -127,6 +140,28 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.search-box {
+  padding: 8px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.search-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #111827;
+  box-sizing: border-box;
+}
+.search-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
 .sidebar {
   background: #ffffff;
   border-right: 1px solid #e2e8f0;
