@@ -29,10 +29,10 @@
 \phone[mobile]{\VAR{cv.contact.phone|e}}
 \BLOCK{endif}
 \BLOCK{if cv.contact.linkedin}
-\social[linkedin]{\VAR{cv.contact.linkedin|e}}
+\social[linkedin]{\VAR{cv.contact.linkedin|e|replace("https://www.linkedin.com/in/", "")|replace("https://linkedin.com/in/", "")|replace("linkedin.com/in/", "")}}
 \BLOCK{endif}
 \BLOCK{if cv.contact.github}
-\social[github]{\VAR{cv.contact.github|e}}
+\social[github]{\VAR{cv.contact.github|e|replace("https://github.com/", "")|replace("github.com/", "")}}
 \BLOCK{endif}
 \BLOCK{if cv.contact.location}
 \address{\VAR{cv.contact.location|e}}{}{}
