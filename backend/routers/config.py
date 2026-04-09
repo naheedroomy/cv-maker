@@ -50,7 +50,6 @@ async def get_config(authorization: str | None = Header(None, alias="Authorizati
     # Only check user-level keys (DB), not server env vars.
     # Server GEMINI_API_KEY is for PDF parsing only — not for CV tailoring.
     return {
-        "claude_cli_available": _claude_cli_available(),
         "claude_api_available": bool(await get_setting("anthropic_api_key", user_id)),
         "gemini_available": bool(await get_setting("gemini_api_key", user_id)),
         "openai_available": bool(await get_setting("openai_api_key", user_id)),

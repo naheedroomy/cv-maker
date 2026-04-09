@@ -16,9 +16,8 @@ const jobLink = ref('')
 const jobText = ref('')
 const submitting = ref(false)
 const errorMessage = ref<string | null>(null)
-const selectedModel = ref('claude-haiku')
+const selectedModel = ref('gemini-flash')
 const selectedCreativity = ref(2)
-const claudeCliAvailable = ref(true) // optimistic default
 const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
@@ -32,14 +31,12 @@ onMounted(async () => {
     const res = await apiFetch('/api/config')
     if (res.ok) {
       const data = await res.json()
-      claudeCliAvailable.value = data.claude_cli_available !== false
       claudeApiAvailable.value = data.claude_api_available === true
       geminiAvailable.value = data.gemini_available === true
       openaiAvailable.value = data.openai_available === true
       // Auto-select first available model if default is unavailable
-      if (!claudeCliAvailable.value && selectedModel.value === 'claude-haiku') {
+      if (!geminiAvailable.value && selectedModel.value === 'gemini-flash') {
         if (claudeApiAvailable.value) selectedModel.value = 'claude-api'
-        else if (geminiAvailable.value) selectedModel.value = 'gemini-flash'
         else if (openaiAvailable.value) selectedModel.value = 'openai'
       }
     }
@@ -127,7 +124,6 @@ function handleRetry(): void {
 
       <ModelSelector
         v-model="selectedModel"
-        :claude-cli-available="claudeCliAvailable"
         :claude-api-available="claudeApiAvailable"
         :gemini-available="geminiAvailable"
         :openai-available="openaiAvailable"

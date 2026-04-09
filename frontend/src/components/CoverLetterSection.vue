@@ -31,7 +31,6 @@ const saving = ref(false)
 const copied = ref(false)
 const showForm = ref(false)
 
-const claudeCliAvailable = ref(true)
 const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
@@ -51,7 +50,6 @@ onMounted(async () => {
   try {
     const res = await apiFetch('/api/config')
     const data = await res.json() as Record<string, unknown>
-    claudeCliAvailable.value = data.claude_cli_available !== false
     claudeApiAvailable.value = data.claude_api_available === true
     geminiAvailable.value = data.gemini_available === true
     openaiAvailable.value = data.openai_available === true
@@ -167,7 +165,6 @@ function handleRegenerate(): void {
       <div class="form-row">
         <ModelSelector
           v-model="selectedModel"
-          :claude-cli-available="claudeCliAvailable"
           :claude-api-available="claudeApiAvailable"
           :gemini-available="geminiAvailable"
           :openai-available="openaiAvailable"

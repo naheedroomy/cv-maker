@@ -3,7 +3,6 @@ import '@/assets/selector.css'
 
 const props = defineProps<{
   modelValue: string
-  claudeCliAvailable: boolean
   claudeApiAvailable: boolean
   geminiAvailable: boolean
   openaiAvailable: boolean
@@ -15,10 +14,9 @@ const emit = defineEmits<{
 }>()
 
 const options = [
-  { value: 'claude-haiku', label: 'Claude Code', hint: 'Free — uses your Claude Code CLI subscription' },
-  { value: 'claude-api', label: 'Claude API', hint: 'Requires ANTHROPIC_API_KEY (model configurable via CLAUDE_API_MODEL)' },
-  { value: 'gemini-flash', label: 'Gemini', hint: 'Requires GEMINI_API_KEY (model configurable via GEMINI_MODEL)' },
-  { value: 'openai', label: 'OpenAI', hint: 'Requires OPENAI_API_KEY (model configurable via OPENAI_MODEL)' },
+  { value: 'claude-api', label: 'Claude API', hint: 'Requires Anthropic API key (set in Settings)' },
+  { value: 'gemini-flash', label: 'Gemini', hint: 'Requires Gemini API key (set in Settings)' },
+  { value: 'openai', label: 'OpenAI', hint: 'Requires OpenAI API key (set in Settings)' },
 ] as const
 
 function select(model: string): void {
@@ -28,24 +26,20 @@ function select(model: string): void {
 }
 
 function hintText(): string {
-  if (props.modelValue === 'claude-haiku' && !props.claudeCliAvailable) {
-    return 'Claude Code CLI not available — install and login, or mount ~/.claude in Docker.'
-  }
   if (props.modelValue === 'claude-api' && !props.claudeApiAvailable) {
-    return 'Claude API requires ANTHROPIC_API_KEY — not configured.'
+    return 'Set your Anthropic API key in Settings.'
   }
   if (props.modelValue === 'gemini-flash' && !props.geminiAvailable) {
-    return 'Gemini requires GEMINI_API_KEY — not configured.'
+    return 'Set your Gemini API key in Settings.'
   }
   if (props.modelValue === 'openai' && !props.openaiAvailable) {
-    return 'OpenAI requires OPENAI_API_KEY — not configured.'
+    return 'Set your OpenAI API key in Settings.'
   }
   const opt = options.find(o => o.value === props.modelValue)
   return opt ? opt.hint : ''
 }
 
 function isDisabledOption(value: string): boolean {
-  if (value === 'claude-haiku' && !props.claudeCliAvailable) return true
   if (value === 'claude-api' && !props.claudeApiAvailable) return true
   if (value === 'gemini-flash' && !props.geminiAvailable) return true
   if (value === 'openai' && !props.openaiAvailable) return true
