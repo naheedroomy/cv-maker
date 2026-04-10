@@ -181,6 +181,9 @@ onUnmounted(() => {
     transform: translateX(-100%);
     transition: transform 200ms ease;
   }
+  .sidebar.sidebar--open {
+    transform: translateX(0);
+  }
 }
 .sidebar-header {
   padding: 16px;

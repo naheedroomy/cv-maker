@@ -92,10 +92,6 @@ watch(() => route.fullPath, () => {
     grid-template-columns: 1fr;
   }
 
-  .sidebar--open {
-    transform: translateX(0);
-  }
-
   .sidebar-overlay {
     display: block;
     position: fixed;
