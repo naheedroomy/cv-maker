@@ -172,6 +172,16 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
 }
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    z-index: 100;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+  }
+}
 .sidebar-header {
   padding: 16px;
   border-bottom: 1px solid #e2e8f0;
