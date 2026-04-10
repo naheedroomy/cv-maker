@@ -92,16 +92,6 @@ watch(() => route.fullPath, () => {
     grid-template-columns: 1fr;
   }
 
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 100;
-    width: 280px;
-    transform: translateX(-100%);
-    transition: transform 200ms ease;
-  }
-
   .sidebar--open {
     transform: translateX(0);
   }
