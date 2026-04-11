@@ -195,7 +195,13 @@ _RULES: dict[str, dict[int, str]] = {
         3: (
             "Aggressively surface implicit connections. If the candidate's experience plausibly "
             "includes a requirement, make that connection explicit. Add short new bullets "
-            "rather than inflating existing ones."
+            "rather than inflating existing ones.\n"
+            "SOFT FABRICATION: You MAY rewrite 1-2 bullets per role to swap equivalent "
+            "technologies to match the target stack (see SUBSTITUTION rules below). You MAY "
+            "also add 1-2 new bullets per role claiming hands-on experience with the target "
+            "stack IF the candidate has demonstrable equivalent experience. Keep fabricated "
+            "bullets concise, realistic, and interview-defensible. The candidate reviews all "
+            "fabricated content before submission."
         ),
         4: (
             "Actively fill gaps. For 'missing' requirements, you MAY add short bullets claiming "
@@ -232,9 +238,18 @@ _RULES: dict[str, dict[int, str]] = {
         1: "Keep the summary closely aligned with the base CV's original framing.",
         2: (
             "Position the candidate to match the role's core identity. Reflect seniority signals "
-            "like ownership and cross-team impact. Prioritize the top 3 themes from the job description."
+            "like ownership and cross-team impact. Prioritize the top 3 themes from the job description.\n"
+            "Use Chain of Density: draft a summary, then compress by replacing filler adjectives "
+            "with specific entities (tools, metrics, domain terms) from the base CV WITHOUT "
+            "increasing word count. Final summary: 2-4 sentences of dense, factual text. "
+            "No hollow phrases like 'results-driven professional' or 'proven track record'."
         ),
-        3: "Be assertive in positioning the candidate as a strong fit for the role.",
+        3: (
+            "Be assertive in positioning the candidate as a strong fit for the role.\n"
+            "Use Chain of Density: draft, then compress — replace every filler adjective with a "
+            "specific tool, metric, or domain term. 2-4 dense sentences. If a phrase could apply "
+            "to any engineer, cut it and replace with something only THIS candidate can claim."
+        ),
         4: "The summary should position the candidate as an excellent fit.",
         5: "The summary should present the candidate as a perfect fit.",
     },
@@ -300,6 +315,39 @@ _RULES: dict[str, dict[int, str]] = {
         # Levels 3-5 inherit level 2 inference rules — the bullet rules above
         # govern what the model is allowed to DO with those inferences.
     },
+    "substitution": {
+        0: "Do NOT substitute any technologies, tools, or platforms.",
+        2: "Do NOT substitute any technologies, tools, or platforms.",
+        3: (
+            "STACK SUBSTITUTION — swap equivalent technologies when the JD requires a different "
+            "tool than the candidate used. Valid swap categories:\n"
+            "- Cloud providers: AWS <-> GCP <-> Azure (EC2/Compute Engine/VM, S3/GCS/Blob Storage, "
+            "EKS/GKE/AKS, RDS/Cloud SQL/Azure SQL, Lambda/Cloud Functions/Azure Functions, "
+            "SQS/Pub-Sub/Service Bus, CloudWatch/Cloud Monitoring/Azure Monitor, "
+            "CloudFormation/Deployment Manager/ARM Templates, IAM/IAM/Entra ID)\n"
+            "- CI/CD: GitHub Actions <-> GitLab CI <-> Jenkins <-> CircleCI <-> Azure DevOps\n"
+            "- IaC: Terraform <-> Pulumi <-> CloudFormation <-> CDK <-> ARM Templates\n"
+            "- Monitoring: Datadog <-> Prometheus+Grafana <-> New Relic <-> Dynatrace\n"
+            "- Databases: PostgreSQL <-> MySQL <-> SQL Server (relational); "
+            "Redis <-> Memcached (cache); MongoDB <-> DynamoDB <-> Firestore (document)\n"
+            "- Messaging: Kafka <-> RabbitMQ <-> SQS <-> Pub/Sub\n"
+            "Rules:\n"
+            "- Swap the technology name but keep the achievement, metrics, and scope intact.\n"
+            "- You MAY add 1-2 new bullets per role using the target stack IF the candidate "
+            "has equivalent experience. Keep them concise and interview-defensible.\n"
+            "- MANDATORY: document every swap in tailoring_notes with action 'substituted' "
+            "and every added bullet with action 'soft-fabricated'. The source field MUST name "
+            "the original technology and the equivalence basis.\n"
+            "- Do NOT swap across categories (e.g., do not swap a database for a message queue).\n"
+            "- Do NOT fabricate metrics, team sizes, or project scopes — only swap tool names."
+        ),
+        4: (
+            "All Level 3 substitution rules apply. Additionally, you MAY make broader "
+            "technology swaps even without direct equivalence, as long as the candidate's "
+            "experience demonstrates the underlying patterns and concepts."
+        ),
+        5: "Unrestricted technology substitution and fabrication.",
+    },
 }
 
 
@@ -330,11 +378,14 @@ def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> 
     reorder_rule = _resolve_rule("reorder", level)
     core_comp_rule = _resolve_rule("core_competencies", level)
     pruning_rule = _resolve_rule("pruning", level)
+    substitution_rule = _resolve_rule("substitution", level)
 
     level_label = Creativity(level).name
 
     prompt = f"""\
-You are a CV tailoring expert. Given a candidate's base CV and a job listing, produce a tailored CV and gap analysis.
+You are a no-nonsense CV optimizer. You despise corporate fluff, filler adjectives, and \
+AI-sounding prose. Your job is to make this CV hit hard with specific facts and metrics, \
+not vague claims. Every word must earn its place.
 
 CREATIVITY LEVEL: {level} ({level_label})
 
@@ -376,6 +427,14 @@ Additional constraints:
 - Skills and highlighted_technologies: plain names only — no parenthetical qualifiers or "alternative:" annotations.
 {tone_rule}
 
+BULLET REWRITING EXAMPLES (style anchor — mimic the transformation pattern, not the content):
+
+BEFORE: "Responsible for managing cloud infrastructure and ensuring system reliability across multiple environments"
+AFTER: "Managed 40+ EC2 instances across 3 AWS regions. 99.95% uptime over 18 months."
+
+BEFORE: "Developed and implemented comprehensive CI/CD pipelines that significantly improved deployment efficiency for the engineering team"
+AFTER: "Built CI/CD pipeline with **GitHub Actions**. Cut deploy time from 45 min to 6 min. Team shipped daily instead of weekly."
+
 BULLET ORDERING:
 {reorder_rule}
 
@@ -384,6 +443,9 @@ PRUNING POLICY:
 
 IMPLICIT INFERENCE RULES:
 {inference_rule}
+
+SUBSTITUTION:
+{substitution_rule}
 
 SKILLS: Filter and reorder to lead with the most relevant.
 {skills_rule}
@@ -404,8 +466,10 @@ Each note must include:
 - "section": which CV section was changed
 - "change": what was changed
 - "reason": which job requirement it targets
-- "action": one of "modified", "added", "removed", "reordered", "unchanged"
+- "action": one of "modified", "added", "removed", "reordered", "unchanged", "substituted", "soft-fabricated"
 - "source": the base CV reference or inference rule that justifies the change
+For "substituted": source MUST name the original technology (e.g., "AWS EC2 -> GCP Compute Engine")
+For "soft-fabricated": source MUST explain the equivalence basis (e.g., "Candidate has 3 years AWS; GCP equivalent added for JD alignment")
 
 ---
 ALIGNMENT CHECKS (apply before producing output):
@@ -494,6 +558,7 @@ def _build_system_prompt_for_chat(creativity_level: int = 2) -> str:
     reorder_rule = _resolve_rule("reorder", level)
     core_comp_rule = _resolve_rule("core_competencies", level)
     pruning_rule = _resolve_rule("pruning", level)
+    substitution_rule = _resolve_rule("substitution", level)
 
     return f"""\
 IMPORTANT — think step-by-step before producing the JSON output:
@@ -508,7 +573,9 @@ Now produce the JSON output following all instructions below.
 
 ---
 
-You are a CV tailoring expert. Given a candidate's base CV and a job listing, produce a tailored CV and gap analysis.
+You are a no-nonsense CV optimizer. You despise corporate fluff, filler adjectives, and \
+AI-sounding prose. Your job is to make this CV hit hard with specific facts and metrics, \
+not vague claims. Every word must earn its place.
 
 CREATIVITY LEVEL: {level} ({level_label})
 
@@ -530,6 +597,14 @@ EXPERIENCE:
 - Skills and highlighted_technologies: plain names only — no parenthetical qualifiers.
 {tone_rule}
 
+BULLET REWRITING EXAMPLES (style anchor — mimic the transformation pattern, not the content):
+
+BEFORE: "Responsible for managing cloud infrastructure and ensuring system reliability across multiple environments"
+AFTER: "Managed 40+ EC2 instances across 3 AWS regions. 99.95% uptime over 18 months."
+
+BEFORE: "Developed and implemented comprehensive CI/CD pipelines that significantly improved deployment efficiency for the engineering team"
+AFTER: "Built CI/CD pipeline with **GitHub Actions**. Cut deploy time from 45 min to 6 min. Team shipped daily instead of weekly."
+
 BULLET ORDERING:
 {reorder_rule}
 
@@ -538,6 +613,9 @@ PRUNING POLICY:
 
 INFERENCE RULES:
 {inference_rule}
+
+SUBSTITUTION:
+{substitution_rule}
 
 SKILLS: {skills_rule}
 
@@ -549,7 +627,9 @@ CORE COMPETENCIES:
 EDUCATION, PROJECTS, CERTIFICATIONS, LANGUAGES: Pass through unchanged. Include ALL certifications — both earned AND expected/upcoming. NEVER drop any. Languages and work_authorization are direct copies.
 CONTACT: Pass through unchanged.
 
-TAILORING NOTES (5-10): Each with section, change, reason, action (modified/added/removed/reordered/unchanged), source.
+TAILORING NOTES (5-10): Each with section, change, reason, action (modified/added/removed/reordered/unchanged/substituted/soft-fabricated), source.
+For "substituted": source MUST name the original technology (e.g., "AWS EC2 -> GCP Compute Engine").
+For "soft-fabricated": source MUST explain the equivalence basis.
 
 GAP ANALYSIS: 10-15 requirements, each with requirement, match_level, tier, evidence.
 Tier prioritization guides EMPHASIS, not ELIMINATION.

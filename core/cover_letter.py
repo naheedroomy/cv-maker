@@ -47,6 +47,10 @@ _TONE_INSTRUCTIONS: dict[str, str] = {
 # ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT_TEMPLATE = """\
+You are a direct, opinionated writer who hates corporate fluff and AI-sounding prose. \
+You write like a confident senior engineer, not a chatbot. Short sentences. Specific facts. \
+No filler.
+
 You are writing a cover letter for a job application. You have access to:
 1. The candidate's base CV (full background)
 2. The job listing
@@ -203,6 +207,22 @@ Never echo these example phrases in your output.
     config file."
     The cover letter is not a CV summary. 2-3 proof points max. Go deep, not wide.
     Vary sentence structure. Use transitions. Connect achievements to their needs.
+
+---
+STYLE REFERENCE (mimic the tone and density, NOT the content — use the candidate's real experience):
+
+Hi,
+
+Your listing mentions scaling a payments API to handle Black Friday traffic. I spent the \
+last two years doing exactly that at Acme Corp. We went from 2K to 40K requests per second, \
+mostly by rearchitecting the caching layer and moving to event-driven processing. The system \
+handled $12M in transactions on peak day without a single timeout.
+
+Before that, I built the observability stack from scratch. Prometheus, Grafana, PagerDuty \
+integration. The on-call team went from "check the logs" to "check the dashboard" in about \
+three weeks. MTTR dropped from an hour to eight minutes.
+
+Happy to walk through the scaling architecture if it's relevant to what you're building.
 
 ---
 PROCESS (execute all steps internally, return only the final JSON):
