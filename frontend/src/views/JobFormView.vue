@@ -21,6 +21,7 @@ const selectedCreativity = ref(2)
 const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
+const geminiWebAvailable = ref(false)
 
 const canSubmit = computed(
   () => companyName.value.trim() !== '' && jobLink.value.trim() !== '' && jobText.value.trim() !== '' && !submitting.value,
@@ -34,6 +35,7 @@ onMounted(async () => {
       claudeApiAvailable.value = data.claude_api_available === true
       geminiAvailable.value = data.gemini_available === true
       openaiAvailable.value = data.openai_available === true
+      geminiWebAvailable.value = data.gemini_web_available === true
       // Auto-select first available model if default is unavailable
       if (!geminiAvailable.value && selectedModel.value === 'gemini-flash') {
         if (claudeApiAvailable.value) selectedModel.value = 'claude-api'
@@ -127,6 +129,7 @@ function handleRetry(): void {
         :claude-api-available="claudeApiAvailable"
         :gemini-available="geminiAvailable"
         :openai-available="openaiAvailable"
+        :gemini-web-available="geminiWebAvailable"
         :disabled="submitting"
       />
 

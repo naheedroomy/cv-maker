@@ -6,6 +6,7 @@ const props = defineProps<{
   claudeApiAvailable: boolean
   geminiAvailable: boolean
   openaiAvailable: boolean
+  geminiWebAvailable: boolean
   disabled: boolean
 }>()
 
@@ -17,6 +18,7 @@ const options = [
   { value: 'claude-api', label: 'Claude API', hint: 'Requires Anthropic API key (set in Settings)' },
   { value: 'gemini-flash', label: 'Gemini', hint: 'Requires Gemini API key (set in Settings)' },
   { value: 'openai', label: 'OpenAI', hint: 'Requires OpenAI API key (set in Settings)' },
+  { value: 'gemini-web', label: 'Gemini Web', hint: 'Requires Gemini web cookie (set in Settings)' },
 ] as const
 
 function select(model: string): void {
@@ -35,6 +37,9 @@ function hintText(): string {
   if (props.modelValue === 'openai' && !props.openaiAvailable) {
     return 'Set your OpenAI API key in Settings.'
   }
+  if (props.modelValue === 'gemini-web' && !props.geminiWebAvailable) {
+    return 'Set your Gemini web cookie (__Secure-1PSID) in Settings.'
+  }
   const opt = options.find(o => o.value === props.modelValue)
   return opt ? opt.hint : ''
 }
@@ -43,6 +48,7 @@ function isDisabledOption(value: string): boolean {
   if (value === 'claude-api' && !props.claudeApiAvailable) return true
   if (value === 'gemini-flash' && !props.geminiAvailable) return true
   if (value === 'openai' && !props.openaiAvailable) return true
+  if (value === 'gemini-web' && !props.geminiWebAvailable) return true
   return false
 }
 </script>
