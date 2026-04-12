@@ -22,6 +22,7 @@ const selectedCreativity = ref(props.currentCreativityLevel)
 const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
+const geminiWebAvailable = ref(false)
 
 // Fetch provider config on mount
 onMounted(() => {
@@ -31,6 +32,7 @@ onMounted(() => {
       claudeApiAvailable.value = data.claude_api_available === true
       geminiAvailable.value = data.gemini_available === true
       openaiAvailable.value = data.openai_available === true
+      geminiWebAvailable.value = data.gemini_web_available === true
     })
     .catch(() => {})
 })
@@ -67,6 +69,7 @@ function handleRegenerate(): void {
         :claude-api-available="claudeApiAvailable"
         :gemini-available="geminiAvailable"
         :openai-available="openaiAvailable"
+        :gemini-web-available="geminiWebAvailable"
         :disabled="disabled"
       />
       <CreativitySlider
