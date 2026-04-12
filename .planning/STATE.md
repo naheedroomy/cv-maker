@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
 status: verifying
-stopped_at: Completed 1006-01-PLAN.md
-last_updated: "2026-04-07T19:10:30.896Z"
+stopped_at: Completed 1007-02-PLAN.md
+last_updated: "2026-04-12T20:42:48.456Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 8
-  completed_phases: 7
-  total_plans: 19
-  completed_plans: 19
+  completed_phases: 1
+  total_plans: 6
+  completed_plans: 16
   percent: 100
 ---
 
@@ -84,6 +84,7 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1006]: Single nginx.conf for dev+prod — Cloudflare set_real_ip_from directives harmless locally, server_name _ wildcard covers both
 - [Phase 1006]: Cloudflare Flexible SSL — no cert management on VPS, TLS terminates at Cloudflare edge
 - [Phase 1006]: Matrix build + GHCR images with latest+SHA tags, GHA layer caching, SSH deploy with health verification — TeX Live layer ~1.2GB requires parallel builds; dual tags enable rollback; GHA caching avoids rebuilding massive layers
+- [Phase 1007]: Cookie field uses textarea (not input) for ~200+ character __Secure-1PSID values; gemini_web_psid in apiKeyFields for masked-value save protection
 
 ### Quick Tasks Completed
 
@@ -116,6 +117,7 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1005 P02 | 87s | 4 tasks | 4 files |
 | Phase 1006 P02 | 1min | 2 tasks | 2 files |
 | Phase 1006 P01 | 1min | 3 tasks | 3 files |
+| Phase 1007 P02 | 327 | 2 tasks | 6 files |
 
 ### Roadmap Evolution
 
@@ -124,6 +126,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T19:05:12.305Z
-Stopped at: Completed 1006-01-PLAN.md
+Last session: 2026-04-12T20:42:37.465Z
+Stopped at: Completed 1007-02-PLAN.md
 Resume file: None
