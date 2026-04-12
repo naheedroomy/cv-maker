@@ -12,9 +12,11 @@ interface Settings {
   anthropic_api_key: string
   gemini_api_key: string
   openai_api_key: string
+  gemini_web_psid: string
+  gemini_web_model: string
 }
 
-const activeTab = ref<'general' | 'claude-cli' | 'claude-api' | 'gemini' | 'openai'>('general')
+const activeTab = ref<'general' | 'claude-cli' | 'claude-api' | 'gemini' | 'openai' | 'gemini-web'>('general')
 const settings = ref<Settings>({
   claude_cli_model: 'haiku',
   claude_api_model: 'claude-haiku-4-5',
@@ -25,6 +27,8 @@ const settings = ref<Settings>({
   anthropic_api_key: '',
   gemini_api_key: '',
   openai_api_key: '',
+  gemini_web_psid: '',
+  gemini_web_model: 'gemini-3-pro',
 })
 const saving = ref(false)
 const saved = ref(false)
@@ -49,7 +53,7 @@ async function handleSave() {
     // Build payload: if an API key field still shows a masked value (***xxxx),
     // omit it so the backend doesn't overwrite the stored key with the masked string.
     const payload: Partial<Settings> = { ...settings.value }
-    const apiKeyFields = ['anthropic_api_key', 'gemini_api_key', 'openai_api_key'] as const
+    const apiKeyFields = ['anthropic_api_key', 'gemini_api_key', 'openai_api_key', 'gemini_web_psid'] as const
     for (const field of apiKeyFields) {
       if (payload[field]?.startsWith('***')) {
         delete payload[field]
@@ -77,6 +81,7 @@ const tabs = [
   { key: 'claude-api' as const, label: 'Claude API' },
   { key: 'gemini' as const, label: 'Gemini' },
   { key: 'openai' as const, label: 'OpenAI' },
+  { key: 'gemini-web' as const, label: 'Gemini Web' },
 ]
 </script>
 
@@ -162,6 +167,39 @@ const tabs = [
         <label class="field-label">API Key</label>
         <input v-model="settings.openai_api_key" type="password" class="field-input" placeholder="sk-..." />
         <p class="field-hint">OpenAI API key. Overrides <code>.env</code> value if set. Masked after save.</p>
+      </div>
+    </div>
+
+    <!-- Gemini Web -->
+    <div v-if="activeTab === 'gemini-web'" class="tab-content">
+      <div class="field">
+        <label class="field-label">Browser Cookie (__Secure-1PSID)</label>
+        <textarea
+          v-model="settings.gemini_web_psid"
+          class="field-input field-textarea"
+          rows="3"
+          placeholder="Paste your __Secure-1PSID cookie value here"
+        ></textarea>
+        <p class="field-hint">
+          To get this cookie: open <code>gemini.google.com</code> in your browser while signed in,
+          press F12, go to the Network tab, click any request, find the <code>Cookie</code> header,
+          and copy the value after <code>__Secure-1PSID=</code> (ends at the next semicolon).
+          This is a long string (~200+ characters). Masked after save.
+        </p>
+      </div>
+      <div class="field">
+        <label class="field-label">Model</label>
+        <input v-model="settings.gemini_web_model" class="field-input" placeholder="gemini-3-pro" />
+        <p class="field-hint">Gemini web model name. Examples: gemini-3-pro, gemini-3-flash</p>
+      </div>
+      <div class="field">
+        <label class="field-label">About</label>
+        <p class="field-hint">
+          Gemini Web uses your browser session cookie to access the Gemini web app directly.
+          No API key needed — uses your existing Gemini subscription.
+          The cookie may expire if you sign out of Google or after several weeks.
+          Less reliable than the official Gemini API but free with your subscription.
+        </p>
       </div>
     </div>
 
@@ -255,6 +293,16 @@ const tabs = [
   font-family: 'SF Mono', 'Fira Code', monospace;
   color: #111827;
   transition: border-color 150ms ease;
+}
+
+.field-textarea {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 12px;
+  resize: vertical;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .field-input:focus {
