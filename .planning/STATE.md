@@ -5,12 +5,12 @@ milestone_name: Deploy, Auth & CV Editor
 status: verifying
 stopped_at: Completed 1007-02-PLAN.md
 last_updated: "2026-04-12T20:42:48.456Z"
-last_activity: 2026-04-07
+last_activity: 2026-04-12 -- Phase 1007 execution complete
 progress:
-  total_phases: 8
-  completed_phases: 1
-  total_plans: 6
-  completed_plans: 16
+  total_phases: 10
+  completed_phases: 7
+  total_plans: 23
+  completed_plans: 21
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 1006 — cicd-domain-and-https
+**Current focus:** Phase 1007 — add-gemini-webapi-as-new-ai-provider
 
 ## Current Position
 
-Phase: 1006
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-07
+Phase: 1007 (add-gemini-webapi-as-new-ai-provider) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 1007
+Last activity: 2026-04-12 -- Phase 1007 execution started
 
 Progress: [██████████] 100%
 
@@ -123,6 +123,7 @@ Archived to PROJECT.md Key Decisions table.
 
 - Phase 999.1 added (backlog): Visual template selector in Settings
 - Phase 1000 added: Cover Letter Generator
+- Phase 1007 added: Add gemini-webapi as new AI provider
 
 ## Session Continuity
 
