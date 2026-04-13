@@ -37,6 +37,8 @@ logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
     datefmt="%Y-%m-%dT%H:%M:%S",
 )
+# Silence noisy frame-parsing debug spam from gemini-webapi internals
+logging.getLogger("gemini_webapi.utils.parsing").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
