@@ -26,6 +26,8 @@ An AI-powered CV tailoring pipeline that takes a structured base CV and a job li
 | Model: `haiku` | latest | LLM for CV tailoring | Fastest Claude model; invoked via `claude -p --model haiku --no-session-persistence`; sufficient quality for CV rewriting tasks. |
 | `google-genai` | >=1.70.0 | Gemini SDK — secondary AI provider for CV tailoring | Strategy pattern abstraction; Gemini 3.1 Flash-Lite Preview as alternative to Claude CLI; requires GEMINI_API_KEY. |
 | Model: `gemini-3.1-flash-lite-preview` | latest | Secondary LLM for CV tailoring | Faster alternative via API; selected in frontend model dropdown; lazy API key loading. |
+| `gemini-webapi` | 2.0.0 | Gemini web app provider -- reverse-engineered async wrapper using browser cookies | Cookie-based auth via `__Secure-1PSID`; free with Gemini subscription; no API key; `gemini-3-flash` default model; async-in-sync pattern via `asyncio.run()` inside thread pool. |
+| Model: `gemini-3-flash` | latest | Default model for Gemini Web provider | Selected via `gemini-webapi` library; web app model identifiers; user-configurable in Settings. |
 
 ### Structured Data Layer (Base CV)
 | Technology | Version | Purpose | Why |
@@ -62,7 +64,7 @@ An AI-powered CV tailoring pipeline that takes a structured base CV and a job li
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
 | `python-dotenv` | >=1.2.2 | Load `.env` file into environment at startup | Enables local GEMINI_API_KEY config without exporting in shell; `load_dotenv()` called in `backend/main.py` before FastAPI app initialization. |
-| Environment variables | — | Runtime configuration | `GEMINI_API_KEY` for Gemini provider (optional — graceful degradation). Claude CLI uses existing subscription (no key needed). |
+| Environment variables | — | Runtime configuration | `GEMINI_API_KEY` for Gemini provider; `GEMINI_WEB_PSID` for Gemini Web provider (cookie-based auth). Claude CLI uses existing subscription (no key needed). |
 
 ### Developer Tooling
 | Technology | Version | Purpose | Why |
@@ -77,6 +79,7 @@ An AI-powered CV tailoring pipeline that takes a structured base CV and a job li
 |----------|-------------|-------------|---------|
 | AI provider | Claude Code CLI (primary) | Gemini 3.1 Flash-Lite (secondary) | Both supported via strategy pattern; Claude is free with subscription, Gemini requires API key but is faster |
 | AI provider | Claude Code CLI | OpenAI API | Same reason — CLI approach avoids SDK dependencies and API key overhead |
+| AI provider | `google-genai` (official API) | `gemini-webapi` (reverse-engineered) | Cookie auth is fragile (periodic re-extraction); no structured JSON mode; ToS grey area; AGPL-3.0 license; but free with existing subscription and no API key needed |
 | UI framework | Vue 3 + Vite | Streamlit | Streamlit lacks component-level control, real routing, and state management needed for job queue UI with polling |
 | UI framework | Vue 3 + Vite | React + Vite | Vue's composition API and SFC model are simpler for a solo-dev project of this size |
 | Backend | FastAPI | Flask | FastAPI is async-native; automatic OpenAPI docs; built-in Pydantic integration |
@@ -113,6 +116,7 @@ which latexmk
 | latexmk via subprocess + tempfile | MEDIUM | Multiple technical sources; latexmk is MacTeX bundled | Correct approach; latexmk must be verified installed on target machine |
 | `uv` as package manager | HIGH | Official Astral docs + widespread community adoption in 2025 | |
 | `google-genai` + Gemini 3.1 Flash-Lite | HIGH | pyproject.toml + working provider | Strategy pattern provider; lazy API key; parse-retry with Pydantic validation |
+| `gemini-webapi` 2.0.0 (Gemini Web) | MEDIUM | pyproject.toml + working provider | Reverse-engineered wrapper; can break when Google changes web app; cookie auth requires periodic re-extraction; output sanitization handles Gemini markdown quirks |
 
 ## Sources
 - [Claude Code CLI docs](https://docs.anthropic.com/en/docs/claude-code)
@@ -127,12 +131,31 @@ which latexmk
 - [Generating reports with Jinja, LaTeX and Docker](https://www.leospairani.com/blog/2024/04/16/generating-reports-with-jinja-latex-and-docker/)
 - [uv documentation](https://docs.astral.sh/uv/)
 - [google-genai SDK](https://pypi.org/project/google-genai/)
+- [gemini-webapi (HanaokaYuzu/Gemini-API)](https://github.com/HanaokaYuzu/Gemini-API)
 <!-- GSD:stack-end -->
 
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+### Output Sanitization
+
+Gemini Web provider output requires sanitization before JSON parsing (`GeminiWebProvider._sanitize_gemini_output()`):
+- Invalid JSON backslash escapes from Gemini markdown formatting (e.g., `\_`, `\>`, `\*`) are stripped via regex -- JSON only allows `\"`, `\\`, `\/`, `\b`, `\f`, `\n`, `\r`, `\t`, `\uXXXX`.
+- Google Search URL wrapping (`[text](url)`) is unwrapped to plain text.
+- Markdown code fences are stripped.
+- Outermost JSON object is extracted by brace-depth matching.
+
+### Annotation Leak Stripping
+
+The `TailoredCV` model includes a `_strip_annotation_leaks` model validator that removes action labels LLMs sometimes leak into bullet text (e.g., `(substituted)`, `(soft fabricated)`, `(added)`, `(removed)`, `(modified)`, `(reordered)`, `(unchanged)`). This runs automatically on all provider output via Pydantic model validation.
+
+### Cookie Health Check
+
+`POST /api/settings/check-gemini-web` validates the stored `__Secure-1PSID` cookie by initializing a `GeminiClient` and sending a trivial prompt. Returns `{"ok": true, "response": "..."}` on success or `{"ok": false, "error": "..."}` on failure. Used by the Settings UI to verify cookie validity before job submission.
+
+### Cover Letter Tones
+
+Available tones for cover letter generation: `formal`, `professional`, `confident`, `direct`, `casual`, `enthusiastic`. Validated by Pydantic regex pattern in `CoverLetterRequest.tone`. Each tone maps to a distinct instruction set in `core/cover_letter.py` `_TONE_INSTRUCTIONS`.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
