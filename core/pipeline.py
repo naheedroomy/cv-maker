@@ -357,6 +357,9 @@ _RULES: dict[str, dict[int, str]] = {
             "- MANDATORY: document every swap in tailoring_notes with action 'substituted' "
             "and every added bullet with action 'soft-fabricated'. The source field MUST name "
             "the original technology and the equivalence basis.\n"
+            "- NEVER put annotations like '(substituted)', '(soft-fabricated)', or any action "
+            "labels inside the actual bullet text. These labels belong ONLY in tailoring_notes. "
+            "The CV bullets must read as natural, clean text with no metadata visible.\n"
             "- Do NOT swap across categories (e.g., do not swap a database for a message queue).\n"
             "- Do NOT fabricate metrics, team sizes, or project scopes — only swap tool names."
         ),

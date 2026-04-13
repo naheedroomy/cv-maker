@@ -4,7 +4,9 @@
 # Source: Pydantic v2 docs — https://docs.pydantic.dev/latest/concepts/models/
 from __future__ import annotations
 
-from pydantic import BaseModel, field_validator
+import re
+
+from pydantic import BaseModel, field_validator, model_validator
 
 # ---------------------------------------------------------------------------
 # Sub-models
@@ -153,6 +155,19 @@ class TailoredCV(BaseModel):
     gap_diff: list[GapItem] = []
     # AI-selected keyword phrases from the JD that the candidate demonstrably matches
     core_competencies: list[str] = []
+
+    # Regex to strip annotation labels that LLMs sometimes leak into bullet text
+    _ANNOTATION_RE = re.compile(
+        r"\s*\((?:substituted|soft[- ]?fabricated|added|removed|modified|reordered|unchanged)\)",
+        re.IGNORECASE,
+    )
+
+    @model_validator(mode="after")
+    def _strip_annotation_leaks(self) -> "TailoredCV":
+        """Remove action labels like '(substituted)' from bullet text."""
+        for exp in self.experience:
+            exp.bullets = [self._ANNOTATION_RE.sub("", b) for b in exp.bullets]
+        return self
 
 
 # ---------------------------------------------------------------------------
