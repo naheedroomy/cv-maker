@@ -37,12 +37,13 @@ logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
     datefmt="%Y-%m-%dT%H:%M:%S",
 )
-# Silence noisy frame-parsing debug spam from gemini-webapi internals
-# gemini-webapi uses loguru, not stdlib logging — must disable via loguru API
-logging.getLogger("gemini_webapi.utils.parsing").setLevel(logging.WARNING)
+# Silence noisy gemini-webapi internals (uses loguru, not stdlib logging)
+# - utils.parsing: "Incomplete frame" debug spam on every SSE chunk
+# - client: "UNAUTHENTICATED" warning that fires even with valid cookies
 try:
     from loguru import logger as _loguru
     _loguru.disable("gemini_webapi.utils.parsing")
+    _loguru.disable("gemini_webapi.client")
 except ImportError:
     pass
 logger = logging.getLogger(__name__)
