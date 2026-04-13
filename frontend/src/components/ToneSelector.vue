@@ -15,7 +15,8 @@ const options = [
   { value: 'professional', label: 'Professional', hint: 'Clear and direct, leads with specifics, no fluff' },
   { value: 'confident', label: 'Confident', hint: 'Assertive with specific achievements, owns the work' },
   { value: 'direct', label: 'Direct', hint: 'Facts only, no warmth or flair, lets the work speak' },
-  { value: 'casual', label: 'Casual', hint: 'Conversational with personality, uses contractions' },
+  { value: 'casual', label: 'Casual', hint: 'Like emailing a friend at the company, punchy and real' },
+  { value: 'enthusiastic', label: 'Enthusiastic', hint: 'Genuine energy about their specific work, warm but grounded' },
 ] as const
 
 function select(tone: string): void {

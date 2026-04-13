@@ -37,8 +37,26 @@ _TONE_INSTRUCTIONS: dict[str, str] = {
         "what they need, and why it matches. Let the work speak."
     ),
     "casual": (
-        "Write conversationally. Show personality. Use contractions. "
-        "OK to use informal transitions and first person naturally."
+        "Write like you're emailing a friend who works at the company. Contractions, "
+        "short punchy sentences, maybe a half-joke if it lands. Drop the paragraph "
+        "structure if it feels forced — fragments and asides are fine. "
+        "'Saw your listing and honestly it reads like my last two years' not "
+        "'I noticed your team is scaling infrastructure.' "
+        "Don't start every sentence with 'I'. Mix it up — start with the tech, "
+        "the problem, the result, or a reaction. Read it back: if it sounds like "
+        "it was written by an AI or a career counselor, rewrite it."
+    ),
+    "enthusiastic": (
+        "Write with genuine energy and warmth — you're excited about the work itself, "
+        "not performing excitement. Show curiosity about their specific problems. "
+        "It's OK to say what genuinely interests you about their stack or mission, "
+        "but ground it in specifics, not adjectives. "
+        "'Your event-driven architecture sounds like a fun scaling problem — I spent "
+        "last year solving something similar' not 'I am thrilled by this exciting opportunity.' "
+        "Use exclamation marks sparingly (max 1). Enthusiasm comes from specificity and "
+        "genuine engagement, not from punctuation or buzzwords. Contractions are fine. "
+        "The reader should think 'this person actually wants to work here' not "
+        "'this person wants any job.'"
     ),
 }
 
