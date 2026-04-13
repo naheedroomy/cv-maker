@@ -345,7 +345,7 @@ def generate_cover_letter(
     )
 
     # Claude CLI: combine system + user into a single prompt (no chat turn support)
-    if provider_model not in ("claude-api", "gemini-flash", "openai"):
+    if provider_model not in ("claude-api", "gemini-flash", "openai", "gemini-web"):
         combined_prompt = f"{system_prompt}\n\n---\n\n{user_prompt}"
         result = _invoke_with_retry(combined_prompt, CoverLetterOutput)
         return result.cover_letter_text
@@ -401,6 +401,21 @@ def generate_cover_letter(
                     ],
                 )
                 raw_text = response.choices[0].message.content
+
+            elif provider_model == "gemini-web":
+                import asyncio
+                from gemini_webapi import GeminiClient
+                full_prompt = f"{system_prompt}\n\n{effective_user}"
+                async def _generate():
+                    client = GeminiClient(provider._psid, provider._psidts)
+                    await client.init(timeout=30, auto_close=True, close_delay=60, auto_refresh=True)
+                    try:
+                        resp = await client.generate_content(full_prompt, model=provider._model)
+                        return resp.text
+                    finally:
+                        await client.close()
+                raw_text = asyncio.run(_generate())
+                raw_text = provider._sanitize_gemini_output(raw_text)
 
             else:
                 raise RuntimeError(f"Unexpected provider_model in chat branch: {provider_model!r}")
