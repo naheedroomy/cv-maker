@@ -82,12 +82,20 @@ def _extract_json(text: str) -> dict:
     text = text.strip()
     try:
         data = json.loads(text)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as first_err:
         m = re.search(r"```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```", text, re.DOTALL)
         if m:
             data = json.loads(m.group(1))
         else:
-            raise ValueError(f"No JSON object found in LLM output: {text[:300]!r}")
+            # Include the actual parse error position for diagnosis
+            pos = first_err.pos or 0
+            ctx_start = max(0, pos - 60)
+            ctx_end = min(len(text), pos + 60)
+            raise ValueError(
+                f"No JSON object found in LLM output: {text[:300]!r}\n"
+                f"  Parse error: {first_err.msg} at pos {pos}\n"
+                f"  Context around error: ...{text[ctx_start:ctx_end]!r}..."
+            )
 
     # Normalize tailoring_notes: convert plain strings to structured dicts
     if "tailoring_notes" in data and isinstance(data["tailoring_notes"], list):
