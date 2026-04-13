@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
 status: verifying
-stopped_at: Completed 1006-01-PLAN.md
-last_updated: "2026-04-07T19:10:30.896Z"
-last_activity: 2026-04-07
+stopped_at: Completed 1007-02-PLAN.md
+last_updated: "2026-04-12T20:42:48.456Z"
+last_activity: 2026-04-12 -- Phase 1007 execution complete
 progress:
-  total_phases: 8
+  total_phases: 10
   completed_phases: 7
-  total_plans: 19
-  completed_plans: 19
+  total_plans: 23
+  completed_plans: 21
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Given a job listing and a base CV, produce a tailored CV that honestly highlights the most relevant experience and skills — never fabricate, only emphasize and reframe.
-**Current focus:** Phase 1006 — cicd-domain-and-https
+**Current focus:** Phase 1007 — add-gemini-webapi-as-new-ai-provider
 
 ## Current Position
 
-Phase: 1006
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-07
+Phase: 1007 (add-gemini-webapi-as-new-ai-provider) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 1007
+Last activity: 2026-04-12 -- Phase 1007 execution started
 
 Progress: [██████████] 100%
 
@@ -84,6 +84,7 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1006]: Single nginx.conf for dev+prod — Cloudflare set_real_ip_from directives harmless locally, server_name _ wildcard covers both
 - [Phase 1006]: Cloudflare Flexible SSL — no cert management on VPS, TLS terminates at Cloudflare edge
 - [Phase 1006]: Matrix build + GHCR images with latest+SHA tags, GHA layer caching, SSH deploy with health verification — TeX Live layer ~1.2GB requires parallel builds; dual tags enable rollback; GHA caching avoids rebuilding massive layers
+- [Phase 1007]: Cookie field uses textarea (not input) for ~200+ character __Secure-1PSID values; gemini_web_psid in apiKeyFields for masked-value save protection
 
 ### Quick Tasks Completed
 
@@ -116,14 +117,16 @@ Archived to PROJECT.md Key Decisions table.
 | Phase 1005 P02 | 87s | 4 tasks | 4 files |
 | Phase 1006 P02 | 1min | 2 tasks | 2 files |
 | Phase 1006 P01 | 1min | 3 tasks | 3 files |
+| Phase 1007 P02 | 327 | 2 tasks | 6 files |
 
 ### Roadmap Evolution
 
 - Phase 999.1 added (backlog): Visual template selector in Settings
 - Phase 1000 added: Cover Letter Generator
+- Phase 1007 added: Add gemini-webapi as new AI provider
 
 ## Session Continuity
 
-Last session: 2026-04-07T19:05:12.305Z
-Stopped at: Completed 1006-01-PLAN.md
+Last session: 2026-04-12T20:42:37.465Z
+Stopped at: Completed 1007-02-PLAN.md
 Resume file: None

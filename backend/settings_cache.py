@@ -20,6 +20,8 @@ _DEFAULTS = {
     "anthropic_api_key": "",
     "gemini_api_key": "",
     "openai_api_key": "",
+    "gemini_web_psid": "",
+    "gemini_web_model": "gemini-3-pro",
 }
 
 # Mapping from settings key -> environment variable name
@@ -27,6 +29,7 @@ _API_KEY_ENV_MAP = {
     "anthropic_api_key": "ANTHROPIC_API_KEY",
     "gemini_api_key": "GEMINI_API_KEY",
     "openai_api_key": "OPENAI_API_KEY",
+    "gemini_web_psid": "GEMINI_WEB_PSID",
 }
 
 

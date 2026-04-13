@@ -34,6 +34,7 @@ const showForm = ref(false)
 const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
 const openaiAvailable = ref(false)
+const geminiWebAvailable = ref(false)
 
 // Detect if cover letter is generating in background (empty string = generating)
 const isGeneratingInBackground = computed(() =>
@@ -53,6 +54,7 @@ onMounted(async () => {
     claudeApiAvailable.value = data.claude_api_available === true
     geminiAvailable.value = data.gemini_available === true
     openaiAvailable.value = data.openai_available === true
+    geminiWebAvailable.value = data.gemini_web_available === true
   } catch { /* keep optimistic defaults */ }
 })
 
@@ -139,7 +141,7 @@ function handleRegenerate(): void {
         >
           View V{{ entry.version }}
           <span class="history-meta">
-            {{ entry.model ? ({ 'claude-haiku': 'CLI', 'claude-api': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[entry.model] || entry.model) : '' }}
+            {{ entry.model ? ({ 'claude-haiku': 'CLI', 'claude-api': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI', 'gemini-web': 'Gemini Web' }[entry.model] || entry.model) : '' }}
             {{ entry.tone ? '· ' + entry.tone.charAt(0).toUpperCase() + entry.tone.slice(1) : '' }}
             · {{ new Date(entry.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
           </span>
@@ -168,6 +170,7 @@ function handleRegenerate(): void {
           :claude-api-available="claudeApiAvailable"
           :gemini-available="geminiAvailable"
           :openai-available="openaiAvailable"
+          :gemini-web-available="geminiWebAvailable"
           :disabled="generating"
         />
         <ToneSelector v-model="tone" :disabled="generating" />

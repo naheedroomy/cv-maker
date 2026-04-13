@@ -199,6 +199,26 @@
 2/2 plans complete
 - [x] 1006-02-PLAN.md — Production Nginx config (Cloudflare), VPS deployment documentation
 
+### Phase 1007: Add gemini-webapi as new AI provider
+
+**Goal:** Add the `gemini-webapi` library as a fifth AI provider, enabling access to Gemini models via browser session cookies instead of API keys. Includes backend provider class, settings/config wiring, and frontend model selector + settings UI.
+
+**Requirements:**
+- GWEB-01: GeminiWebProvider class implements BaseProvider using gemini-webapi library with asyncio.run() in sync run() method
+- GWEB-02: Provider factory dispatches "gemini-web" model to GeminiWebProvider with per-user psid and model from settings
+- GWEB-03: Settings cache has defaults and env var mapping for gemini_web_psid and gemini_web_model
+- GWEB-04: Settings API and config endpoint expose gemini_web fields and availability flag
+- GWEB-05: ModelSelector shows "Gemini Web" pill gated by cookie availability in all consumer views
+- GWEB-06: Settings page has a Gemini Web tab with cookie textarea, model input, and extraction instructions
+
+**Depends on:** Phase 1006
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 1007-01-PLAN.md — Backend: install gemini-webapi, create provider, wire factory/settings/config
+- [ ] 1007-02-PLAN.md — Frontend: ModelSelector pill, SettingsView tab, availability wiring in all views
+
 ---
 
 ## Backlog

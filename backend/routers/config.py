@@ -53,5 +53,6 @@ async def get_config(authorization: str | None = Header(None, alias="Authorizati
         "claude_api_available": bool(await get_setting("anthropic_api_key", user_id)),
         "gemini_available": bool(await get_setting("gemini_api_key", user_id)),
         "openai_available": bool(await get_setting("openai_api_key", user_id)),
+        "gemini_web_available": bool(await get_setting("gemini_web_psid", user_id)),
         "google_client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
     }

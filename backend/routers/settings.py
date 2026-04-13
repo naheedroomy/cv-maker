@@ -21,6 +21,8 @@ class SettingsResponse(BaseModel):
     anthropic_api_key: str
     gemini_api_key: str
     openai_api_key: str
+    gemini_web_psid: str
+    gemini_web_model: str
 
 
 class SettingsUpdate(BaseModel):
@@ -33,6 +35,8 @@ class SettingsUpdate(BaseModel):
     anthropic_api_key: str | None = None
     gemini_api_key: str | None = None
     openai_api_key: str | None = None
+    gemini_web_psid: str | None = None
+    gemini_web_model: str | None = None
 
 
 def _mask_key(key: str) -> str:
@@ -69,6 +73,8 @@ async def get_settings(user: dict = Depends(get_current_user)) -> SettingsRespon
         anthropic_api_key=_mask_key(stored.get("anthropic_api_key", _DEFAULTS["anthropic_api_key"])),
         gemini_api_key=_mask_key(stored.get("gemini_api_key", _DEFAULTS["gemini_api_key"])),
         openai_api_key=_mask_key(stored.get("openai_api_key", _DEFAULTS["openai_api_key"])),
+        gemini_web_psid=_mask_key(stored.get("gemini_web_psid", _DEFAULTS["gemini_web_psid"])),
+        gemini_web_model=stored.get("gemini_web_model", _DEFAULTS["gemini_web_model"]),
     )
 
 
