@@ -319,8 +319,9 @@ _RULES: dict[str, dict[int, str]] = {
         0: "Do NOT substitute any technologies, tools, or platforms.",
         2: "Do NOT substitute any technologies, tools, or platforms.",
         3: (
-            "STACK SUBSTITUTION — swap equivalent technologies when the JD requires a different "
-            "tool than the candidate used. Valid swap categories:\n"
+            "SELECTIVE STACK SUBSTITUTION — swap equivalent technologies in SOME roles when the "
+            "JD requires a different tool, but preserve the candidate's real stack diversity.\n"
+            "Valid swap categories:\n"
             "- Cloud providers: AWS <-> GCP <-> Azure (EC2/Compute Engine/VM, S3/GCS/Blob Storage, "
             "EKS/GKE/AKS, RDS/Cloud SQL/Azure SQL, Lambda/Cloud Functions/Azure Functions, "
             "SQS/Pub-Sub/Service Bus, CloudWatch/Cloud Monitoring/Azure Monitor, "
@@ -331,7 +332,17 @@ _RULES: dict[str, dict[int, str]] = {
             "- Databases: PostgreSQL <-> MySQL <-> SQL Server (relational); "
             "Redis <-> Memcached (cache); MongoDB <-> DynamoDB <-> Firestore (document)\n"
             "- Messaging: Kafka <-> RabbitMQ <-> SQS <-> Pub/Sub\n"
-            "Rules:\n"
+            "CRITICAL DIVERSITY RULE for Level 3:\n"
+            "- Do NOT uniformly replace the same technology across ALL roles. A candidate's "
+            "history should show realistic stack diversity — it is normal for different companies "
+            "to use different stacks.\n"
+            "- Swap the target stack into AT MOST 1-2 of the most relevant roles (ideally the "
+            "most recent or most aligned with the JD). Leave remaining roles on their ORIGINAL "
+            "stack.\n"
+            "- Example: if the candidate used AWS at 3 companies and the JD wants GCP, swap "
+            "to GCP at ONE company (the most relevant one), keep AWS at the others. The result "
+            "shows the candidate knows GCP AND has breadth across cloud providers.\n"
+            "Other rules:\n"
             "- Swap the technology name but keep the achievement, metrics, and scope intact.\n"
             "- You MAY add 1-2 new bullets per role using the target stack IF the candidate "
             "has equivalent experience. Keep them concise and interview-defensible.\n"
@@ -342,9 +353,11 @@ _RULES: dict[str, dict[int, str]] = {
             "- Do NOT fabricate metrics, team sizes, or project scopes — only swap tool names."
         ),
         4: (
-            "All Level 3 substitution rules apply. Additionally, you MAY make broader "
-            "technology swaps even without direct equivalence, as long as the candidate's "
-            "experience demonstrates the underlying patterns and concepts."
+            "AGGRESSIVE STACK SUBSTITUTION — swap equivalent technologies across ALL roles "
+            "to present a unified stack aligned with the JD. The Level 3 diversity constraint "
+            "is LIFTED — you may replace the same technology everywhere. Additionally, you MAY "
+            "make broader technology swaps even without direct equivalence, as long as the "
+            "candidate's experience demonstrates the underlying patterns and concepts."
         ),
         5: "Unrestricted technology substitution and fabrication.",
     },

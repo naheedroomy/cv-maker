@@ -38,7 +38,13 @@ logging.basicConfig(
     datefmt="%Y-%m-%dT%H:%M:%S",
 )
 # Silence noisy frame-parsing debug spam from gemini-webapi internals
+# gemini-webapi uses loguru, not stdlib logging — must disable via loguru API
 logging.getLogger("gemini_webapi.utils.parsing").setLevel(logging.WARNING)
+try:
+    from loguru import logger as _loguru
+    _loguru.disable("gemini_webapi.utils.parsing")
+except ImportError:
+    pass
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
