@@ -78,7 +78,7 @@ def _invoke_claude(prompt: str, timeout: int = 300, cli_model: str = "") -> str:
 
 
 def _extract_json(text: str) -> dict:
-    """Extract JSON from claude stdout, stripping markdown fences if present."""
+    """Extract JSON from LLM output, stripping markdown fences if present."""
     text = text.strip()
     try:
         data = json.loads(text)
@@ -87,7 +87,7 @@ def _extract_json(text: str) -> dict:
         if m:
             data = json.loads(m.group(1))
         else:
-            raise ValueError(f"No JSON object found in claude output: {text[:300]!r}")
+            raise ValueError(f"No JSON object found in LLM output: {text[:300]!r}")
 
     # Normalize tailoring_notes: convert plain strings to structured dicts
     if "tailoring_notes" in data and isinstance(data["tailoring_notes"], list):

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class GeminiWebProvider(BaseProvider):
-    DEFAULT_MODEL = "gemini-3-pro"
+    DEFAULT_MODEL = "gemini-3-flash"
 
     def __init__(self, psid: str = "", psidts: str = "", model: str = "") -> None:
         if not psid:
