@@ -33,6 +33,26 @@ const settings = ref<Settings>({
 const saving = ref(false)
 const saved = ref(false)
 const error = ref<string | null>(null)
+const cookieChecking = ref(false)
+const cookieStatus = ref<{ ok: boolean; message: string } | null>(null)
+
+async function checkCookie() {
+  cookieChecking.value = true
+  cookieStatus.value = null
+  try {
+    const res = await apiFetch('/api/settings/check-gemini-web', { method: 'POST' })
+    const data = await res.json()
+    if (data.ok) {
+      cookieStatus.value = { ok: true, message: `Connected — "${data.response}"` }
+    } else {
+      cookieStatus.value = { ok: false, message: data.error || 'Cookie invalid or expired' }
+    }
+  } catch {
+    cookieStatus.value = { ok: false, message: 'Request failed — check network' }
+  } finally {
+    cookieChecking.value = false
+  }
+}
 
 onMounted(async () => {
   try {
@@ -191,6 +211,25 @@ const tabs = [
         <label class="field-label">Model</label>
         <input v-model="settings.gemini_web_model" class="field-input" placeholder="gemini-3-pro" />
         <p class="field-hint">Gemini web model name. Examples: gemini-3-pro, gemini-3-flash</p>
+      </div>
+      <div class="field">
+        <label class="field-label">Check Cookie</label>
+        <div class="cookie-check-row">
+          <button
+            class="btn-check"
+            :disabled="cookieChecking || !settings.gemini_web_psid"
+            @click="checkCookie"
+          >
+            {{ cookieChecking ? 'Checking...' : 'Test Connection' }}
+          </button>
+          <span v-if="cookieStatus" :class="cookieStatus.ok ? 'check-ok' : 'check-fail'">
+            {{ cookieStatus.message }}
+          </span>
+        </div>
+        <p class="field-hint">
+          Sends a quick test request to verify your cookie is still valid.
+          Save your cookie first before testing.
+        </p>
       </div>
       <div class="field">
         <label class="field-label">About</label>
@@ -360,6 +399,46 @@ const tabs = [
 }
 
 .save-error {
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.cookie-check-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-check {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.btn-check:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.btn-check:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.check-ok {
+  font-size: 13px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.check-fail {
   font-size: 13px;
   font-weight: 600;
   color: #dc2626;

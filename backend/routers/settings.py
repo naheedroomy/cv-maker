@@ -1,12 +1,14 @@
 """Provider settings API — GET/PUT model names and base URLs."""
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from backend.auth import get_current_user
 from backend.db import get_db
-from backend.settings_cache import _DEFAULTS
+from backend.settings_cache import _DEFAULTS, get_setting
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -95,3 +97,27 @@ async def update_settings(body: SettingsUpdate, user: dict = Depends(get_current
         await db.close()
 
     return await get_settings(user=user)
+
+
+@router.post("/check-gemini-web")
+async def check_gemini_web(user: dict = Depends(get_current_user)):
+    """Quick connectivity check for Gemini Web cookie."""
+    psid = await get_setting("gemini_web_psid", user["id"])
+    if not psid:
+        return {"ok": False, "error": "No cookie configured"}
+
+    async def _test():
+        from gemini_webapi import GeminiClient
+        client = GeminiClient(psid, "")
+        await client.init(timeout=15, auto_close=True, close_delay=10, auto_refresh=False)
+        try:
+            resp = await client.generate_content("Reply with exactly: OK")
+            return resp.text
+        finally:
+            await client.close()
+
+    try:
+        text = await asyncio.wait_for(_test(), timeout=20)
+        return {"ok": True, "response": text[:100]}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:200]}
