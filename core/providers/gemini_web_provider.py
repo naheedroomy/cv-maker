@@ -17,6 +17,9 @@ from core.providers.base import BaseProvider
 
 logger = logging.getLogger(__name__)
 
+# Silence noisy frame-parsing debug spam from gemini-webapi internals
+logging.getLogger("gemini_webapi.utils.parsing").setLevel(logging.WARNING)
+
 
 class GeminiWebProvider(BaseProvider):
     DEFAULT_MODEL = "gemini-3-flash"
@@ -35,14 +38,44 @@ class GeminiWebProvider(BaseProvider):
     def _sanitize_gemini_output(text: str) -> str:
         """Fix Gemini web app quirks that produce invalid JSON.
 
-        1. Unescape markdown underscore escaping: ``\\_`` → ``_``
-        2. Unwrap Google Search markdown links: ``[text](https://www.google.com/search?q=...)`` → ``text``
+        1. Strip markdown code fences (```json ... ```)
+        2. Unescape markdown underscore escaping: ``\\_`` -> ``_``
+        3. Unwrap Google Search markdown links: ``[text](url)`` -> ``text``
+        4. Extract outermost JSON object if wrapped in non-JSON text
         """
+        # Strip markdown code fences
+        text = re.sub(r"```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```", "", text)
         # Remove markdown underscore escaping (\_) which is invalid in JSON
         text = text.replace("\\_", "_")
         # Unwrap markdown links that Gemini wraps around URLs
         text = re.sub(r"\[([^\]]+)\]\(https?://[^\)]+\)", r"\1", text)
-        return text
+        # Extract the outermost JSON object by brace matching
+        start = text.find("{")
+        if start != -1:
+            depth = 0
+            in_string = False
+            escape_next = False
+            for i, ch in enumerate(text[start:], start):
+                if escape_next:
+                    escape_next = False
+                    continue
+                if ch == "\\":
+                    escape_next = True
+                    continue
+                if ch == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
+                if in_string:
+                    continue
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        text = text[start : i + 1]
+                        break
+        return text.strip()
 
     def run(
         self, base_cv: BaseCV, job_text: str, creativity_level: int = 2
@@ -76,6 +109,12 @@ class GeminiWebProvider(BaseProvider):
                     full_prompt = f"{system_prompt}\n\n{effective_user}"
                     response = await client.generate_content(
                         full_prompt, model=self._model
+                    )
+                    logger.info(
+                        "GeminiWeb raw response: %d chars, starts=%r, ends=%r",
+                        len(response.text),
+                        response.text[:80],
+                        response.text[-80:],
                     )
                     raw_text = self._sanitize_gemini_output(response.text)
                     data = _extract_json(raw_text)
