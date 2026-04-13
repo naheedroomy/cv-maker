@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 
 from gemini_webapi import GeminiClient
 from gemini_webapi.exceptions import AuthError, APIError
@@ -29,6 +30,19 @@ class GeminiWebProvider(BaseProvider):
         self._psid = psid
         self._psidts = psidts
         self._model = model or self.DEFAULT_MODEL
+
+    @staticmethod
+    def _sanitize_gemini_output(text: str) -> str:
+        """Fix Gemini web app quirks that produce invalid JSON.
+
+        1. Unescape markdown underscore escaping: ``\\_`` → ``_``
+        2. Unwrap Google Search markdown links: ``[text](https://www.google.com/search?q=...)`` → ``text``
+        """
+        # Remove markdown underscore escaping (\_) which is invalid in JSON
+        text = text.replace("\\_", "_")
+        # Unwrap markdown links that Gemini wraps around URLs
+        text = re.sub(r"\[([^\]]+)\]\(https?://[^\)]+\)", r"\1", text)
+        return text
 
     def run(
         self, base_cv: BaseCV, job_text: str, creativity_level: int = 2
@@ -60,14 +74,10 @@ class GeminiWebProvider(BaseProvider):
                     # gemini-webapi has no separate system prompt parameter --
                     # concatenate system + user into a single prompt string
                     full_prompt = f"{system_prompt}\n\n{effective_user}"
-                    # Use streaming to avoid response truncation on large CV outputs
-                    # (generate_content truncates at ~16k UTF-16 units for large prompts)
-                    chunks: list[str] = []
-                    async for chunk in client.generate_content_stream(
+                    response = await client.generate_content(
                         full_prompt, model=self._model
-                    ):
-                        chunks.append(chunk.text_delta)
-                    raw_text = "".join(chunks)
+                    )
+                    raw_text = self._sanitize_gemini_output(response.text)
                     data = _extract_json(raw_text)
                     result = TailoredCV.model_validate(data)
                     logger.info("GeminiWeb JSON parse + validation succeeded")
