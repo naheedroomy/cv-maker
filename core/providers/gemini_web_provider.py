@@ -60,10 +60,15 @@ class GeminiWebProvider(BaseProvider):
                     # gemini-webapi has no separate system prompt parameter --
                     # concatenate system + user into a single prompt string
                     full_prompt = f"{system_prompt}\n\n{effective_user}"
-                    response = await client.generate_content(
+                    # Use streaming to avoid response truncation on large CV outputs
+                    # (generate_content truncates at ~16k UTF-16 units for large prompts)
+                    chunks: list[str] = []
+                    async for chunk in client.generate_content_stream(
                         full_prompt, model=self._model
-                    )
-                    data = _extract_json(response.text)
+                    ):
+                        chunks.append(chunk.text_delta)
+                    raw_text = "".join(chunks)
+                    data = _extract_json(raw_text)
                     result = TailoredCV.model_validate(data)
                     logger.info("GeminiWeb JSON parse + validation succeeded")
                     return result, result.gap_diff
