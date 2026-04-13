@@ -46,8 +46,10 @@ class GeminiWebProvider(BaseProvider):
         # Strip markdown code fences
         text = re.sub(r"```(?:json)?\s*", "", text)
         text = re.sub(r"\s*```", "", text)
-        # Remove markdown underscore escaping (\_) which is invalid in JSON
-        text = text.replace("\\_", "_")
+        # Remove ALL invalid JSON backslash escapes from Gemini's markdown formatting.
+        # JSON only allows: \" \\ \/ \b \f \n \r \t \uXXXX
+        # Gemini outputs markdown escapes like \_ \> \* \# \- \. etc.
+        text = re.sub(r'\\([^"\\/bfnrtu])', r'\1', text)
         # Unwrap markdown links that Gemini wraps around URLs
         text = re.sub(r"\[([^\]]+)\]\(https?://[^\)]+\)", r"\1", text)
         # Extract the outermost JSON object by brace matching
