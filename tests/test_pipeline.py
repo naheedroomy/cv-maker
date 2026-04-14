@@ -266,26 +266,33 @@ class TestParameterizedPrompt:
         assert "Technology adjacency" in result
         assert "Infrastructure fundamentals" in result
 
+    def test_level_3_contains_limited_substitution(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Level 3 prompt includes limited substitution (one role only) without soft-fabrication."""
+        result = _build_prompt(base_cv, sample_job_text, 3)
+        assert "LIMITED STACK SUBSTITUTION" in result
+        assert "AT MOST 1 role" in result
+        assert "No new bullets" in result
+
     def test_level_4_contains_exposure_language(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """Level 4 prompt includes 'exposure, not ownership' language."""
-        result = _build_prompt(base_cv, sample_job_text, 4)
+        """Level 5 prompt includes 'exposure, not ownership' language."""
+        result = _build_prompt(base_cv, sample_job_text, 5)
         assert "exposure" in result.lower()
 
     def test_level_5_contains_fabrication_warning(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """Level 5 prompt includes fabrication warning."""
-        result = _build_prompt(base_cv, sample_job_text, 5)
+        """Level 6 prompt includes fabrication warning."""
+        result = _build_prompt(base_cv, sample_job_text, 6)
         assert "fabricate" in result.lower()
         assert "WARNING" in result
 
     def test_level_label_embedded(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """Prompt includes the level number and name."""
         result = _build_prompt(base_cv, sample_job_text, 3)
-        assert "CREATIVITY LEVEL: 3 (FORWARD)" in result
+        assert "CREATIVITY LEVEL: 3 (SELECTIVE)" in result
 
     def test_all_levels_produce_distinct_prompts(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """All 6 levels produce distinct prompt text."""
-        prompts = [_build_prompt(base_cv, sample_job_text, i) for i in range(6)]
-        assert len(set(prompts)) == 6
+        """All 7 levels produce distinct prompt text."""
+        prompts = [_build_prompt(base_cv, sample_job_text, i) for i in range(7)]
+        assert len(set(prompts)) == 7
 
     def test_default_is_level_2(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """Calling without creativity_level defaults to level 2."""
@@ -309,13 +316,13 @@ class TestParameterizedPrompt:
         assert "FLOORS" in result or "minimum" in result.lower()
 
     def test_level_clamped_to_range(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """Levels outside 0-5 are clamped."""
+        """Levels outside 0-6 are clamped."""
         low = _build_prompt(base_cv, sample_job_text, -1)
         zero = _build_prompt(base_cv, sample_job_text, 0)
         assert low == zero
         high = _build_prompt(base_cv, sample_job_text, 99)
-        five = _build_prompt(base_cv, sample_job_text, 5)
-        assert high == five
+        six = _build_prompt(base_cv, sample_job_text, 6)
+        assert high == six
 
 
 class TestChatPrompt:
@@ -335,7 +342,7 @@ class TestChatPrompt:
     def test_level_embedded(self) -> None:
         """Chat prompt includes level label."""
         result = pipeline._build_system_prompt_for_chat(3)
-        assert "CREATIVITY LEVEL: 3 (FORWARD)" in result
+        assert "CREATIVITY LEVEL: 3 (SELECTIVE)" in result
 
 
 class TestRunPipelineCreativity:
@@ -363,8 +370,8 @@ class TestCreativityEnum:
     def test_values(self) -> None:
         assert Creativity.STRICT == 0
         assert Creativity.DEFAULT == 2
-        assert Creativity.CREATIVE == 5
+        assert Creativity.CREATIVE == 6
 
     def test_name_lookup(self) -> None:
-        assert Creativity(3).name == "FORWARD"
-        assert Creativity(4).name == "BOLD"
+        assert Creativity(3).name == "SELECTIVE"
+        assert Creativity(4).name == "FORWARD"
