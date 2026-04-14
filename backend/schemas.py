@@ -11,7 +11,7 @@ class JobCreate(BaseModel):
     job_link: str
     job_text: str
     model: str = "claude-haiku"
-    creativity_level: int = Field(default=2, ge=0, le=5)
+    creativity_level: int = Field(default=2, ge=0, le=6)
 
 
 class JobResponse(BaseModel):
