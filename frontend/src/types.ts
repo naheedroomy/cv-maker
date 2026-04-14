@@ -122,5 +122,5 @@ export interface JobCreate {
   job_link: string
   job_text: string
   model?: string  // "claude-haiku" (default) or "gemini-flash"
-  creativity_level?: number  // 0-6, default 2 (Moderate)
+  creativity_level?: number  // 0-5, default 2 (Moderate)
 }
