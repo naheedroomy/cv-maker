@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Deploy, Auth & CV Editor
 status: executing
-stopped_at: Completed quick task 260414-rvs
-last_updated: "2026-04-14T14:45:50.679Z"
+stopped_at: Completed quick task 260413-l31
+last_updated: "2026-04-13T09:48:18.453Z"
 last_activity: 2026-04-12 -- Phase 1007 execution started
 progress:
-  total_phases: 10
-  completed_phases: 8
-  total_plans: 23
-  completed_plans: 21
+  total_phases: 9
+  completed_phases: 1
+  total_plans: 6
+  completed_plans: 17
   percent: 100
 ---
 
@@ -86,8 +86,6 @@ Archived to PROJECT.md Key Decisions table.
 - [Phase 1006]: Matrix build + GHCR images with latest+SHA tags, GHA layer caching, SSH deploy with health verification — TeX Live layer ~1.2GB requires parallel builds; dual tags enable rollback; GHA caching avoids rebuilding massive layers
 - [Phase 1007]: Cookie field uses textarea (not input) for ~200+ character __Secure-1PSID values; gemini_web_psid in apiKeyFields for masked-value save protection
 - [Phase quick]: Updated existing Environment variables row (not duplicate) to add GEMINI_WEB_PSID; replaced Conventions placeholder with four documented conventions from Phase 1007
-- [Phase quick-260414-rvs]: New level 3 (SELECTIVE) copies rule content from level 2 for bullets/titles/summary/skills; substitution key 3 is a new LIMITED STACK SUBSTITUTION rule (AT MOST 1 role, no new bullets, no soft-fabrication)
-- [Phase quick-260414-rvs]: Warning threshold shifted from >= 4 to >= 5 so BOLD (now at 5) remains the semantic boundary for plausible-claims territory
 
 ### Quick Tasks Completed
 
@@ -130,6 +128,6 @@ Archived to PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-14T14:45:43.209Z
-Stopped at: Completed quick task 260414-rvs
+Last session: 2026-04-13T09:48:11.675Z
+Stopped at: Completed quick task 260413-l31
 Resume file: None
