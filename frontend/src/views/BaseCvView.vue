@@ -6,9 +6,12 @@ import PdfDropZone from '@/components/PdfDropZone.vue'
 import CvEditorSection from '@/components/CvEditorSection.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import type { ExperienceItem, EducationItem, ProjectItem, LanguageItem } from '@/types'
+import { apiFetch } from '@/utils/apiFetch'
 
 const store = useCvStore()
 const { cv, loading, saving, uploading, uploadProgress, error } = storeToRefs(store)
+
+const downloading = ref(false)
 
 const collapsed = reactive({
   contact: false,
@@ -62,6 +65,32 @@ async function handleSave() {
 function handleDelete() {
   if (confirm('Remove your CV? This cannot be undone.')) {
     store.deleteCv()
+  }
+}
+
+async function handleDownload() {
+  if (!cv.value) return
+  downloading.value = true
+  try {
+    const res = await apiFetch('/api/cv/me/pdf', {
+      method: 'POST',
+      body: JSON.stringify(cv.value),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error((body as { detail?: string }).detail ?? `PDF generation failed: ${res.status}`)
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'Base-CV.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    store.error = err instanceof Error ? err.message : 'Download failed'
+  } finally {
+    downloading.value = false
   }
 }
 
@@ -198,6 +227,14 @@ function removeLanguage(index: number) {
           @click="handleSave"
         >
           {{ saving ? 'Saving...' : 'Save CV' }}
+        </button>
+        <button
+          type="button"
+          class="btn-secondary"
+          :disabled="downloading"
+          @click="handleDownload"
+        >
+          {{ downloading ? 'Rendering...' : 'Download PDF' }}
         </button>
         <button
           type="button"
