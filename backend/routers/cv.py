@@ -1,24 +1,29 @@
 """CV CRUD + upload endpoints.
 
-Provides four endpoints for managing a user's saved CV:
+Provides five endpoints for managing a user's saved CV:
 - POST   /cv/upload  — PDF upload + two-pass Gemini parsing, saves to DB
 - GET    /cv/me      — Returns user's saved CV from DB
 - PUT    /cv/me      — Saves edited CV JSON as YAML to users.base_cv_yaml
 - DELETE /cv/me      — Sets base_cv_yaml to NULL
+- POST   /cv/me/pdf  — Renders current CV through LaTeX pipeline, returns PDF bytes
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 
 import yaml
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi.responses import Response
 from pydantic import ValidationError
 
 from backend.auth import get_current_user
 from backend.db import get_db
 from backend.schemas import CvMeResponse, CvUploadResponse
+from backend.settings_cache import get_setting
 from core.cv_parser import parse_pdf_to_base_cv
-from core.models import BaseCV
+from core.models import BaseCV, TailoredCV
+from core.renderer import render_latex, render_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -171,3 +176,37 @@ async def delete_cv_me(user: dict = Depends(get_current_user)) -> dict:
 
     logger.info("CV removed for user_id=%s", user["id"])
     return {"success": True, "message": "CV removed"}
+
+
+@router.post("/me/pdf")
+async def download_base_cv_pdf(body: dict, user: dict = Depends(get_current_user)) -> Response:
+    """Render the current base CV as PDF via the LaTeX pipeline.
+
+    Accepts CV data in request body so unsaved in-memory edits are included.
+    Converts BaseCV to TailoredCV (extra fields default to []) for renderer compatibility.
+    """
+    try:
+        base_cv = BaseCV.model_validate(body)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors()) from exc
+
+    # Convert BaseCV -> TailoredCV (shared fields identical, extras default to [])
+    tailored = TailoredCV(**base_cv.model_dump())
+
+    # Render LaTeX -> PDF (blocking subprocess, run in thread pool)
+    latex_source = render_latex(tailored)
+    pdf_bytes = await asyncio.to_thread(render_pdf, latex_source)
+
+    # Build filename from cv_filename setting or contact name
+    cv_filename = await get_setting("cv_filename", user["id"])
+    if not cv_filename:
+        cv_filename = base_cv.contact.name.replace(" ", "-") if base_cv.contact.name else "Base-CV"
+    filename = f"{cv_filename}.pdf"
+
+    logger.info("PDF rendered for user_id=%s: filename=%s", user["id"], filename)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
