@@ -8,7 +8,7 @@ class JobCreate(BaseModel):
     """Request body for POST /api/jobs."""
 
     company_name: str
-    job_link: str
+    job_link: str | None = None
     job_text: str
     model: str = "claude-haiku"
     creativity_level: int = Field(default=2, ge=0, le=6)

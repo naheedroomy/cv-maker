@@ -24,7 +24,7 @@ const openaiAvailable = ref(false)
 const geminiWebAvailable = ref(false)
 
 const canSubmit = computed(
-  () => companyName.value.trim() !== '' && jobLink.value.trim() !== '' && jobText.value.trim() !== '' && !submitting.value,
+  () => companyName.value.trim() !== '' && jobText.value.trim() !== '' && !submitting.value,
 )
 
 onMounted(async () => {

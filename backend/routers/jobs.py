@@ -75,17 +75,18 @@ async def create_job(body: JobCreate, user: dict = Depends(get_current_user)) ->
 
     db = await get_db()
     try:
-        # Check for duplicate job link
-        cursor = await db.execute(
-            "SELECT id, company_name FROM jobs WHERE user_id=? AND job_link=?",
-            (user["id"], body.job_link),
-        )
-        existing = await cursor.fetchone()
-        if existing:
-            raise HTTPException(
-                status_code=409,
-                detail=f"A job with this link already exists: {existing['company_name']}",
+        # Check for duplicate job link (only when job_link is provided)
+        if body.job_link:
+            cursor = await db.execute(
+                "SELECT id, company_name FROM jobs WHERE user_id=? AND job_link=?",
+                (user["id"], body.job_link),
             )
+            existing = await cursor.fetchone()
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"A job with this link already exists: {existing['company_name']}",
+                )
 
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
