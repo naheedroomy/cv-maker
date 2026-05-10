@@ -65,6 +65,14 @@ class ProjectItem(BaseModel):
     technologies: list[str] = []
     url: str | None = None
 
+    @field_validator("description", mode="before")
+    @classmethod
+    def coerce_none_to_empty_string(cls, v: object) -> str:
+        """Replace null from JSON with empty string."""
+        if v is None:
+            return ""
+        return str(v)
+
 
 # ---------------------------------------------------------------------------
 # Top-level pipeline models
@@ -86,6 +94,13 @@ class BaseCV(BaseModel):
     projects: list[ProjectItem] = []
     certifications: list[str] = []
     languages: list[LanguageItem] = []
+
+    @field_validator("summary", mode="before")
+    @classmethod
+    def coerce_summary_none_to_empty(cls, v: object) -> str:
+        if v is None:
+            return ""
+        return str(v)
 
 
 class JobRequirements(BaseModel):
