@@ -98,6 +98,20 @@ function handleCreateEmpty() {
   store.createEmptyCv()
 }
 
+// ── Common Helpers ─────────────────────────────────────────────────────────
+
+function moveItemUp(array: any[] | undefined, index: number) {
+  if (!array || index <= 0) return
+  const item = array.splice(index, 1)[0]
+  array.splice(index - 1, 0, item)
+}
+
+function moveItemDown(array: any[] | undefined, index: number) {
+  if (!array || index >= array.length - 1) return
+  const item = array.splice(index, 1)[0]
+  array.splice(index + 1, 0, item)
+}
+
 // ── Work Experience ────────────────────────────────────────────────────────
 
 function addExperience() {
@@ -334,7 +348,11 @@ function removeLanguage(index: number) {
           <div v-for="(exp, i) in cv.experience" :key="i" class="entry-card">
             <div class="entry-header">
               <span class="entry-label">{{ exp.company || 'New Position' }}</span>
-              <button type="button" class="btn-icon-danger" @click="removeExperience(i)">Remove</button>
+              <div class="entry-actions">
+                <button type="button" class="btn-icon" @click="moveItemUp(cv.experience, i)" :disabled="i === 0" title="Move Up">↑</button>
+                <button type="button" class="btn-icon" @click="moveItemDown(cv.experience, i)" :disabled="i === cv.experience.length - 1" title="Move Down">↓</button>
+                <button type="button" class="btn-icon-danger" @click="removeExperience(i)">Remove</button>
+              </div>
             </div>
             <div class="form-grid">
               <div class="form-field"><label>Company</label><input v-model="exp.company" type="text" placeholder="Acme Corp" /></div>
@@ -370,7 +388,11 @@ function removeLanguage(index: number) {
           <div v-for="(edu, i) in cv.education" :key="i" class="entry-card">
             <div class="entry-header">
               <span class="entry-label">{{ edu.institution || 'New Institution' }}</span>
-              <button type="button" class="btn-icon-danger" @click="removeEducation(i)">Remove</button>
+              <div class="entry-actions">
+                <button type="button" class="btn-icon" @click="moveItemUp(cv.education, i)" :disabled="i === 0" title="Move Up">↑</button>
+                <button type="button" class="btn-icon" @click="moveItemDown(cv.education, i)" :disabled="i === cv.education.length - 1" title="Move Down">↓</button>
+                <button type="button" class="btn-icon-danger" @click="removeEducation(i)">Remove</button>
+              </div>
             </div>
             <div class="form-grid">
               <div class="form-field"><label>Institution</label><input v-model="edu.institution" type="text" placeholder="University of..." /></div>
@@ -409,7 +431,11 @@ function removeLanguage(index: number) {
           <div v-for="(proj, i) in cv.projects" :key="i" class="entry-card">
             <div class="entry-header">
               <span class="entry-label">{{ proj.name || 'New Project' }}</span>
-              <button type="button" class="btn-icon-danger" @click="removeProject(i)">Remove</button>
+              <div class="entry-actions">
+                <button type="button" class="btn-icon" @click="moveItemUp(cv.projects, i)" :disabled="i === 0" title="Move Up">↑</button>
+                <button type="button" class="btn-icon" @click="moveItemDown(cv.projects, i)" :disabled="i === cv.projects.length - 1" title="Move Down">↓</button>
+                <button type="button" class="btn-icon-danger" @click="removeProject(i)">Remove</button>
+              </div>
             </div>
             <div class="form-grid">
               <div class="form-field"><label>Name</label><input v-model="proj.name" type="text" placeholder="My Project" /></div>
@@ -704,6 +730,33 @@ function removeLanguage(index: number) {
   font-size: 14px;
   font-weight: 600;
   color: #374151;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.btn-icon {
+  background: none;
+  border: 1px solid #e2e8f0;
+  color: #4b5563;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.1s;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.btn-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* List editors */
