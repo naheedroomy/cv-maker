@@ -12,6 +12,7 @@ import openai
 from core.models import BaseCV, GapItem, TailoredCV
 from core.pipeline import _build_system_prompt_for_chat, _build_user_prompt, _extract_json
 from core.providers.base import BaseProvider
+from core.validation import check_tailored_cv
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class OpenAIProvider(BaseProvider):
                 text = response.choices[0].message.content
                 data = _extract_json(text)
                 result = TailoredCV.model_validate(data)
+                check_tailored_cv(base_cv, result)
                 logger.info("OpenAI JSON parse + validation succeeded")
                 return result, result.gap_diff
             except (openai.APIError, Exception) as exc:  # noqa: BLE001

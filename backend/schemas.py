@@ -61,6 +61,7 @@ class CoverLetterRequest(BaseModel):
     model: str = "claude-haiku"
     tone: str = Field(default="professional", pattern="^(formal|professional|confident|direct|casual|enthusiastic)$")
     user_notes: str = ""
+    writing_sample: str = ""
 
 
 class CoverLetterResponse(BaseModel):

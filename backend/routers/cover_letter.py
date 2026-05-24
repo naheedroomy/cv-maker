@@ -29,6 +29,7 @@ async def _cover_letter_worker(
     model: str,
     user_notes: str,
     tone: str,
+    writing_sample: str = "",
 ) -> None:
     """Run cover letter generation in the background, update DB on completion."""
     try:
@@ -67,6 +68,7 @@ async def _cover_letter_worker(
             gap_diff,
             user_notes,
             tone,
+            writing_sample,
         )
 
         # Save result
@@ -80,6 +82,19 @@ async def _cover_letter_worker(
             await db.commit()
         finally:
             await db.close()
+
+        # Lightweight audit — log AI-tell warnings internally
+        try:
+            from core.cover_letter_audit import audit_cover_letter
+            audit = audit_cover_letter(cover_letter_text)
+            if audit["warnings"]:
+                logger.warning("Cover letter audit for job %s: word_count=%d, issues=%s",
+                               job_id, audit["word_count"], audit["warnings"])
+            else:
+                logger.info("Cover letter audit for job %s: clean (word_count=%d)",
+                            job_id, audit["word_count"])
+        except Exception:
+            logger.debug("Cover letter audit skipped (non-critical error)", exc_info=True)
 
         logger.info("Cover letter generated for job %s (tone=%s, model=%s)", job_id, tone, model)
 
@@ -155,7 +170,7 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, 
 
     # Fire and forget
     schedule_background_task(
-        _cover_letter_worker(job_id, user["id"], body.model, body.user_notes, body.tone)
+        _cover_letter_worker(job_id, user["id"], body.model, body.user_notes, body.tone, body.writing_sample)
     )
 
     return {"status": "generating"}

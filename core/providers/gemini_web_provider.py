@@ -14,6 +14,7 @@ from gemini_webapi.exceptions import AuthError, APIError
 from core.models import BaseCV, GapItem, TailoredCV
 from core.pipeline import _build_system_prompt_for_chat, _build_user_prompt, _extract_json
 from core.providers.base import BaseProvider
+from core.validation import check_tailored_cv
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,7 @@ class GeminiWebProvider(BaseProvider):
                 raw_text = self._sanitize_gemini_output(response.text)
                 data = _extract_json(raw_text)
                 result = TailoredCV.model_validate(data)
+                check_tailored_cv(base_cv, result)
                 logger.info("GeminiWeb JSON parse + validation succeeded")
                 return result, result.gap_diff
             except (AuthError, APIError, Exception) as exc:  # noqa: BLE001

@@ -16,7 +16,7 @@ from core.pipeline import Creativity, _build_prompt, _resolve_rule, run_pipeline
 # ---------------------------------------------------------------------------
 
 TAILORED_CV_JSON = json.dumps({
-    "contact": {"name": "Jane Smith", "email": "jane@example.com"},
+    "contact": {"name": "Jane Smith", "email": "jane@example.com", "github": "github.com/jane"},
     "summary": "Python engineer with FastAPI expertise.",
     "experience": [
         {
@@ -375,3 +375,46 @@ class TestCreativityEnum:
     def test_name_lookup(self) -> None:
         assert Creativity(3).name == "SELECTIVE"
         assert Creativity(4).name == "FORWARD"
+
+
+class TestPromptHardening:
+    """Tests for prompt hardening — injection protection, anti-fabrication, etc."""
+
+    def test_prompt_injection_protection_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Prompt includes injection protection warning for job listing content."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "PROMPT INJECTION" in result
+        assert "UNTRUSTED" in result
+
+    def test_anti_fabrication_rule_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Prompt includes the TRUTH GUARD anti-fabrication rule."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "TRUTH GUARD" in result
+        assert "Do NOT invent" in result
+
+    def test_inferred_framing_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Prompt includes inferred experience framing rules at level 2+."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "INFERRED EXPERIENCE FRAMING" in result
+        assert "transferable" in result.lower()
+
+    def test_length_guidance_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Prompt includes bullet count ceiling guidance."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "BULLET COUNT CEILING" in result
+
+    def test_no_soft_fabrication_in_level_4(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Level 4 prompt does NOT mention SOFT FABRICATION anymore."""
+        result = _build_prompt(base_cv, sample_job_text, 4)
+        assert "SOFT FABRICATION" not in result
+        assert "NO FABRICATION" in result
+
+    def test_chat_prompt_has_injection_protection(self) -> None:
+        """Chat system prompt includes injection protection."""
+        result = pipeline._build_system_prompt_for_chat(2)
+        assert "PROMPT INJECTION" in result
+
+    def test_chat_prompt_has_anti_fabrication(self) -> None:
+        """Chat system prompt includes anti-fabrication rule."""
+        result = pipeline._build_system_prompt_for_chat(2)
+        assert "TRUTH GUARD" in result
