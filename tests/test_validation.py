@@ -93,12 +93,18 @@ class TestExperienceValidation:
         with pytest.raises(ValueError, match="Company names changed"):
             validate_tailored_cv(base, tailored)
 
-    def test_job_title_changed_fails(self) -> None:
+    def test_job_title_changed_is_corrected_and_warns(self) -> None:
         base = _make_base()
         tailored = _make_tailored(base)
+        original_title = tailored.experience[0].title
         tailored.experience[0].title = "Principal Engineer"
-        with pytest.raises(ValueError, match="Job title changed"):
-            validate_tailored_cv(base, tailored)
+        warnings = validate_tailored_cv(base, tailored)
+        # Title is reset to the base CV value
+        assert tailored.experience[0].title == original_title
+        # A warning is emitted
+        assert len(warnings) >= 1
+        assert any("Title corrected" in w for w in warnings)
+        assert any("Principal Engineer" in w for w in warnings)
 
     def test_date_changed_fails(self) -> None:
         base = _make_base()

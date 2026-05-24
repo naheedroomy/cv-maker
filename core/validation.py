@@ -55,7 +55,7 @@ def validate_tailored_cv(base: BaseCV, tailored: TailoredCV) -> list[str]:
     _check_contact(base, tailored)
     _check_experience_count(base, tailored)
     _check_companies(base, tailored)
-    _check_titles(base, tailored)
+    _check_titles(base, tailored, warnings)  # soft: corrects + warns
     _check_dates(base, tailored)
     _check_education(base, tailored)
     _check_certifications(base, tailored)
@@ -108,8 +108,12 @@ def _check_companies(base: BaseCV, tailored: TailoredCV) -> None:
         )
 
 
-def _check_titles(base: BaseCV, tailored: TailoredCV) -> None:
-    # Match by company name (normalised), then compare titles
+def _check_titles(base: BaseCV, tailored: TailoredCV, warnings: list[str]) -> None:
+    """Correct job title drift back to the base CV title (soft, not hard failure).
+
+    Title retitling is a common LLM behaviour that rarely changes substance.
+    Instead of failing the generation, we silently reset the title and warn.
+    """
     base_by_company = {e.company.strip().lower(): e.title.strip() for e in base.experience}
     for te in tailored.experience:
         key = te.company.strip().lower()
@@ -117,11 +121,11 @@ def _check_titles(base: BaseCV, tailored: TailoredCV) -> None:
             continue  # already caught by _check_companies
         original = base_by_company[key]
         if te.title.strip() != original:
-            raise ValueError(
-                f"Job title changed for '{te.company}': "
-                f"'{original}' -> '{te.title}'. "
-                f"Job titles must not be modified by AI."
+            warnings.append(
+                f"Title corrected for '{te.company}': "
+                f"'{te.title.strip()}' -> '{original}'"
             )
+            te.title = original
 
 
 def _check_dates(base: BaseCV, tailored: TailoredCV) -> None:
