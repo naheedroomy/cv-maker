@@ -418,3 +418,65 @@ class TestPromptHardening:
         """Chat system prompt includes anti-fabrication rule."""
         result = pipeline._build_system_prompt_for_chat(2)
         assert "TRUTH GUARD" in result
+
+
+class TestHighlightedTechnologies:
+    """Tests for the deterministic highlighted_technologies rule."""
+
+    def test_rule_resolved_at_level_0(self) -> None:
+        """The highlighted_tech rule is present at all levels."""
+        result = _resolve_rule("highlighted_tech", 0)
+        assert "3-8 specific technologies" in result
+        assert "plain names only" in result.lower()
+
+    def test_in_prompt_at_level_2(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """The full prompt includes highlighted tech instructions at level 2."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "3-8 specific technologies" in result
+
+    def test_in_chat_prompt(self) -> None:
+        """Chat system prompt includes highlighted tech instructions."""
+        result = pipeline._build_system_prompt_for_chat(2)
+        assert "3-8 specific technologies" in result
+
+    def test_static_string_replaced(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """The old bare-string 'Surface known-but-not-leading' is gone."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "Surface known-but-not-leading technologies" not in result
+
+
+class TestUserNotes:
+    """Tests for user_notes parameter in prompt builders."""
+
+    def test_user_notes_appear_in_prompt(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """When user_notes is non-empty, it appears in the prompt."""
+        result = _build_prompt(base_cv, sample_job_text, 2, user_notes="Emphasize platform work.")
+        assert "USER NOTES (user guidance" in result
+        assert "Emphasize platform work." in result
+
+    def test_no_user_notes_no_section(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """When user_notes is empty, no USER NOTES heading appears (only injection-rule mention)."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        # The injection rule mentions "user notes" in prose, but the actual
+        # USER NOTES heading block should NOT be present.
+        assert "USER NOTES (user guidance" not in result
+
+    def test_user_notes_in_user_prompt(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """User prompt includes USER NOTES section when provided."""
+        result = pipeline._build_user_prompt(base_cv, sample_job_text, user_notes="Make it concise.")
+        assert "USER NOTES" in result
+        assert "Make it concise." in result
+
+    def test_no_user_notes_in_user_prompt(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """User prompt does NOT include USER NOTES when empty."""
+        result = pipeline._build_user_prompt(base_cv, sample_job_text)
+        assert "USER NOTES" not in result
+
+    def test_run_pipeline_accepts_user_notes(self, monkeypatch, base_cv: BaseCV, sample_job_text: str) -> None:
+        """run_pipeline accepts and passes user_notes through."""
+        monkeypatch.setattr(pipeline, "subprocess", _mock_subprocess(
+            lambda cmd, **kw: _make_proc(TAILORED_CV_JSON)
+        ))
+        # This should not raise
+        result, _ = run_pipeline(base_cv, sample_job_text, user_notes="Test notes")
+        assert result.summary == "Python engineer with FastAPI expertise."

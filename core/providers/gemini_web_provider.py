@@ -81,16 +81,16 @@ class GeminiWebProvider(BaseProvider):
         return text.strip()
 
     def run(
-        self, base_cv: BaseCV, job_text: str, creativity_level: int = 2
+        self, base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = ""
     ) -> tuple[TailoredCV, list[GapItem]]:
         """Sync entry point -- creates a fresh event loop in the thread pool thread."""
-        return asyncio.run(self._run_async(base_cv, job_text, creativity_level))
+        return asyncio.run(self._run_async(base_cv, job_text, creativity_level, user_notes))
 
     async def _run_async(
-        self, base_cv: BaseCV, job_text: str, creativity_level: int
+        self, base_cv: BaseCV, job_text: str, creativity_level: int, user_notes: str = ""
     ) -> tuple[TailoredCV, list[GapItem]]:
         system_prompt = _build_system_prompt_for_chat(creativity_level)
-        user_prompt = _build_user_prompt(base_cv, job_text)
+        user_prompt = _build_user_prompt(base_cv, job_text, user_notes)
         last_exc: Exception | None = None
 
         for attempt in range(3):

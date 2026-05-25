@@ -24,9 +24,9 @@ class OpenAIProvider(BaseProvider):
         self._client = openai.OpenAI(api_key=api_key, base_url=base_url)
         self._model = model or "gpt-4o-mini"
 
-    def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> tuple[TailoredCV, list[GapItem]]:
+    def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = "") -> tuple[TailoredCV, list[GapItem]]:
         system_prompt = _build_system_prompt_for_chat(creativity_level)
-        user_prompt = _build_user_prompt(base_cv, job_text)
+        user_prompt = _build_user_prompt(base_cv, job_text, user_notes)
         last_exc: Exception | None = None
         for attempt in range(3):
             logger.info("OpenAI attempt %d/3 for TailoredCV", attempt + 1)

@@ -62,7 +62,9 @@ defineProps<{ cv: TailoredCV }>()
     <!-- Highlighted Technologies -->
     <section v-if="cv.highlighted_technologies && cv.highlighted_technologies.length > 0" class="cv-section">
       <h3 class="section-heading">Technologies</h3>
-      <p class="body-text">{{ cv.highlighted_technologies.join(', ') }}</p>
+      <div class="tech-pills">
+        <span v-for="(tech, i) in cv.highlighted_technologies" :key="i" class="pill-item">{{ tech }}</span>
+      </div>
     </section>
 
     <!-- Projects (optional) -->
@@ -188,6 +190,22 @@ defineProps<{ cv: TailoredCV }>()
   font-size: 12px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+/* Highlighted Technologies pills */
+.tech-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pill-item {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #0c4a6e;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
 }
 
 /* Bullets */

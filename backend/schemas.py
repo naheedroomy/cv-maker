@@ -12,6 +12,7 @@ class JobCreate(BaseModel):
     job_text: str
     model: str = "claude-haiku"
     creativity_level: int = Field(default=2, ge=0, le=6)
+    user_notes: str = ""
 
 
 class JobResponse(BaseModel):
@@ -37,6 +38,7 @@ class JobResponse(BaseModel):
     cover_letter_tone: str | None = None  # tone used for cover letter generation
     cv_history: list[dict] | None = None  # previous CV versions
     cl_history: list[dict] | None = None  # previous cover letter versions
+    user_notes: str | None = None  # user guidance notes for tailoring
 
 
 class CvConvertRequest(BaseModel):

@@ -107,7 +107,12 @@
 \BLOCK{if cv.highlighted_technologies}
 \bigskip
 \section{Technologies}
-\VAR{", ".join(cv.highlighted_technologies)|e}
+\begin{sloppypar}
+\noindent
+\BLOCK{for tech in cv.highlighted_technologies}
+\pill{\VAR{tech|e}}\hspace{4pt}%
+\BLOCK{endfor}
+\end{sloppypar}
 \BLOCK{endif}
 
 \BLOCK{if cv.languages}

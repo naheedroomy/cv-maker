@@ -309,6 +309,19 @@ _RULES: dict[str, dict[int, str]] = {
             "Return as the 'core_competencies' array."
         ),
     },
+    "highlighted_tech": {
+        0: (
+            "HIGHLIGHTED TECHNOLOGIES: Select 3-8 specific technologies, tools, or platforms that the "
+            "candidate demonstrably knows from the base CV and that are explicitly mentioned or required "
+            "by the job listing. Prioritize Tier 1 (core tech stack) and Tier 2 (core responsibilities) "
+            "JD-required tools that the candidate has evidence for — e.g., if the JD asks for KEDA, SQS, "
+            "or Kubernetes and the candidate's base CV shows experience with these, surface them here. "
+            "These are concrete named tools, not abstract capabilities. "
+            "Plain names only — no parenthetical qualifiers, no prose, no annotations. "
+            "Do NOT include technologies the candidate does not have. "
+            "Return as the 'highlighted_technologies' array."
+        ),
+    },
     "pruning": {
         0: (
             "A bullet that doesn't directly match a Tier 1 requirement but demonstrates "
@@ -467,7 +480,7 @@ def _resolve_rule(rule_name: str, level: int) -> str:
     return levels[applicable[-1]]
 
 
-def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> str:
+def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = "") -> str:
     """Build a single, self-consistent prompt parameterized by creativity level.
 
     Instead of layering contradictory instructions, each concern (titles, bullets,
@@ -490,8 +503,17 @@ def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> 
     inferred_rule = _resolve_rule("inferred_framing", level)
     length_rule = _resolve_rule("length_guidance", level)
     injection_rule = _resolve_rule("prompt_injection", level)
+    highlighted_tech_rule = _resolve_rule("highlighted_tech", level)
 
     level_label = Creativity(level).name
+
+    # Build USER NOTES section — only if non-empty (do not add noisy placeholder)
+    user_notes_block = ""
+    if user_notes.strip():
+        user_notes_block = (
+            f"\n---\nUSER NOTES (user guidance — do NOT override TRUTH GUARD or anti-fabrication rules):\n"
+            f"{user_notes.strip()}\n---\n"
+        )
 
     prompt = f"""\
 {injection_rule}
@@ -567,7 +589,7 @@ SUBSTITUTION:
 SKILLS: Filter and reorder to lead with the most relevant.
 {skills_rule}
 
-HIGHLIGHTED TECHNOLOGIES: Surface technologies from the base CV that the candidate knows but did not lead with. Plain names only.
+{highlighted_tech_rule}
 
 CORE COMPETENCIES:
 {core_comp_rule}
@@ -605,8 +627,7 @@ BASE CV:
 ---
 JOB LISTING:
 {job_text}
----
-
+---{user_notes_block}
 Return ONLY a valid JSON object (no markdown fences, no commentary) matching this schema:
 
 {{
@@ -680,6 +701,7 @@ def _build_system_prompt_for_chat(creativity_level: int = 2) -> str:
     inferred_rule = _resolve_rule("inferred_framing", level)
     length_rule = _resolve_rule("length_guidance", level)
     injection_rule = _resolve_rule("prompt_injection", level)
+    highlighted_tech_rule = _resolve_rule("highlighted_tech", level)
 
     return f"""\
 {injection_rule}
@@ -746,7 +768,7 @@ SUBSTITUTION:
 
 SKILLS: {skills_rule}
 
-HIGHLIGHTED TECHNOLOGIES: Surface known-but-not-leading technologies from the base CV. Plain names only.
+{highlighted_tech_rule}
 
 CORE COMPETENCIES:
 {core_comp_rule}
@@ -771,9 +793,16 @@ Never return empty bullets lists. If a role has 2 or fewer bullets, keep all of 
 Return ONLY valid JSON (no fences, no commentary) matching the schema provided in the user message."""
 
 
-def _build_user_prompt(base_cv: BaseCV, job_text: str) -> str:
+def _build_user_prompt(base_cv: BaseCV, job_text: str, user_notes: str = "") -> str:
     """Build the user prompt containing the CV and job listing data."""
     base_cv_yaml = _serialize_base_cv(base_cv)
+    # USER NOTES block — only if non-empty
+    user_notes_block = ""
+    if user_notes.strip():
+        user_notes_block = (
+            f"\nUSER NOTES (guidance only, do NOT override truth rules):\n"
+            f"---\n{user_notes.strip()}\n---\n"
+        )
     return f"""\
 BASE CV:
 ---
@@ -783,8 +812,7 @@ BASE CV:
 JOB LISTING:
 ---
 {job_text}
----
-
+---{user_notes_block}
 Analyze the job listing thoroughly. Extract ALL requirements (aim for 10-15). \
 For each, cite specific evidence from the base CV. Then produce the tailored CV \
 as a single JSON object matching this schema:
@@ -813,7 +841,7 @@ as a single JSON object matching this schema:
   "certifications": ["<str>"],
   "languages": [{{"language": "<str>", "level": "<str>"}}],
   "core_competencies": ["<JD-derived keyword phrase>"],
-  "highlighted_technologies": ["<surfaced tech>"],
+  "highlighted_technologies": ["<3-8 concrete tools/tech from candidate's base CV that JD requires, plain names only>"],
   "tailoring_notes": [
     {{
       "section": "<CV section>",
@@ -839,13 +867,13 @@ as a single JSON object matching this schema:
 # ---------------------------------------------------------------------------
 
 
-def run_pipeline(base_cv: BaseCV, job_text: str, creativity_level: int = 2, cli_model: str = "") -> tuple[TailoredCV, list[GapItem]]:
+def run_pipeline(base_cv: BaseCV, job_text: str, creativity_level: int = 2, cli_model: str = "", user_notes: str = "") -> tuple[TailoredCV, list[GapItem]]:
     """Full AI pipeline: analyze job + tailor CV in a single Claude call.
 
     Returns:
         (tailored_cv, gap_diff) where gap_diff is extracted from the combined response.
     """
-    prompt = _build_prompt(base_cv, job_text, creativity_level)
+    prompt = _build_prompt(base_cv, job_text, creativity_level, user_notes)
     result = _invoke_with_retry(prompt, TailoredCV, cli_model=cli_model)
 
     # Post-generation validation — hard violations raise ValueError

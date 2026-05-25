@@ -52,7 +52,7 @@ export interface TailoringNote {
   section: string
   change: string
   reason: string
-  action: 'modified' | 'added' | 'removed' | 'reordered' | 'unchanged'
+  action: 'modified' | 'added' | 'removed' | 'reordered' | 'unchanged' | 'substituted' | 'soft-fabricated'
 }
 
 export interface TailoredCV {
@@ -99,6 +99,7 @@ export interface JobResponse {
   cover_letter_tone: string | null
   cv_history: CvHistoryEntry[] | null
   cl_history: ClHistoryEntry[] | null
+  user_notes: string | null
 }
 
 export interface CvHistoryEntry {
@@ -123,4 +124,5 @@ export interface JobCreate {
   job_text: string
   model?: string  // "claude-haiku" (default) or "gemini-flash"
   creativity_level?: number  // 0-6, default 2 (Moderate)
+  user_notes?: string  // optional guidance for CV tailoring
 }

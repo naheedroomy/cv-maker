@@ -55,6 +55,7 @@ def _row_to_response(row) -> JobResponse:
         cover_letter_tone=row["cover_letter_tone"] if "cover_letter_tone" in row.keys() else None,
         cv_history=json.loads(row["cv_history_json"]) if "cv_history_json" in row.keys() and row["cv_history_json"] else None,
         cl_history=json.loads(row["cl_history_json"]) if "cl_history_json" in row.keys() and row["cl_history_json"] else None,
+        user_notes=row["user_notes"] if "user_notes" in row.keys() else None,
     )
 
 
@@ -91,16 +92,16 @@ async def create_job(body: JobCreate, user: dict = Depends(get_current_user)) ->
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             "INSERT INTO jobs "
-            "(id, user_id, company_name, job_link, job_text, model, creativity_level, status, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
-            (job_id, user["id"], body.company_name, body.job_link, body.job_text, body.model, body.creativity_level, now, now),
+            "(id, user_id, company_name, job_link, job_text, model, creativity_level, user_notes, status, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+            (job_id, user["id"], body.company_name, body.job_link, body.job_text, body.model, body.creativity_level, body.user_notes, now, now),
         )
         await db.commit()
     finally:
         await db.close()
 
     task = schedule_background_task(
-        job_worker(job_id, body.company_name, body.job_text, body.model, body.creativity_level, user_id=user["id"])
+        job_worker(job_id, body.company_name, body.job_text, body.model, body.creativity_level, user_id=user["id"], user_notes=body.user_notes)
     )
     _job_tasks[job_id] = task
     logger.info("Job %s created for company=%s model=%s creativity=%d", job_id, body.company_name, body.model, body.creativity_level)
@@ -393,6 +394,7 @@ async def get_pdf_version(job_id: str, version: int, user: dict = Depends(get_cu
 class RegenerateRequest(BaseModel):
     model: str | None = None
     creativity_level: int | None = None
+    user_notes: str | None = None
 
 
 @router.post("/{job_id}/regenerate", response_model=JobResponse)
@@ -419,6 +421,7 @@ async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depe
 
         model = body.model or row["model"]
         creativity = body.creativity_level if body.creativity_level is not None else row["creativity_level"]
+        notes = body.user_notes if body.user_notes is not None else (row["user_notes"] if "user_notes" in row.keys() else "")
         now = datetime.now(timezone.utc).isoformat()
 
         # Archive current CV into history (if it exists)
@@ -441,12 +444,12 @@ async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depe
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             """UPDATE jobs SET
-                status='pending', model=?, creativity_level=?,
+                status='pending', model=?, creativity_level=?, user_notes=?,
                 tailored_cv_json=NULL, gap_diff_json=NULL, pdf_path=NULL,
                 cv_history_json=?,
                 updated_at=?
             WHERE id=? AND user_id=?""",
-            (model, creativity, history_json, now, job_id, user["id"]),
+            (model, creativity, notes, history_json, now, job_id, user["id"]),
         )
         await db.commit()
 
@@ -457,7 +460,7 @@ async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depe
 
     # Kick off worker
     new_task = schedule_background_task(
-        job_worker(job_id, row["company_name"], row["job_text"], model, creativity, user_id=user["id"])
+        job_worker(job_id, row["company_name"], row["job_text"], model, creativity, user_id=user["id"], user_notes=notes)
     )
     _job_tasks[job_id] = new_task
     logger.info("Job %s regenerating with model=%s creativity=%d", job_id, model, creativity)

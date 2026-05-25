@@ -27,9 +27,9 @@ class GeminiProvider(BaseProvider):
         self._client = genai.Client(api_key=api_key)
         self._model = model or self.DEFAULT_MODEL
 
-    def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2) -> tuple[TailoredCV, list[GapItem]]:
+    def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = "") -> tuple[TailoredCV, list[GapItem]]:
         system_prompt = _build_system_prompt_for_chat(creativity_level)
-        user_prompt = _build_user_prompt(base_cv, job_text)
+        user_prompt = _build_user_prompt(base_cv, job_text, user_notes)
         last_exc: Exception | None = None
         for attempt in range(3):
             logger.info("Gemini attempt %d/3 for TailoredCV", attempt + 1)

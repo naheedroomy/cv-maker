@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     cover_letter_tone TEXT,
     cv_history_json  TEXT,
     cl_history_json  TEXT,
+    user_notes       TEXT,
     created_at       TEXT NOT NULL,
     updated_at       TEXT NOT NULL
 );
@@ -112,6 +113,8 @@ async def init_db(db_path: Path | None = None) -> None:
             await db.execute("ALTER TABLE jobs ADD COLUMN cl_history_json TEXT")
         if "applied_at" not in columns:
             await db.execute("ALTER TABLE jobs ADD COLUMN applied_at TEXT")
+        if "user_notes" not in columns:
+            await db.execute("ALTER TABLE jobs ADD COLUMN user_notes TEXT")
 
         # Seed placeholder local user (idempotent)
         await db.execute(

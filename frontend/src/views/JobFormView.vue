@@ -14,6 +14,7 @@ const store = useJobStore()
 const companyName = ref('')
 const jobLink = ref('')
 const jobText = ref('')
+const userNotes = ref('')
 const submitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const selectedModel = ref('gemini-flash')
@@ -58,6 +59,7 @@ async function handleSubmit(): Promise<void> {
       job_text: jobText.value.trim(),
       model: selectedModel.value,
       creativity_level: selectedCreativity.value,
+      user_notes: userNotes.value.trim(),
     })
     await router.push('/jobs/' + id)
   } catch (err) {
@@ -120,6 +122,17 @@ function handleRetry(): void {
           class="field-textarea"
           placeholder="Paste the full job listing here..."
           aria-required="true"
+          :disabled="submitting"
+        ></textarea>
+      </div>
+
+      <div class="field">
+        <label for="user-notes" class="field-label">Generation notes (optional)</label>
+        <textarea
+          id="user-notes"
+          v-model="userNotes"
+          class="field-textarea field-textarea--small"
+          placeholder="Optional instructions: emphasize platform work, keep this under two pages, include SQS if supported by my CV."
           :disabled="submitting"
         ></textarea>
       </div>
@@ -234,6 +247,10 @@ function handleRetry(): void {
   background: #f8f9fa;
   color: #6b7280;
   cursor: not-allowed;
+}
+
+.field-textarea--small {
+  height: 80px;
 }
 
 .submit-btn {
