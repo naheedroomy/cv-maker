@@ -14,7 +14,7 @@ function formatDate(iso: string): string {
   <router-link
     :to="`/jobs/${job.id}`"
     class="session-entry"
-    :class="{ 'session-entry--active': active }"
+    :class="{ 'session-entry--active': active, 'session-entry--applied': job.applied }"
     :aria-current="active ? 'page' : undefined"
   >
     <div class="session-top">
@@ -30,8 +30,8 @@ function formatDate(iso: string): string {
         <span v-else-if="job.status === 'failed'" class="indicator indicator--failed" title="CV failed">CV</span>
 
         <!-- Cover letter status -->
-        <span v-if="job.cover_letter_text && job.cover_letter_text.length > 0" class="indicator indicator--done" title="Cover letter ready">CL</span>
-        <span v-else-if="job.cover_letter_text === ''" class="indicator indicator--pending" title="Cover letter generating">CL</span>
+        <span v-if="job.cover_letter_text && job.cover_letter_text.length > 0" class="indicator indicator--done" title="Cover letter ready">L</span>
+        <span v-else-if="job.cover_letter_text === ''" class="indicator indicator--pending" title="Cover letter generating">L</span>
       </div>
     </div>
   </router-link>
@@ -54,6 +54,17 @@ function formatDate(iso: string): string {
   background: #f3f4f6;
   border-left: 3px solid #2563eb;
 }
+.session-entry--applied {
+  background: #f0fdf4;
+  border-left: 3px solid #22c55e;
+}
+.session-entry--applied:hover {
+  background: #dcfce7;
+}
+.session-entry--active.session-entry--applied {
+  background: #dcfce7;
+  border-left: 3px solid #2563eb;
+}
 .session-top {
   display: flex;
   align-items: center;
@@ -71,8 +82,8 @@ function formatDate(iso: string): string {
 .applied-badge {
   font-size: 9px;
   font-weight: 600;
-  color: #16a34a;
-  background: #dcfce7;
+  color: #15803d;
+  background: #bbf7d0;
   border-radius: 3px;
   padding: 1px 5px;
   flex-shrink: 0;
@@ -89,7 +100,8 @@ function formatDate(iso: string): string {
 }
 .status-indicators {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 3px;
 }
 .indicator {
   font-size: 9px;
