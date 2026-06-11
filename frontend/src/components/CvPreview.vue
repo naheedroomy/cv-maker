@@ -98,8 +98,8 @@ defineProps<{ cv: TailoredCV }>()
 }
 
 .cv-section {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 24px;
 }
@@ -107,7 +107,7 @@ defineProps<{ cv: TailoredCV }>()
 .section-heading {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 16px;
 }
 
@@ -115,7 +115,7 @@ defineProps<{ cv: TailoredCV }>()
   font-size: 14px;
   font-weight: 400;
   line-height: 1.5;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 /* Experience */
@@ -133,11 +133,11 @@ defineProps<{ cv: TailoredCV }>()
 .company-name {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 .experience-meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
@@ -156,11 +156,11 @@ defineProps<{ cv: TailoredCV }>()
 .institution-name {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 .education-meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
@@ -180,15 +180,15 @@ defineProps<{ cv: TailoredCV }>()
 .project-name {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 .project-url {
   font-size: 12px;
-  color: #2563eb;
+  color: var(--color-accent-primary);
 }
 .project-tech {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-top: 4px;
 }
 
@@ -200,8 +200,8 @@ defineProps<{ cv: TailoredCV }>()
 }
 .pill-item {
   display: inline-block;
-  background: #e0f2fe;
-  color: #0c4a6e;
+  background: var(--color-surface-3);
+  color: var(--color-text-primary);
   font-size: 13px;
   font-weight: 500;
   padding: 4px 10px;
@@ -216,7 +216,7 @@ defineProps<{ cv: TailoredCV }>()
 .bullet-list li {
   font-size: 14px;
   line-height: 1.5;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 4px;
 }
 .bullet-list li:last-child {

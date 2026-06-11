@@ -175,23 +175,23 @@ async function handleConvert(): Promise<void> {
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 8px;
 }
 
 .page-description {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-bottom: 24px;
   line-height: 1.6;
 }
 
 .page-description code {
-  background: #f3f4f6;
+  background: var(--color-surface-2);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .banner {
@@ -206,15 +206,15 @@ async function handleConvert(): Promise<void> {
 }
 
 .banner--success {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #6ee7b7;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-border);
 }
 
 .banner--error {
-  background: #fee2e2;
-  color: #7f1d1d;
-  border: 1px solid #fca5a5;
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+  border: 1px solid var(--color-error-border);
 }
 
 .banner-icon {
@@ -231,17 +231,17 @@ async function handleConvert(): Promise<void> {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 6px;
 }
 
 .required-star {
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 .field-hint {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-top: 6px;
 }
 
@@ -249,7 +249,7 @@ async function handleConvert(): Promise<void> {
   display: block;
   font-size: 14px;
   font-family: inherit;
-  color: #374151;
+  color: var(--color-text-secondary);
   cursor: pointer;
 }
 
@@ -262,12 +262,12 @@ async function handleConvert(): Promise<void> {
   display: block;
   width: 100%;
   padding: 8px 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
-  color: #111827;
-  background: #ffffff;
+  color: var(--color-text-primary);
+  background: var(--color-surface-1);
   outline: none;
   resize: vertical;
   transition: border-color 150ms ease;
@@ -275,12 +275,12 @@ async function handleConvert(): Promise<void> {
 }
 
 .field-textarea:focus {
-  border-color: #2563eb;
+  border-color: var(--color-accent-primary);
 }
 
 .field-textarea:disabled {
-  background: #f8f9fa;
-  color: #6b7280;
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
   cursor: not-allowed;
 }
 
@@ -291,24 +291,25 @@ async function handleConvert(): Promise<void> {
   gap: 8px;
   height: 40px;
   padding: 0 24px;
-  background: #2563eb;
+  background: var(--color-accent-primary);
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 150ms ease;
+  transition: background-color 150ms ease, opacity 150ms ease;
   margin-top: 8px;
 }
 
 .convert-btn:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 
 .convert-btn--disabled,
 .convert-btn:disabled {
-  background: #93c5fd;
+  background: var(--color-accent-primary);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -337,15 +338,15 @@ async function handleConvert(): Promise<void> {
 .yaml-heading {
   font-size: 18px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 12px;
 }
 
 .yaml-content {
   font-size: 13px;
-  color: #374151;
-  background: #f8f9fa;
-  border: 1px solid #e2e8f0;
+  color: var(--color-text-primary);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 16px;
   white-space: pre-wrap;

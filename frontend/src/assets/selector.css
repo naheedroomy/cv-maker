@@ -4,8 +4,8 @@
   display: inline-flex;
   gap: 4px;
   padding: 4px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
 }
 
@@ -15,25 +15,25 @@
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: #111827;
+  color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 150ms ease;
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
 .pill-option:hover:not(.pill-option--active):not(.pill-option--disabled) {
-  background: #f3f4f6;
+  background: var(--color-surface-2);
 }
 
 .pill-option--active {
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--color-accent-primary);
+  color: var(--color-text-inverted);
 }
 
 .pill-option--disabled {
-  color: #6b7280;
+  color: var(--color-text-tertiary);
   cursor: not-allowed;
 }
 
@@ -41,17 +41,17 @@
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 6px;
 }
 
 .field-hint {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-tertiary);
   margin-top: 6px;
   margin-bottom: 0;
 }
 
 .field-hint--warning {
-  color: #dc2626;
+  color: #dc2626; /* Keep warning color as is for now */
 }

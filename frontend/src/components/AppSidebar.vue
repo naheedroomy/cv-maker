@@ -142,35 +142,38 @@ onUnmounted(() => {
 <style scoped>
 .search-box {
   padding: 8px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 .search-input {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid #d1d5db;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 13px;
   font-family: inherit;
-  color: #111827;
+  color: var(--color-text-primary);
   box-sizing: border-box;
+  transition: border-color 150ms ease;
 }
 .search-input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-accent-primary);
 }
 .search-input::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
 }
 
 .sidebar {
-  background: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  background: var(--color-surface-1);
+  border-right: 1px solid var(--color-border);
   height: 100vh;
   position: sticky;
   top: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  transition: background-color 200ms ease, border-color 200ms ease;
 }
 @media (max-width: 768px) {
   .sidebar {
@@ -187,14 +190,15 @@ onUnmounted(() => {
 }
 .sidebar-header {
   padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
+  transition: border-color 200ms ease;
 }
 .new-job-btn {
   display: block;
   width: 100%;
   height: 44px;
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--color-accent-primary);
+  color: var(--color-text-inverted);
   font-size: 14px;
   font-weight: 600;
   border: none;
@@ -203,7 +207,7 @@ onUnmounted(() => {
   transition: background-color 150ms ease;
 }
 .new-job-btn:hover {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 .header-links {
   display: flex;
@@ -214,12 +218,12 @@ onUnmounted(() => {
 .header-link {
   font-size: 13px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-tertiary);
   text-decoration: none;
   transition: color 150ms ease;
 }
 .header-link:hover {
-  color: #111827;
+  color: var(--color-text-primary);
 }
 nav {
   flex: 1;
@@ -231,17 +235,18 @@ nav {
 .empty-heading {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-secondary);
   margin-bottom: 4px;
 }
 .empty-body {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-tertiary);
 }
 .cv-info {
   padding: 12px 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border);
   margin-top: auto;
+  transition: border-color 200ms ease;
 }
 .cv-info-loaded {
   display: block;
@@ -252,17 +257,17 @@ nav {
   margin: -4px;
 }
 .cv-info-loaded:hover {
-  background: #f3f4f6;
+  background: var(--color-surface-2);
 }
 .cv-info-name {
   font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin: 0;
 }
 .cv-info-detail {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--color-text-tertiary);
   margin: 2px 0 0;
 }
 .cv-info-empty {
@@ -272,7 +277,7 @@ nav {
 }
 .cv-info-link {
   font-size: 11px;
-  color: #2563eb;
+  color: var(--color-accent-primary);
   text-decoration: none;
 }
 .cv-info-link:hover {
@@ -283,8 +288,9 @@ nav {
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border);
   margin-top: auto;
+  transition: border-color 200ms ease;
 }
 .user-avatar {
   width: 32px;
@@ -297,8 +303,8 @@ nav {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--color-accent-primary);
+  color: var(--color-text-inverted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -313,7 +319,7 @@ nav {
 .user-name {
   font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -323,11 +329,11 @@ nav {
   border: none;
   padding: 0;
   font-size: 11px;
-  color: #6b7280;
+  color: var(--color-text-tertiary);
   cursor: pointer;
   transition: color 150ms ease;
 }
 .sign-out-btn:hover {
-  color: #dc2626;
+  color: #dc2626; /* Keep explicit danger color */
 }
 </style>

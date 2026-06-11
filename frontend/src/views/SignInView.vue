@@ -99,14 +99,14 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #f5f7fa;
+  background-color: var(--color-background);
 }
 
 .signin-card {
-  background: #ffffff;
+  background: var(--color-surface-1);
   border-radius: 12px;
   padding: 48px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 24px var(--color-shadow, rgba(0, 0, 0, 0.08));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -118,13 +118,13 @@ onMounted(async () => {
   margin: 0;
   font-size: 2rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--color-text-primary);
 }
 
 .app-subtitle {
   margin: 0;
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .google-button-wrapper {
@@ -132,7 +132,7 @@ onMounted(async () => {
 }
 
 .error-message {
-  color: #dc2626;
+  color: var(--color-error);
   font-size: 0.875rem;
   text-align: center;
   max-width: 300px;
