@@ -113,6 +113,82 @@ class TestExperienceValidation:
         with pytest.raises(ValueError, match="Date changed"):
             validate_tailored_cv(base, tailored)
 
+    def test_same_company_different_titles_no_false_correction(self) -> None:
+        """Regression: two roles at the same company with different titles and
+        date ranges should validate without changing either title."""
+        base = BaseCV.model_validate({
+            "contact": {"name": "Jane Smith", "email": "jane@example.com", "github": "github.com/jane"},
+            "summary": "Experienced engineer.",
+            "experience": [
+                {
+                    "company": "TechCorp",
+                    "title": "Senior Software Engineer",
+                    "start": "2019-03",
+                    "end": "2021-06",
+                    "bullets": ["Built REST APIs"],
+                    "technologies": ["Python"],
+                },
+                {
+                    "company": "TechCorp",
+                    "title": "Staff Engineer",
+                    "start": "2021-07",
+                    "end": "2024-01",
+                    "bullets": ["Led platform team"],
+                    "technologies": ["Python"],
+                },
+            ],
+            "skills": ["Python"],
+            "education": [{"institution": "State University", "degree": "BSc", "field": "CS", "year": 2016}],
+            "certifications": ["AWS Certified"],
+            "languages": [{"language": "English", "level": "Native"}],
+        })
+        tailored = TailoredCV.model_validate(base.model_dump())
+        warnings = validate_tailored_cv(base, tailored)
+        # Neither title should be corrected since they match the base.
+        assert warnings == []
+
+    def test_same_company_drift_only_affected_role_corrected(self) -> None:
+        """Drift case: two roles at the same company; only the drifted role
+        gets corrected to its own base title, not the other role's title."""
+        base = BaseCV.model_validate({
+            "contact": {"name": "Jane Smith", "email": "jane@example.com", "github": "github.com/jane"},
+            "summary": "Experienced engineer.",
+            "experience": [
+                {
+                    "company": "TechCorp",
+                    "title": "Senior Software Engineer",
+                    "start": "2019-03",
+                    "end": "2021-06",
+                    "bullets": ["Built REST APIs"],
+                    "technologies": ["Python"],
+                },
+                {
+                    "company": "TechCorp",
+                    "title": "Staff Engineer",
+                    "start": "2021-07",
+                    "end": "2024-01",
+                    "bullets": ["Led platform team"],
+                    "technologies": ["Python"],
+                },
+            ],
+            "skills": ["Python"],
+            "education": [{"institution": "State University", "degree": "BSc", "field": "CS", "year": 2016}],
+            "certifications": ["AWS Certified"],
+            "languages": [{"language": "English", "level": "Native"}],
+        })
+        tailored = TailoredCV.model_validate(base.model_dump())
+        # Drift only the first role's title
+        tailored.experience[0].title = "Principal Engineer"
+        warnings = validate_tailored_cv(base, tailored)
+        # First role corrected back to its own base title
+        assert tailored.experience[0].title == "Senior Software Engineer"
+        # Second role untouched — not overwritten by the first role's title
+        assert tailored.experience[1].title == "Staff Engineer"
+        # Warning emitted for the correction
+        assert len(warnings) >= 1
+        assert any("Title corrected" in w for w in warnings)
+        assert any("Principal Engineer" in w for w in warnings)
+
 
 class TestEducationValidation:
     def test_education_count_mismatch_fails(self) -> None:

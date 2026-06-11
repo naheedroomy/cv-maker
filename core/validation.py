@@ -113,16 +113,23 @@ def _check_titles(base: BaseCV, tailored: TailoredCV, warnings: list[str]) -> No
 
     Title retitling is a common LLM behaviour that rarely changes substance.
     Instead of failing the generation, we silently reset the title and warn.
+
+    Matches roles by (company, start, end) so that duplicate roles at the same
+    company with different titles and date ranges are each corrected to their
+    own base title, not a single overwritten title.
     """
-    base_by_company = {e.company.strip().lower(): e.title.strip() for e in base.experience}
+    base_by_role = {
+        (e.company.strip().lower(), e.start, e.end): e.title.strip()
+        for e in base.experience
+    }
     for te in tailored.experience:
-        key = te.company.strip().lower()
-        if key not in base_by_company:
-            continue  # already caught by _check_companies
-        original = base_by_company[key]
+        key = (te.company.strip().lower(), te.start, te.end)
+        if key not in base_by_role:
+            continue  # already caught by _check_companies / _check_dates
+        original = base_by_role[key]
         if te.title.strip() != original:
             warnings.append(
-                f"Title corrected for '{te.company}': "
+                f"Title corrected for '{te.company}' ({te.start}–{te.end}): "
                 f"'{te.title.strip()}' -> '{original}'"
             )
             te.title = original
