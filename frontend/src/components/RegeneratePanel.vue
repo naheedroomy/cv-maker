@@ -93,16 +93,16 @@ function handleRegenerate(): void {
   padding: 0 24px;
   border-radius: 6px;
   background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #374151;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: border-color 150ms ease, color 150ms ease;
 }
 .btn-regenerate-toggle:hover:not(:disabled) {
-  border-color: #374151;
-  color: #111827;
+  border-color: var(--color-text-primary);
+  color: var(--color-text-primary);
 }
 .btn-regenerate-toggle:disabled {
   opacity: 0.6;
@@ -112,8 +112,8 @@ function handleRegenerate(): void {
 .regenerate-options {
   margin-top: 12px;
   padding: 16px;
-  background: #f8f9fa;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
@@ -121,17 +121,17 @@ function handleRegenerate(): void {
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: #2563eb;
+  background: var(--color-accent-primary);
   border: none;
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   margin-top: 8px;
-  transition: background-color 150ms ease;
+  transition: background-color 150ms ease, opacity 150ms ease;
 }
 .btn-regenerate-now:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 .btn-regenerate-now:disabled {
   opacity: 0.6;

@@ -263,13 +263,13 @@ const tabs = [
 .settings-title {
   font-size: 22px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 4px;
 }
 
 .settings-subtitle {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-bottom: 24px;
 }
 
@@ -277,7 +277,7 @@ const tabs = [
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: #f3f4f6;
+  background: var(--color-surface-2);
   border-radius: 8px;
   margin-bottom: 24px;
 }
@@ -288,7 +288,7 @@ const tabs = [
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #374151;
+  color: var(--color-text-secondary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -296,12 +296,12 @@ const tabs = [
 }
 
 .tab:hover:not(.tab--active) {
-  background: #e5e7eb;
+  background: var(--color-surface-3);
 }
 
 .tab--active {
-  background: #ffffff;
-  color: #111827;
+  background: var(--color-surface-1);
+  color: var(--color-text-primary);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
@@ -320,17 +320,18 @@ const tabs = [
 .field-label {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .field-input {
   height: 40px;
   padding: 0 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
   font-family: 'SF Mono', 'Fira Code', monospace;
-  color: #111827;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-1);
   transition: border-color 150ms ease;
 }
 
@@ -346,18 +347,18 @@ const tabs = [
 
 .field-input:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15); /* Assuming --color-accent-primary is #3B82F6 */
 }
 
 .field-hint {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
 .field-hint code {
-  background: #f3f4f6;
+  background: var(--color-surface-2);
   padding: 1px 4px;
   border-radius: 3px;
   font-size: 11px;
@@ -374,34 +375,34 @@ const tabs = [
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: #2563eb;
+  background: var(--color-accent-primary);
   border: none;
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 150ms ease;
+  transition: background-color 150ms ease, opacity 150ms ease;
 }
 
 .btn-save:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 
 .btn-save:disabled {
-  background: #93c5fd;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .save-success {
   font-size: 13px;
   font-weight: 600;
-  color: #16a34a;
+  color: var(--color-success);
 }
 
 .save-error {
   font-size: 13px;
   font-weight: 600;
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 .cookie-check-row {
@@ -414,9 +415,9 @@ const tabs = [
   height: 36px;
   padding: 0 16px;
   border-radius: 6px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  color: #374151;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -424,7 +425,7 @@ const tabs = [
 }
 
 .btn-check:hover:not(:disabled) {
-  background: #e5e7eb;
+  background: var(--color-surface-3);
 }
 
 .btn-check:disabled {
@@ -435,12 +436,12 @@ const tabs = [
 .check-ok {
   font-size: 13px;
   font-weight: 600;
-  color: #16a34a;
+  color: var(--color-success);
 }
 
 .check-fail {
   font-size: 13px;
   font-weight: 600;
-  color: #dc2626;
+  color: var(--color-error);
 }
 </style>

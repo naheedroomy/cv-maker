@@ -172,7 +172,7 @@ function handleRetry(): void {
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 24px;
 }
 
@@ -190,12 +190,12 @@ function handleRetry(): void {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 6px;
 }
 
 .required-star {
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 .field-input {
@@ -203,23 +203,23 @@ function handleRetry(): void {
   width: 100%;
   height: 40px;
   padding: 8px 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
-  color: #111827;
-  background: #ffffff;
+  color: var(--color-text-primary);
+  background: var(--color-surface-1);
   outline: none;
   transition: border-color 150ms ease;
 }
 
 .field-input:focus {
-  border-color: #2563eb;
+  border-color: var(--color-accent-primary);
 }
 
 .field-input:disabled {
-  background: #f8f9fa;
-  color: #6b7280;
+  background: var(--color-surface-2);
+  color: var(--color-text-tertiary);
   cursor: not-allowed;
 }
 
@@ -228,24 +228,24 @@ function handleRetry(): void {
   width: 100%;
   height: 200px;
   padding: 8px 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
-  color: #111827;
-  background: #ffffff;
+  color: var(--color-text-primary);
+  background: var(--color-surface-1);
   outline: none;
   resize: vertical;
   transition: border-color 150ms ease;
 }
 
 .field-textarea:focus {
-  border-color: #2563eb;
+  border-color: var(--color-accent-primary);
 }
 
 .field-textarea:disabled {
-  background: #f8f9fa;
-  color: #6b7280;
+  background: var(--color-surface-2);
+  color: var(--color-text-tertiary);
   cursor: not-allowed;
 }
 
@@ -260,7 +260,7 @@ function handleRetry(): void {
   gap: 8px;
   height: 40px;
   padding: 0 24px;
-  background: #2563eb;
+  background: var(--color-accent-primary);
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
@@ -273,12 +273,13 @@ function handleRetry(): void {
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 
 .submit-btn--disabled,
 .submit-btn:disabled {
-  background: #93c5fd;
+  background: var(--color-accent-primary);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 

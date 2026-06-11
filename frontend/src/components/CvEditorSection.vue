@@ -45,8 +45,8 @@ defineEmits<{
 
 <style scoped>
 .editor-section {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -65,26 +65,26 @@ defineEmits<{
 }
 
 .section-header:hover {
-  background-color: #f9fafb;
+  background-color: var(--color-surface-2);
 }
 
 .section-title {
   font-size: 15px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .drag-handle {
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
   font-size: 14px;
   cursor: grab;
 }
 
 .chevron {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
@@ -95,6 +95,6 @@ defineEmits<{
 
 .section-body {
   padding: 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border);
 }
 </style>

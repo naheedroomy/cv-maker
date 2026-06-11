@@ -492,7 +492,7 @@ function removeLanguage(index: number) {
 .editor-title {
   font-size: 22px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -504,9 +504,9 @@ function removeLanguage(index: number) {
 
 /* Error */
 .error-banner {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
+  color: var(--color-error);
   padding: 12px 16px;
   border-radius: 6px;
   font-size: 14px;
@@ -523,7 +523,7 @@ function removeLanguage(index: number) {
 
 .loading-text {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 /* Empty state */
@@ -538,7 +538,7 @@ function removeLanguage(index: number) {
   align-items: center;
   gap: 12px;
   margin: 16px 0;
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
   font-size: 13px;
 }
 
@@ -547,7 +547,7 @@ function removeLanguage(index: number) {
   content: '';
   flex: 1;
   height: 1px;
-  background: #e2e8f0;
+  background: var(--color-border);
 }
 
 .create-empty-row {
@@ -556,7 +556,7 @@ function removeLanguage(index: number) {
 
 /* Buttons */
 .btn-primary {
-  background: #2563eb;
+  background: var(--color-accent-primary);
   color: #ffffff;
   border: none;
   border-radius: 6px;
@@ -565,11 +565,11 @@ function removeLanguage(index: number) {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: background-color 0.15s, opacity 0.15s;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 
 .btn-primary:disabled {
@@ -578,9 +578,9 @@ function removeLanguage(index: number) {
 }
 
 .btn-secondary {
-  background: #ffffff;
-  color: #374151;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-1);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   height: 36px;
   padding: 0 16px;
@@ -590,13 +590,13 @@ function removeLanguage(index: number) {
 }
 
 .btn-secondary:hover {
-  background: #f9fafb;
+  background: var(--color-surface-2);
 }
 
 .btn-danger {
   background: none;
-  color: #dc2626;
-  border: 1px solid #fca5a5;
+  color: var(--color-error);
+  border: 1px solid var(--color-error-border);
   border-radius: 6px;
   height: 36px;
   padding: 0 16px;
@@ -606,13 +606,13 @@ function removeLanguage(index: number) {
 }
 
 .btn-danger:hover {
-  background: #fef2f2;
+  background: var(--color-error-bg);
 }
 
 .btn-text {
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--color-accent-primary);
   font-size: 13px;
   cursor: pointer;
   padding: 4px 0;
@@ -627,7 +627,7 @@ function removeLanguage(index: number) {
 .btn-icon-danger {
   background: none;
   border: none;
-  color: #dc2626;
+  color: var(--color-error);
   cursor: pointer;
   font-size: 12px;
   padding: 2px 6px;
@@ -636,7 +636,7 @@ function removeLanguage(index: number) {
 }
 
 .btn-icon-danger:hover {
-  background: #fef2f2;
+  background: var(--color-error-bg);
 }
 
 .btn-icon-small {
@@ -671,7 +671,7 @@ function removeLanguage(index: number) {
 .form-field label,
 .list-label {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
@@ -680,12 +680,12 @@ function removeLanguage(index: number) {
 .full-width {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
-  color: #111827;
-  background: #ffffff;
+  color: var(--color-text-primary);
+  background: var(--color-surface-1);
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
@@ -694,8 +694,8 @@ function removeLanguage(index: number) {
 .form-field textarea:focus,
 .full-width:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-primary-rgb), 0.15);
 }
 
 /* Draggable sections */
@@ -709,7 +709,7 @@ function removeLanguage(index: number) {
 
 /* Entry cards */
 .entry-card {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 16px;
   margin-bottom: 12px;
@@ -729,7 +729,7 @@ function removeLanguage(index: number) {
 .entry-label {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .entry-actions {
@@ -740,8 +740,8 @@ function removeLanguage(index: number) {
 
 .btn-icon {
   background: none;
-  border: 1px solid #e2e8f0;
-  color: #4b5563;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   cursor: pointer;
   font-size: 14px;
   padding: 2px 6px;
@@ -750,8 +750,8 @@ function removeLanguage(index: number) {
 }
 
 .btn-icon:hover:not(:disabled) {
-  background: #f3f4f6;
-  color: #111827;
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
 }
 
 .btn-icon:disabled {
@@ -778,20 +778,20 @@ function removeLanguage(index: number) {
 .list-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
-  color: #111827;
-  background: #ffffff;
+  color: var(--color-text-primary);
+  background: var(--color-surface-1);
   resize: vertical;
   box-sizing: border-box;
 }
 
 .list-input:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-primary-rgb), 0.15);
 }
 
 /* Tag editors */
@@ -806,7 +806,7 @@ function removeLanguage(index: number) {
   display: flex;
   align-items: center;
   gap: 2px;
-  background: #f3f4f6;
+  background: var(--color-surface-2);
   border-radius: 4px;
   padding: 2px 4px 2px 6px;
 }
@@ -816,7 +816,7 @@ function removeLanguage(index: number) {
   background: transparent;
   border: none;
   font-size: 13px;
-  color: #374151;
+  color: var(--color-text-secondary);
   padding: 2px 0;
 }
 

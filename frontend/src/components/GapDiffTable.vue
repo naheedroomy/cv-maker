@@ -32,33 +32,33 @@ defineProps<{ items: GapItem[] }>()
 <style scoped>
 .gap-table-wrapper {
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
 }
 
 .gap-table {
   width: 100%;
   border-collapse: collapse;
-  background: #ffffff;
+  background: var(--color-surface-1);
 }
 
 .gap-table thead tr {
-  background: #f8f9fa;
+  background: var(--color-surface-2);
 }
 
 .gap-table th {
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-secondary);
   text-align: left;
   padding: 8px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .gap-table td {
   padding: 8px 16px;
   vertical-align: top;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .gap-table tbody tr:last-child td {
@@ -68,14 +68,14 @@ defineProps<{ items: GapItem[] }>()
 .requirement-text {
   display: block;
   font-size: 14px;
-  color: #111827;
+  color: var(--color-text-primary);
   line-height: 1.5;
 }
 
 .evidence-text {
   display: block;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-top: 4px;
   line-height: 1.4;
 }
@@ -90,17 +90,17 @@ defineProps<{ items: GapItem[] }>()
 }
 
 .gap-badge--strong {
-  background: #dcfce7;
-  color: #14532d;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
 }
 
 .gap-badge--partial {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
 }
 
 .gap-badge--missing {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
 }
 </style>

@@ -57,42 +57,42 @@ const actionClasses: Record<string, string> = {
 .section-heading {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 16px;
 }
 
 .table-wrapper {
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
 }
 
 .notes-table {
   width: 100%;
   border-collapse: collapse;
-  background: #ffffff;
+  background: var(--color-surface-1);
 }
 
 .notes-table thead tr {
-  background: #fffbeb;
+  background: var(--color-warning-bg);
 }
 
 .notes-table th {
   font-size: 12px;
   font-weight: 600;
-  color: #92400e;
+  color: var(--color-warning-text);
   text-align: left;
   padding: 8px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
 }
 
 .notes-table td {
   padding: 10px 16px;
   vertical-align: top;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-surface-2);
   font-size: 13px;
-  color: #374151;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
@@ -102,7 +102,7 @@ const actionClasses: Record<string, string> = {
 
 .cell-section {
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   white-space: nowrap;
 }
 
@@ -111,7 +111,7 @@ const actionClasses: Record<string, string> = {
 }
 
 .cell-reason {
-  color: #6b7280;
+  color: var(--color-text-tertiary);
   min-width: 150px;
 }
 
@@ -125,27 +125,27 @@ const actionClasses: Record<string, string> = {
 }
 
 .action--modified {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--color-surface-3);
+  color: var(--color-accent-primary);
 }
 
 .action--added {
-  background: #dcfce7;
-  color: #14532d;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
 }
 
 .action--removed {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
 }
 
 .action--reordered {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
 }
 
 .action--unchanged {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--color-surface-2);
+  color: var(--color-text-tertiary);
 }
 </style>

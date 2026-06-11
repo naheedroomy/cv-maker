@@ -19,8 +19,8 @@ withDefaults(defineProps<{ title: string; lines?: number }>(), { lines: 3 })
 
 <style scoped>
 .skeleton-section {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 24px;
   margin-bottom: 48px;
@@ -29,13 +29,13 @@ withDefaults(defineProps<{ title: string; lines?: number }>(), { lines: 3 })
 .skeleton-title {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 4px;
 }
 
 .skeleton-label {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-bottom: 16px;
 }
 
@@ -47,7 +47,7 @@ withDefaults(defineProps<{ title: string; lines?: number }>(), { lines: 3 })
 
 .skeleton-line {
   height: 16px;
-  background: #e2e8f0;
+  background: var(--color-surface-2);
   border-radius: 4px;
   animation: pulse 1.5s ease-in-out infinite;
 }

@@ -243,14 +243,14 @@ function handleRegenerate(): void {
 
 .generating-text {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-tertiary);
 }
 
 .field-label {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 6px;
 }
 
@@ -258,9 +258,9 @@ function handleRegenerate(): void {
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: #2563eb;
+  background: var(--color-accent-primary);
   border: none;
-  color: #ffffff;
+  color: var(--color-text-inverted);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -269,7 +269,7 @@ function handleRegenerate(): void {
 }
 
 .btn-generate-trigger:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 .btn-generate-trigger:disabled {
   opacity: 0.6;
@@ -297,18 +297,19 @@ function handleRegenerate(): void {
 .notes-textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-1);
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
-  color: #111827;
+  color: var(--color-text-primary);
   resize: vertical;
   box-sizing: border-box;
 }
 
 .notes-textarea:disabled {
-  background: #f9fafb;
-  color: #6b7280;
+  background: var(--color-surface-2);
+  color: var(--color-text-tertiary);
   cursor: not-allowed;
 }
 
@@ -316,9 +317,9 @@ function handleRegenerate(): void {
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: #2563eb;
+  background: var(--color-accent-primary);
   border: none;
-  color: #ffffff;
+  color: var(--color-text-inverted);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -328,7 +329,7 @@ function handleRegenerate(): void {
 }
 
 .btn-generate:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 
 .btn-generate:disabled {
@@ -345,9 +346,9 @@ function handleRegenerate(): void {
 .cl-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #6b7280;
-  background: #f3f4f6;
-  border: 1px solid #e2e8f0;
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 2px 8px;
 }
@@ -361,12 +362,13 @@ function handleRegenerate(): void {
   width: 100%;
   min-height: 300px;
   padding: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-1);
   border-radius: 6px;
   font-size: 14px;
   line-height: 1.6;
   font-family: inherit;
-  color: #111827;
+  color: var(--color-text-primary);
   resize: vertical;
   box-sizing: border-box;
 }
@@ -383,8 +385,8 @@ function handleRegenerate(): void {
   padding: 0 20px;
   border-radius: 6px;
   background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #374151;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -393,22 +395,22 @@ function handleRegenerate(): void {
 }
 
 .btn-copy:hover:not(.btn-copy--copied) {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
 }
 
 .btn-copy--copied {
-  border-color: #16a34a;
-  color: #16a34a;
+  border-color: var(--color-success-primary);
+  color: var(--color-success-primary);
 }
 
 .btn-save-download {
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: #2563eb;
+  background: var(--color-accent-primary);
   border: none;
-  color: #ffffff;
+  color: var(--color-text-inverted);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -417,7 +419,7 @@ function handleRegenerate(): void {
 }
 
 .btn-save-download:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 
 .btn-save-download:disabled {
@@ -430,8 +432,8 @@ function handleRegenerate(): void {
   padding: 0 20px;
   border-radius: 6px;
   background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #374151;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -440,7 +442,7 @@ function handleRegenerate(): void {
 }
 
 .btn-regenerate-cl:hover:not(:disabled) {
-  border-color: #374151;
+  border-color: var(--color-text-secondary);
 }
 
 .btn-regenerate-cl:disabled {
@@ -451,13 +453,13 @@ function handleRegenerate(): void {
 .cl-history--top {
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .history-heading {
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-tertiary);
   margin-bottom: 8px;
 }
 
@@ -473,25 +475,25 @@ function handleRegenerate(): void {
   gap: 8px;
   padding: 6px 12px;
   background: transparent;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
-  color: #374151;
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: border-color 150ms ease;
   text-align: left;
 }
 
 .history-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
 }
 
 .history-meta {
   font-weight: 400;
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
 }
 </style>

@@ -91,24 +91,24 @@ function openFilePicker() {
 
 <style scoped>
 .drop-zone {
-  border: 2px dashed #d1d5db;
+  border: 2px dashed var(--color-border);
   border-radius: 8px;
   padding: 48px 24px;
   text-align: center;
   cursor: pointer;
   transition: border-color 0.15s ease, background-color 0.15s ease;
-  background-color: #f9fafb;
+  background-color: var(--color-surface-1);
   user-select: none;
 }
 
 .drop-zone:hover:not(.drop-zone--uploading) {
-  border-color: #2563eb;
-  background-color: #eff6ff;
+  border-color: var(--color-accent-primary);
+  background-color: var(--color-accent-secondary);
 }
 
 .drop-zone--dragover {
-  border-color: #2563eb;
-  background-color: #eff6ff;
+  border-color: var(--color-accent-primary);
+  background-color: var(--color-accent-secondary);
 }
 
 .drop-zone--uploading {
@@ -125,25 +125,25 @@ function openFilePicker() {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  color: #6b7280;
+  color: var(--color-text-tertiary);
 }
 
 .upload-icon {
   width: 40px;
   height: 40px;
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
 }
 
 .drop-title {
   font-size: 15px;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
 .drop-subtitle {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
   margin: 0;
 }
 
@@ -156,6 +156,6 @@ function openFilePicker() {
 
 .upload-text {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-tertiary);
 }
 </style>

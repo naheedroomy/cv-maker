@@ -369,7 +369,8 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 .job-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   margin-bottom: 4px;
 }
 
@@ -377,7 +378,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   display: inline-block;
   margin-bottom: 20px;
   font-size: 13px;
-  color: #2563eb;
+  color: var(--color-accent-primary);
   text-decoration: none;
   word-break: break-all;
 }
@@ -389,9 +390,9 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 .model-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #6b7280;
-  background: #f3f4f6;
-  border: 1px solid #e2e8f0;
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 2px 8px;
 }
@@ -401,28 +402,28 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   font-weight: 600;
   padding: 2px 10px;
   border-radius: 4px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #6b7280;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-1);
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 150ms ease;
 }
 .applied-toggle:hover {
-  border-color: #16a34a;
-  color: #16a34a;
+  border-color: var(--color-success-primary);
+  color: var(--color-success-primary);
 }
 .applied-toggle--active {
-  background: #dcfce7;
-  border-color: #16a34a;
-  color: #16a34a;
+  background: var(--color-success-secondary);
+  border-color: var(--color-success-primary);
+  color: var(--color-success-primary);
 }
 
 .applied-date {
   font-size: 11px;
   font-weight: 600;
-  color: #16a34a;
-  background: #dcfce7;
-  border: 1px solid #16a34a;
+  color: var(--color-success-primary);
+  background: var(--color-success-secondary);
+  border: 1px solid var(--color-success-primary);
   border-radius: 4px;
   padding: 2px 8px;
 }
@@ -430,7 +431,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 .company-heading {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 /* Running state actions */
@@ -451,7 +452,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 
 .status-text {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 /* Tab bar */
@@ -459,7 +460,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   display: flex;
   gap: 0;
   height: 44px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 24px;
 }
 
@@ -469,7 +470,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -478,12 +479,12 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 }
 
 .tab-btn:hover {
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .tab-btn--active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: var(--color-accent-primary);
+  border-bottom-color: var(--color-accent-primary);
 }
 
 .tab-panel {
@@ -492,7 +493,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 
 .tab-empty-state {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   padding: 32px 0;
 }
 
@@ -508,9 +509,9 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: #2563eb;
+  background: var(--color-accent-primary);
   border: none;
-  color: #ffffff;
+  color: var(--color-text-inverted);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -520,7 +521,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   transition: background-color 150ms ease;
 }
 .btn-primary:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-primary-hover);
 }
 .btn-primary:disabled {
   opacity: 0.6;
@@ -532,17 +533,17 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   height: 40px;
   padding: 0 24px;
   border-radius: 6px;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #374151;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 150ms ease, color 150ms ease;
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 .btn-secondary:hover:not(:disabled) {
-  border-color: #374151;
-  color: #111827;
+  background: var(--color-surface-3);
+  border-color: var(--color-border);
 }
 .btn-secondary:disabled {
   opacity: 0.6;
@@ -555,8 +556,8 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   padding: 0 24px;
   border-radius: 6px;
   background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #6b7280;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -582,13 +583,13 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 .cv-history--top {
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .history-heading {
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-bottom: 8px;
 }
 
@@ -603,27 +604,28 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  background: transparent;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
-  color: #374151;
+  color: var(--color-text-primary);
   cursor: pointer;
-  transition: border-color 150ms ease;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
   text-align: left;
 }
 
 .history-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+  background-color: var(--color-surface-2);
 }
 
 .history-meta {
   font-weight: 400;
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
 }
 
 /* Analysis section headings */
@@ -634,7 +636,7 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 .section-heading {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin-bottom: 16px;
 }
 
@@ -647,34 +649,36 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
   display: block;
   font-size: 12px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-bottom: 4px;
 }
 
 .listing-input {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
-  color: #111827;
+  color: var(--color-text-primary);
   box-sizing: border-box;
 }
 
 .listing-input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-accent-primary);
 }
 
 .listing-textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid #d1d5db;
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 13px;
   font-family: inherit;
-  color: #374151;
+  color: var(--color-text-primary);
   line-height: 1.6;
   resize: vertical;
   box-sizing: border-box;
@@ -682,15 +686,15 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 
 .listing-textarea:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-accent-primary);
 }
 
 /* Job listing text */
 .job-text-content {
   font-size: 13px;
-  color: #374151;
-  background: #f8f9fa;
-  border: 1px solid #e2e8f0;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 16px;
   white-space: pre-wrap;

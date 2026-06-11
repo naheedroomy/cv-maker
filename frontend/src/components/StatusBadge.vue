@@ -20,19 +20,19 @@ defineProps<{ status: JobStatus }>()
 }
 .badge--pending,
 .badge--running {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
 }
 .badge--complete {
-  background: #dcfce7;
-  color: #14532d;
+  background: var(--color-success-secondary);
+  color: var(--color-success-primary);
 }
 .badge--failed {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
 }
 .badge--cancelled {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
 }
 </style>

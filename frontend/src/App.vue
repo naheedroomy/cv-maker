@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppSidebar from './components/AppSidebar.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/authStore'
 
 const authStore = useAuthStore()
@@ -36,6 +37,7 @@ watch(() => route.fullPath, () => {
           <line x1="6" y1="6" x2="18" y2="18" /><line x1="6" y1="18" x2="18" y2="6" />
         </svg>
       </button>
+      <ThemeToggle />
       <RouterView />
     </main>
   </div>
@@ -43,12 +45,75 @@ watch(() => route.fullPath, () => {
 
 <style>
 :root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Default Theme: Dark */
+  --color-background: #111827; /* Slate 900 */
+  --color-surface-1: #1f2937; /* Slate 800 */
+  --color-surface-2: #374151; /* Slate 700 */
+  --color-surface-3: #4b5563; /* Slate 600 */
+  --color-border: #374151; /* Slate 700 */
+
+  --color-text-primary: #f9fafb; /* Slate 50 */
+  --color-text-secondary: #d1d5db; /* Slate 300 */
+  --color-text-tertiary: #9ca3af; /* Slate 400 */
+  --color-text-inverted: #111827;
+
+  --color-accent-primary: #3b82f6; /* Blue 500 */
+  --color-accent-primary-rgb: 59, 130, 246;
+  --color-accent-primary-hover: #60a5fa; /* Blue 400 */
+  --color-accent-secondary: #1e293b; /* Slate 800 */
+
+  --color-success-primary: #22c55e; /* Green 500 */
+  --color-success-secondary: #14532d; /* Green 900 */
+  --color-warning-bg: #451a03;
+  --color-warning-text: #fbbf24;
+  --color-error: #f87171;
+  --color-error-bg: #450a0a;
+  --color-error-text: #fecaca;
+  --color-error-border: #991b1b;
+  --color-shadow: rgba(0, 0, 0, 0.35);
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+[data-theme='light'] {
+  --color-background: #f8f9fa;
+  --color-surface-1: #ffffff;
+  --color-surface-2: #f3f4f6;
+  --color-surface-3: #e5e7eb;
+  --color-border: #e2e8f0;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-tertiary: #6b7280;
+  --color-text-inverted: #ffffff;
+
+  --color-accent-primary: #2563eb;
+  --color-accent-primary-rgb: 37, 99, 235;
+  --color-accent-primary-hover: #1d4ed8;
+  --color-accent-secondary: #eff6ff;
+
+  --color-success-primary: #16a34a;
+  --color-success-secondary: #f0fdf4;
+  --color-warning-bg: #fffbeb;
+  --color-warning-text: #92400e;
+  --color-error: #dc2626;
+  --color-error-bg: #fef2f2;
+  --color-error-text: #991b1b;
+  --color-error-border: #fecaca;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+}
+
+html {
+  font-family: var(--font-sans);
   font-size: 14px;
-  color: #111827;
-  background: #f8f9fa;
+  color: var(--color-text-primary);
+  background: var(--color-background);
   margin: 0;
   padding: 0;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 * {
@@ -61,6 +126,7 @@ watch(() => route.fullPath, () => {
   display: grid;
   grid-template-columns: 260px 1fr;
   min-height: 100vh;
+  background-color: var(--color-background);
 }
 
 .main-content {
@@ -84,7 +150,7 @@ watch(() => route.fullPath, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8f9fa;
+  background: var(--color-background);
 }
 
 @media (max-width: 768px) {
@@ -96,7 +162,7 @@ watch(() => route.fullPath, () => {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.6);
     z-index: 99;
     opacity: 0;
     pointer-events: none;
@@ -118,16 +184,16 @@ watch(() => route.fullPath, () => {
     z-index: 98;
     width: 40px;
     height: 40px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--color-surface-1);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     cursor: pointer;
-    color: #374151;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    color: var(--color-text-secondary);
+    box-shadow: var(--shadow-md);
   }
 
   .sidebar-toggle:hover {
-    background: #f3f4f6;
+    background: var(--color-surface-2);
   }
 
   .main-content {
