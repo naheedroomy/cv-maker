@@ -310,6 +310,13 @@ class TestParameterizedPrompt:
         result = _build_prompt(base_cv, sample_job_text, 2)
         assert "Signal density" in result
 
+    def test_english_only_sanity_check_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Prompt requires final CV output to stay in English."""
+        result = _build_prompt(base_cv, sample_job_text, 2)
+        assert "LANGUAGE SANITY CHECK" in result
+        assert "entirely in English" in result
+        assert "Do not copy non-English wording" in result
+
     def test_coverage_constraint_present(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """Prompt includes minimum bullet count constraint."""
         result = _build_prompt(base_cv, sample_job_text, 2)
@@ -343,6 +350,12 @@ class TestChatPrompt:
         """Chat prompt includes level label."""
         result = pipeline._build_system_prompt_for_chat(3)
         assert "CREATIVITY LEVEL: 3 (SELECTIVE)" in result
+
+    def test_english_only_sanity_check_present(self) -> None:
+        """Chat prompt requires final CV output to stay in English."""
+        result = pipeline._build_system_prompt_for_chat(2)
+        assert "LANGUAGE SANITY CHECK" in result
+        assert "entirely in English" in result
 
 
 class TestRunPipelineCreativity:

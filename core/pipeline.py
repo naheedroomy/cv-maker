@@ -599,6 +599,12 @@ EDUCATION, PROJECTS, CERTIFICATIONS, LANGUAGES: Pass through unchanged. Include 
 CONTACT: Pass through unchanged.
 
 ---
+LANGUAGE SANITY CHECK:
+- The final generated CV must be written entirely in English, even if the job listing contains German, Spanish, French, or any other non-English fragments.
+- Do not copy non-English wording from the job listing into the summary, bullets, skills, core competencies, highlighted technologies, tailoring notes, or gap analysis.
+- Proper nouns may remain as written (company names, product names, locations, certification names), but all explanatory text around them must be English.
+
+---
 STEP 3 — TAILORING NOTES (5-10)
 
 Each note must include:
@@ -789,6 +795,7 @@ ALIGNMENT CHECKS:
 - No bullet exceeds stated ownership. No role below minimum bullet count (2). \
 Never return empty bullets lists. If a role has 2 or fewer bullets, keep all of them.
 - Balance depth (target alignment) and breadth (full experience).
+- LANGUAGE SANITY CHECK: The final CV must be entirely in English. Ignore non-English job-listing fragments except proper nouns; do not copy German, Spanish, French, or other non-English wording into any output field.
 
 Return ONLY valid JSON (no fences, no commentary) matching the schema provided in the user message."""
 
