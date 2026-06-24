@@ -989,11 +989,26 @@ as a single JSON object matching this schema:
 def apply_tech_bolding(tailored: TailoredCV) -> TailoredCV:
     """Apply **bold** markers to technology names in bullet text.
 
-    Uses highlighted_technologies (global, bolded everywhere) and each role's
-    technologies list (bolded only within that role). Matches case-insensitively
-    with word boundaries. Skips already-bolded text. Resolves known aliases.
+    Uses highlighted_technologies (global), each role's technologies list
+    (role-scoped), and a built-in allowlist of known concrete DevOps/cloud
+    tools (global). Matches case-insensitively with word boundaries.
+    Skips already-bolded text. Resolves known aliases.
     Mutates and returns the TailoredCV.
     """
+    # Known concrete DevOps/cloud tools — bolded globally to catch tools the
+    # model mentioned in bullets but forgot to include in technology fields.
+    # Sorted longest-first to avoid partial conflicts (e.g. "AWS CloudWatch"
+    # before "AWS"). Generic concepts excluded — only concrete named tools.
+    _CONCRETE_TOOLS_ALLOWLIST: set[str] = {
+        "github actions", "gitlab ci", "aws codepipeline", "codepipeline",
+        "aws codebuild", "codebuild", "aws cloudwatch", "cloudwatch",
+        "fastapi", "postgresql", "kubernetes", "terraform", "cloudformation",
+        "prometheus", "sonarqube", "mongodb", "jenkins", "ansible", "docker",
+        "datadog", "argocd", "django", "python", "azure", "linux",
+        "nexus", "helm", "oidc", "oauth", "vpn", "dns", "s3", "sqs", "keda",
+        "iam", "sso", "eks", "bash", "aws",
+    }
+
     # Reuse alias map from validation (lightweight copy)
     _TECH_ALIASES: dict[str, str] = {
         "k8s": "kubernetes",
@@ -1043,8 +1058,8 @@ def apply_tech_bolding(tailored: TailoredCV) -> TailoredCV:
         role_techs: set[str] = {
             t.strip().lower() for t in exp.technologies if t.strip()
         }
-        # Combine with global techs
-        all_techs = global_techs_lower | role_techs
+        # Combine with global techs and concrete-tool allowlist
+        all_techs = global_techs_lower | role_techs | _CONCRETE_TOOLS_ALLOWLIST
         for i, bullet in enumerate(exp.bullets):
             exp.bullets[i] = _bold_tech_in_text(bullet, all_techs)
 

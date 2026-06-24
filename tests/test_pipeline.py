@@ -1324,3 +1324,84 @@ class TestTechBolding:
         assert "**Python**" in cv.experience[0].bullets[0]
         # Docker bolded in role D
         assert "**Docker**" in cv.experience[1].bullets[0]
+
+    # ── Allowlist bolding tests ──────────────────────────────────────
+
+    def test_allowlisted_tool_bolded_even_absent_from_tech_fields(self) -> None:
+        """Concrete tools in bullets get bolded even if not in technology lists."""
+        cv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "t@t.com"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["Deployed apps with ArgoCD and Helm"],
+                            "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        bullet = cv.experience[0].bullets[0]
+        assert "**ArgoCD**" in bullet
+        assert "**Helm**" in bullet
+
+    def test_generic_concepts_not_bolded(self) -> None:
+        """Generic concepts like 'automation', 'infrastructure' are NOT bolded."""
+        cv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "t@t.com"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["Built automation for infrastructure monitoring and scalability"],
+                            "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        bullet = cv.experience[0].bullets[0]
+        assert "**automation**" not in bullet
+        assert "**infrastructure**" not in bullet
+        assert "**monitoring**" not in bullet
+        assert "**scalability**" not in bullet
+
+    def test_aws_s3_sqs_keda_sentence_all_bolded(self) -> None:
+        """Complex sentence with AWS/S3/SQS/KEDA/Kubernetes bolds all concrete tools."""
+        cv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "t@t.com"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": [
+                                "Designed an event-driven AWS pipeline using S3, SQS, "
+                                "and KEDA to autoscale Kubernetes workloads"
+                            ],
+                            "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        bullet = cv.experience[0].bullets[0]
+        assert "**AWS**" in bullet
+        assert "**S3**" in bullet
+        assert "**SQS**" in bullet
+        assert "**KEDA**" in bullet
+        assert "**Kubernetes**" in bullet
+
+    def test_argocd_github_actions_terraform_sentence_all_bolded(self) -> None:
+        """ArgoCD + GitHub Actions + Terraform all bolded from allowlist."""
+        cv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "t@t.com"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": [
+                                "Built GitOps pipeline with ArgoCD, GitHub Actions, and Terraform"
+                            ],
+                            "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        bullet = cv.experience[0].bullets[0]
+        assert "**ArgoCD**" in bullet
+        assert "**GitHub Actions**" in bullet
+        assert "**Terraform**" in bullet
