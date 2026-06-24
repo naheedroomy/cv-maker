@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import re
+from difflib import SequenceMatcher
 
 from core.models import BaseCV, TailoredCV
 
@@ -103,7 +104,7 @@ _GENERIC_PATTERN_RE = re.compile(
 
 
 def validate_tailored_cv(
-    base: BaseCV, tailored: TailoredCV, jd_keywords: list[str] | None = None
+    base: BaseCV, tailored: TailoredCV, jd_keywords: list[str] | None = None, jd_text: str = ""
 ) -> list[str]:
     """Compare BaseCV vs TailoredCV.
 
@@ -141,6 +142,15 @@ def validate_tailored_cv(
 
     # ── Soft checks (generic / low-substance bullets) ─────────────────
     _check_generic_bullets(base, tailored, warnings)
+
+    # ── Soft checks (keyword placement / plausibility) ────────────────
+    _check_keyword_placement(base, tailored, warnings)
+    _check_awkward_chains(tailored, warnings)
+    if jd_text:
+        _check_jd_mimicry(tailored, jd_text, warnings)
+    _check_highlighted_tech_references(tailored, warnings)
+    _check_role_tech_consistency(tailored, warnings)
+    _check_core_competencies_tool_leakage(tailored, warnings)
 
     return warnings
 
@@ -533,4 +543,177 @@ def _check_generic_bullets(
                 f"Low ownership signal: only {pct}% of bullets contain "
                 f"impact/ownership language — consider surfacing results, "
                 f"mentorship, or ownership where base CV supports it"
+            )
+
+
+# ── Keyword placement / plausibility soft checks ─────────────────────────────
+
+
+def _check_keyword_placement(
+    base: BaseCV, tailored: TailoredCV, warnings: list[str]
+) -> None:
+    """Warn when a tailored role technology has no evidence in that role's base CV."""
+    # Build per-role evidence from base CV, keyed by (company, start, end)
+    base_role_evidence: dict[tuple[str, str, str], tuple[set[str], str]] = {}
+    base_skills_lower = {s.strip().lower() for s in base.skills}
+    for e in base.experience:
+        key = (e.company.strip().lower(), e.start, e.end or "")
+        techs = {t.strip().lower() for t in e.technologies}
+        bullets_text = " ".join(b.lower() for b in e.bullets)
+        base_role_evidence[key] = (techs, bullets_text)
+
+    for exp in tailored.experience:
+        key = (exp.company.strip().lower(), exp.start, exp.end or "")
+        evidence = base_role_evidence.get(key)
+        if evidence is None:
+            continue
+        base_techs, base_bullets = evidence
+        tailored_techs = {t.strip().lower() for t in exp.technologies}
+        for tech in tailored_techs:
+            if len(tech) <= 2:
+                continue
+            tech_lower = tech.lower()
+            # Skip if tech is in base role technologies, base role bullets, or base skills
+            if tech_lower in base_techs:
+                continue
+            if tech_lower in base_bullets:
+                continue
+            if tech_lower in base_skills_lower:
+                continue
+            warnings.append(
+                f"Suspicious placement: '{tech}' may not be grounded in "
+                f"'{exp.company}' ({exp.start}–{exp.end}) role's base-CV evidence"
+            )
+
+
+def _check_awkward_chains(tailored: TailoredCV, warnings: list[str]) -> None:
+    """Detect 3+ consecutive capitalized nouns/tech terms (awkward keyword chains)."""
+    # Common action verbs that are often capitalized at bullet start but not tech terms
+    _COMMON_VERBS = frozenset({
+        "built", "managed", "designed", "implemented", "developed", "created",
+        "led", "deployed", "migrated", "optimized", "reduced", "increased",
+        "automated", "configured", "integrated", "launched", "architected",
+        "engineered", "maintained", "monitored", "scaled", "secured", "tested",
+        "delivered", "owned", "drove", "established", "improved", "streamlined",
+        "orchestrated", "achieved",
+    })
+    _CHAIN_RE = re.compile(
+        r"\b([A-Z][a-zA-Z0-9+#.-]*(?:\s+[A-Z][a-zA-Z0-9+#.-]*){2,})\b"
+    )
+    for exp in tailored.experience:
+        for bullet in exp.bullets:
+            stripped = bullet.replace("**", "")
+            for m in _CHAIN_RE.finditer(stripped):
+                words = m.group().split()
+                # Filter out common verbs
+                tech_words = [w for w in words if w.lower() not in _COMMON_VERBS]
+                if len(tech_words) >= 3:
+                    warnings.append(
+                        f"Awkward term chain detected: {len(tech_words)} "
+                        f"consecutive capitalized terms — '{m.group()}' — "
+                        f"use natural project language"
+                    )
+                    break  # one warning per bullet
+
+
+def _check_jd_mimicry(
+    tailored: TailoredCV, jd_text: str, warnings: list[str]
+) -> None:
+    """Warn when bullet text closely mimics JD phrasing (bigram similarity >= 80%)."""
+    # Extract JD requirement-like sentences (lines with 6+ words)
+    jd_lines = [l.strip() for l in jd_text.splitlines() if len(l.split()) >= 6]
+    if not jd_lines:
+        return
+
+    for exp in tailored.experience:
+        for bullet in exp.bullets:
+            bullet_norm = bullet.replace("**", "").lower()
+            for jd_line in jd_lines:
+                jd_norm = jd_line.lower()
+                # Use SequenceMatcher for quick similarity check
+                ratio = SequenceMatcher(None, bullet_norm, jd_norm).ratio()
+                if ratio >= 0.80 and len(bullet_norm) > 15:
+                    warnings.append(
+                        f"Possible JD mimicry: bullet phrasing closely matches "
+                        f"job description language ({int(ratio*100)}% similarity) — "
+                        f"'{bullet[:80]}...'"
+                    )
+                    break
+
+
+def _check_highlighted_tech_references(
+    tailored: TailoredCV, warnings: list[str]
+) -> None:
+    """Warn if a highlighted technology is never referenced in any bullet."""
+    all_bullet_text = " ".join(
+        b.replace("**", "").lower()
+        for e in tailored.experience for b in e.bullets
+    )
+    for tech in tailored.highlighted_technologies:
+        tech_stripped = tech.strip()
+        if not tech_stripped:
+            continue
+        # Word-boundary phrase match (handles +, #, ., / in tech names safely)
+        pattern = re.compile(
+            r"(?<!\w)" + re.escape(tech_stripped) + r"(?!\w)", re.IGNORECASE,
+        )
+        if not pattern.search(all_bullet_text):
+            warnings.append(
+                f"Highlighted technology '{tech}' is never referenced in "
+                f"bullets — consider adding or removing"
+            )
+
+
+def _check_role_tech_consistency(
+    tailored: TailoredCV, warnings: list[str]
+) -> None:
+    """Warn if a role's technologies field lists tools not in its bullets or skills."""
+    all_skills_lower = {s.strip().lower() for s in tailored.skills}
+    for exp in tailored.experience:
+        if not exp.bullets:
+            continue
+        role_bullet_text = " ".join(
+            b.replace("**", "").lower() for b in exp.bullets
+        )
+        for tech in exp.technologies:
+            tech_stripped = tech.strip()
+            if not tech_stripped:
+                continue
+            tech_lower = tech_stripped.lower()
+            # Word-boundary phrase match in skills
+            in_skills = any(
+                re.search(r"(?<!\w)" + re.escape(tech_stripped) + r"(?!\w)",
+                          s, re.IGNORECASE)
+                for s in tailored.skills
+            )
+            # Word-boundary phrase match in bullets
+            in_bullets = bool(
+                re.search(r"(?<!\w)" + re.escape(tech_stripped) + r"(?!\w)",
+                          role_bullet_text, re.IGNORECASE)
+            )
+            if in_bullets or in_skills:
+                continue
+            warnings.append(
+                f"Role technology '{tech}' not referenced in any bullet "
+                f"for '{exp.company}' role"
+            )
+
+
+def _check_core_competencies_tool_leakage(
+    tailored: TailoredCV, warnings: list[str]
+) -> None:
+    """Warn if core_competencies contains concrete tool names instead of capabilities."""
+    # Collect known concrete tools from highlighted_technologies and role techs
+    concrete_tools: set[str] = {t.strip().lower() for t in tailored.highlighted_technologies}
+    for exp in tailored.experience:
+        concrete_tools |= {t.strip().lower() for t in exp.technologies}
+
+    # Tool-like patterns: CamelCase, dot-separated, or common tool names
+    for comp in tailored.core_competencies:
+        comp_lower = comp.strip().lower()
+        if comp_lower in concrete_tools:
+            warnings.append(
+                f"Concrete tool '{comp}' in core_competencies — use "
+                f"highlighted_technologies for tools; core_competencies is "
+                f"for capabilities/methodologies (e.g., GitOps, IaC, CI/CD)"
             )

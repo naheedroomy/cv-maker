@@ -257,6 +257,12 @@ class EvidenceMatch(BaseModel):
     #   improved_reliability, reduced_onboarding_time, increased_velocity,
     #   reduced_cost, improved_security_posture, increased_coverage, simplified_operations.
     impact_signals: list[str] = Field(default_factory=list)
+    # Keyword placement guidance: where this keyword can be defensibly placed.
+    # "experience" = can embed in an experience bullet, "skills" = skills section
+    # only, "omit" = no defensible placement — omit entirely.
+    placement: str = "experience"
+    # Reason for the placement decision (e.g., "Only in base CV skills, no bullet evidence").
+    placement_reason: str = ""
 
 
 class KeywordPair(BaseModel):

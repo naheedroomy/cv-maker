@@ -735,3 +735,162 @@ class TestGenericBulletValidation:
         assert len(generic_warnings) > 0
         assert len(kw_warnings) > 0
         assert len(metric_warnings) > 0
+
+
+# ---------------------------------------------------------------------------
+# Placement validation tests (Task 4.8)
+# ---------------------------------------------------------------------------
+
+
+class TestPlacementValidation:
+    """Tests for keyword placement / plausibility validation."""
+
+    def test_chain_detection_flags_noun_stack(self) -> None:
+        base = BaseCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["test"], "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        tailored = TailoredCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": [
+                                "Used Kubernetes Container Orchestration Auto Scaling for workloads",
+                            ], "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        warnings = validate_tailored_cv(base, tailored)
+        chain_warnings = [w for w in warnings if "chain" in w.lower()]
+        assert len(chain_warnings) > 0
+
+    def test_normal_sentence_no_chain_warning(self) -> None:
+        base = BaseCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["test"], "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        tailored = TailoredCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": [
+                                "Designed an event-driven pipeline using S3, SQS, and KEDA",
+                            ], "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        warnings = validate_tailored_cv(base, tailored)
+        chain_warnings = [w for w in warnings if "chain" in w.lower()]
+        assert len(chain_warnings) == 0
+
+    def test_highlighted_tech_not_in_bullets_warns(self) -> None:
+        base = BaseCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["test"], "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        tailored = TailoredCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["Built APIs with Python"],
+                            "technologies": ["Python"]}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+            "highlighted_technologies": ["ArgoCD"],
+        })
+        warnings = validate_tailored_cv(base, tailored)
+        ref_warnings = [w for w in warnings if "never referenced" in w.lower()]
+        assert len(ref_warnings) > 0
+
+    def test_tool_in_core_competencies_warns(self) -> None:
+        base = BaseCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["test"], "technologies": ["Kubernetes"]}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        tailored = TailoredCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["Managed Kubernetes clusters"],
+                            "technologies": ["Kubernetes"]}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+            "core_competencies": ["Kubernetes"],
+        })
+        warnings = validate_tailored_cv(base, tailored)
+        leakage_warnings = [w for w in warnings if "Concrete tool" in w]
+        assert len(leakage_warnings) > 0
+
+    def test_duplicate_company_role_keying_no_false_positive(self) -> None:
+        """Same company, different dates: technologies unique to each role don't cross-trigger."""
+        base = BaseCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [
+                {"company": "Acme", "title": "Engineer", "start": "2020-01", "end": "2021-06",
+                 "bullets": ["Used GitLab CI"], "technologies": ["GitLab CI"]},
+                {"company": "Acme", "title": "Senior Engineer", "start": "2021-07", "end": "2024-01",
+                 "bullets": ["Used GitHub Actions"], "technologies": ["GitHub Actions"]},
+            ],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        tailored = TailoredCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [
+                {"company": "Acme", "title": "Engineer", "start": "2020-01", "end": "2021-06",
+                 "bullets": ["Built GitLab CI pipelines"],
+                 "technologies": ["GitLab CI"]},
+                {"company": "Acme", "title": "Senior Engineer", "start": "2021-07", "end": "2024-01",
+                 "bullets": ["Automated deployments with GitHub Actions"],
+                 "technologies": ["GitHub Actions"]},
+            ],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        warnings = validate_tailored_cv(base, tailored)
+        placement_warnings = [w for w in warnings if "Suspicious placement" in w]
+        assert len(placement_warnings) == 0
+
+    def test_word_boundary_prevents_short_tech_false_match(self) -> None:
+        """Short tech name 'Go' does not match inside 'Google' or 'Golang'."""
+        base = BaseCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["test"], "technologies": []}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        tailored = TailoredCV.model_validate({
+            "contact": {"name": "X", "email": "x@x.com", "github": "x"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["Wrote Google Cloud Functions in Golang"],
+                            "technologies": ["Go"]}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        warnings = validate_tailored_cv(base, tailored)
+        ref_warnings = [w for w in warnings if "not referenced" in w.lower()]
+        # "Go" should not match inside "Google" or "Golang" — word boundary prevents this
+        # But "Go" also doesn't appear as a standalone word in the bullet, so it fires
+        # This tests that the regex works correctly (no substring matches)
+        assert any("Go" in w for w in ref_warnings)

@@ -458,18 +458,18 @@ class TestHighlightedTechnologies:
     def test_rule_resolved_at_level_0(self) -> None:
         """The highlighted_tech rule is present at all levels."""
         result = _resolve_rule("highlighted_tech", 0)
-        assert "3-8 specific technologies" in result
+        assert "3-8 CONCRETE tools" in result
         assert "plain names only" in result.lower()
 
     def test_in_prompt_at_level_2(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """The full prompt includes highlighted tech instructions at level 2."""
         result = _build_prompt(base_cv, sample_job_text, 2)
-        assert "3-8 specific technologies" in result
+        assert "3-8 CONCRETE tools" in result
 
     def test_in_chat_prompt(self) -> None:
         """Chat system prompt includes highlighted tech instructions."""
         result = pipeline._build_system_prompt_for_chat(2)
-        assert "3-8 specific technologies" in result
+        assert "3-8 CONCRETE tools" in result
 
     def test_static_string_replaced(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """The old bare-string 'Surface known-but-not-leading' is gone."""
@@ -635,6 +635,13 @@ class TestIntermediateModels:
         })
         assert "automation" in match.differentiator_categories
         assert "improved_consistency" in match.impact_signals
+
+    def test_evidence_match_placement_defaults(self) -> None:
+        """placement defaults to 'experience', placement_reason to ''."""
+        match = EvidenceMatch(requirement_phrase="X", match_level="strong",
+                              evidence_text="test")
+        assert match.placement == "experience"
+        assert match.placement_reason == ""
 
 
 # ---------------------------------------------------------------------------
@@ -1126,3 +1133,194 @@ class TestStagedPipelineBackwardCompat:
         """run_pipeline prompt includes keyword policy even in single-shot mode."""
         prompt = _build_prompt(base_cv, sample_job_text, 3)
         assert "NATURAL KEYWORD EMBEDDING POLICY" in prompt
+
+
+# ---------------------------------------------------------------------------
+# Recruiter plausibility in prompt tests (Task 2.6)
+# ---------------------------------------------------------------------------
+
+
+class TestRecruiterPlausibilityInPrompt:
+    """Tests verifying the recruiter plausibility rule in prompts."""
+
+    def test_plausibility_in_build_prompt(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        prompt = _build_prompt(base_cv, sample_job_text, 2)
+        assert "RECRUITER PLAUSIBILITY RULES" in prompt
+        assert "TRUTHFUL PLACEMENT" in prompt
+        assert "NATURAL LANGUAGE" in prompt
+
+    def test_plausibility_in_chat_prompt(self) -> None:
+        prompt = pipeline._build_system_prompt_for_chat(2)
+        assert "RECRUITER PLAUSIBILITY RULES" in prompt
+
+    def test_plausibility_resolved_at_all_levels(self) -> None:
+        for level in range(7):
+            rule = _resolve_rule("recruiter_plausibility", level)
+            assert "TRUTHFUL PLACEMENT" in rule
+
+
+# ---------------------------------------------------------------------------
+# Stage 2 placement fields tests (Tasks 3.4, 3.5)
+# ---------------------------------------------------------------------------
+
+
+class TestStage2PlacementFields:
+    """Tests for Stage 2 prompt extension with placement fields."""
+
+    def test_stage_2_prompt_contains_placement_instructions(
+        self, base_cv: BaseCV, expected_requirements: RequirementExtraction,
+    ) -> None:
+        captured = []
+
+        def mock_provider(prompt: str) -> str:
+            captured.append(prompt)
+            return json.dumps({
+                "matches": [{"requirement_phrase": "X", "match_level": "strong",
+                             "evidence_text": "test", "allowed_keywords": ["X"],
+                             "inference_rule": None}],
+                "pairing_plan": {"pairs": []},
+                "coverage_summary": {"total_requirements": 1, "strong_matches": 1,
+                                     "partial_matches": 0, "missing": 0},
+            })
+
+        map_evidence(expected_requirements, base_cv, mock_provider)
+        assert "placement" in captured[0]
+        assert '"experience"' in captured[0] or "'experience'" in captured[0]
+
+    def test_mock_stage_2_with_placement_fields(
+        self, base_cv: BaseCV, expected_requirements: RequirementExtraction,
+    ) -> None:
+        mock_json = json.dumps({
+            "matches": [{
+                "requirement_phrase": "Kubernetes", "match_level": "strong",
+                "evidence_text": "test", "allowed_keywords": ["Kubernetes"],
+                "inference_rule": None,
+                "placement": "skills", "placement_reason": "Only in base CV skills",
+            }],
+            "pairing_plan": {"pairs": []},
+            "coverage_summary": {"total_requirements": 1, "strong_matches": 1,
+                                 "partial_matches": 0, "missing": 0},
+        })
+
+        def mock_provider(prompt: str) -> str:
+            return mock_json
+
+        result = map_evidence(expected_requirements, base_cv, mock_provider)
+        assert result.matches[0].placement == "skills"
+        assert result.matches[0].placement_reason == "Only in base CV skills"
+
+
+# ---------------------------------------------------------------------------
+# Tech bolding tests (Task 5.4)
+# ---------------------------------------------------------------------------
+
+
+class TestTechBolding:
+    """Tests for deterministic technology bolding."""
+
+    def _make_tailored(self, bullets: list[str], techs: list[str],
+                       highlighted: list[str] | None = None) -> TailoredCV:
+        return TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "t@t.com"},
+            "summary": "test",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": bullets, "technologies": techs}],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+            "highlighted_technologies": highlighted or [],
+        })
+
+    def test_single_word_bolding(self) -> None:
+        cv = self._make_tailored(
+            ["Managed Kubernetes clusters"],
+            ["Kubernetes"], ["Kubernetes"],
+        )
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        assert "**Kubernetes**" in cv.experience[0].bullets[0]
+
+    def test_multi_word_bolding(self) -> None:
+        cv = self._make_tailored(
+            ["Built CI/CD with GitHub Actions"],
+            ["GitHub Actions"], ["GitHub Actions"],
+        )
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        assert "**GitHub Actions**" in cv.experience[0].bullets[0]
+
+    def test_case_insensitive_match(self) -> None:
+        cv = self._make_tailored(
+            ["managed kubernetes clusters"],
+            ["Kubernetes"], ["Kubernetes"],
+        )
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        assert "**kubernetes**" in cv.experience[0].bullets[0]
+
+    def test_no_double_bolding(self) -> None:
+        cv = self._make_tailored(
+            ["Managed **Kubernetes** clusters"],
+            ["Kubernetes"], ["Kubernetes"],
+        )
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        assert cv.experience[0].bullets[0].count("**") == 2  # one pair
+
+    def test_word_boundary_prevents_partial_match(self) -> None:
+        cv = self._make_tailored(
+            ["Used Kuberneteses tool"],
+            ["Kubernetes"], [],
+        )
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        assert "**" not in cv.experience[0].bullets[0]
+
+    def test_alias_resolution_k8s(self) -> None:
+        cv = self._make_tailored(
+            ["Managed K8s clusters"],
+            ["Kubernetes"], [],
+        )
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        assert "**K8s**" in cv.experience[0].bullets[0]
+
+    def test_global_highlighted_bolded_in_all_roles(self) -> None:
+        cv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "t@t.com"},
+            "summary": "test",
+            "experience": [
+                {"company": "C", "title": "T", "start": "2020-01",
+                 "bullets": ["Used Docker"], "technologies": []},
+                {"company": "D", "title": "T2", "start": "2018-01",
+                 "bullets": ["Deployed with Docker"], "technologies": []},
+            ],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+            "highlighted_technologies": ["Docker"],
+        })
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        assert "**Docker**" in cv.experience[0].bullets[0]
+        assert "**Docker**" in cv.experience[1].bullets[0]
+
+    def test_role_specific_tech_bolded_only_in_its_role(self) -> None:
+        cv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "t@t.com"},
+            "summary": "test",
+            "experience": [
+                {"company": "C", "title": "T", "start": "2020-01",
+                 "bullets": ["Used Python and Docker"],
+                 "technologies": ["Python"]},
+                {"company": "D", "title": "T2", "start": "2018-01",
+                 "bullets": ["Deployed with Docker"],
+                 "technologies": ["Docker"]},
+            ],
+            "skills": [],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        from core.pipeline import apply_tech_bolding
+        apply_tech_bolding(cv)
+        # Python bolded in role C only (role tech, not highlighted)
+        assert "**Python**" in cv.experience[0].bullets[0]
+        # Docker bolded in role D
+        assert "**Docker**" in cv.experience[1].bullets[0]

@@ -296,3 +296,57 @@ def expected_evidence_map() -> EvidenceMap:
         },
         "coverage_summary": {"total_requirements": 10, "strong_matches": 7, "partial_matches": 2, "missing": 1},
     })
+
+
+@pytest.fixture
+def suspicious_jd_text() -> str:
+    """JD with keywords that are easy to misplace: Jenkins, SonarQube, Nexus, IAM, etc."""
+    return (
+        "Senior DevOps Engineer\n\n"
+        "Required:\n"
+        "- Experience with Jenkins and GitLab CI for CI/CD pipeline automation\n"
+        "- Knowledge of SonarQube and Nexus for code quality and artifact management\n"
+        "- Strong IAM and SSO experience (OIDC, OAuth, SAML)\n"
+        "- Understanding of VPN, DNS, and network routing\n"
+        "- Experience with infrastructure as code (Terraform, CloudFormation)\n"
+        "- Proficiency in Python and Go for automation\n"
+    )
+
+
+@pytest.fixture
+def base_cv_role_specific_evidence() -> BaseCV:
+    """Base CV with role-specific evidence: GitLab CI in one role, GitHub Actions in another."""
+    return BaseCV.model_validate({
+        "contact": {"name": "Alex Chen", "email": "alex@example.com", "github": "github.com/alex"},
+        "summary": "DevOps engineer with multi-cloud CI/CD experience.",
+        "experience": [
+            {
+                "company": "CloudCo",
+                "title": "Senior DevOps Engineer",
+                "start": "2020-06",
+                "end": "2024-03",
+                "bullets": [
+                    "Built GitLab CI pipelines with integrated SonarQube scanning for 15 microservices",
+                    "Managed Nexus artifact repository for internal library distribution",
+                ],
+                "technologies": ["GitLab CI", "SonarQube", "Nexus", "Docker", "Kubernetes"],
+            },
+            {
+                "company": "StartupInc",
+                "title": "DevOps Engineer",
+                "start": "2018-01",
+                "end": "2020-05",
+                "bullets": [
+                    "Automated deployments with GitHub Actions and Terraform",
+                ],
+                "technologies": ["GitHub Actions", "Terraform", "AWS"],
+            },
+        ],
+        "skills": [
+            "GitLab CI", "GitHub Actions", "Jenkins", "SonarQube", "Nexus",
+            "Terraform", "Docker", "Kubernetes", "AWS", "Python",
+        ],
+        "education": [
+            {"institution": "Tech University", "degree": "BSc", "field": "CS", "year": 2017},
+        ],
+    })

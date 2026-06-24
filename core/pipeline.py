@@ -310,25 +310,24 @@ _RULES: dict[str, dict[int, str]] = {
     },
     "core_competencies": {
         0: (
-            "Select 6-10 of the candidate's TOP skills/technologies from their base CV, "
-            "ordered by relevance to this job listing. These come from the CANDIDATE'S stack, "
-            "not the JD's language — do NOT parrot JD phrases back. "
-            "Mix concrete tools (Kubernetes, Terraform, AWS, Datadog) with key capabilities "
-            "(CI/CD, GitOps, IaC) that the candidate genuinely has. "
-            "Keep each entry to 1-3 words. Include certification labels if relevant (e.g., 'Kubernetes (CKAD)'). "
+            "Select 6-10 of the candidate's TOP capabilities and methodologies from their "
+            "base CV, ordered by relevance. These are CAPABILITIES, not concrete tools — "
+            "use terms like CI/CD, GitOps, IaC, Cloud Infrastructure, Observability, "
+            "DevSecOps, Platform Engineering, Container Orchestration. Do NOT list "
+            "concrete tools here (Kubernetes, Terraform, AWS belong in "
+            "highlighted_technologies). Keep each entry to 1-3 words.\n"
             "Return as the 'core_competencies' array."
         ),
     },
     "highlighted_tech": {
         0: (
-            "HIGHLIGHTED TECHNOLOGIES: Select 3-8 specific technologies, tools, or platforms that the "
-            "candidate demonstrably knows from the base CV and that are explicitly mentioned or required "
-            "by the job listing. Prioritize Tier 1 (core tech stack) and Tier 2 (core responsibilities) "
-            "JD-required tools that the candidate has evidence for — e.g., if the JD asks for KEDA, SQS, "
-            "or Kubernetes and the candidate's base CV shows experience with these, surface them here. "
-            "These are concrete named tools, not abstract capabilities. "
-            "Plain names only — no parenthetical qualifiers, no prose, no annotations. "
-            "Do NOT include technologies the candidate does not have. "
+            "HIGHLIGHTED TECHNOLOGIES: Select 3-8 CONCRETE tools, technologies, or "
+            "platforms that the candidate demonstrably knows from the base CV and that "
+            "are explicitly mentioned or required by the job listing. These are specific "
+            "named tools — Kubernetes, Terraform, AWS, ArgoCD, Datadog, Prometheus — "
+            "NOT abstract capabilities like 'CI/CD' or 'Observability' (those go in "
+            "core_competencies). Plain names only — no parenthetical qualifiers.\n"
+            "Do NOT include technologies the candidate does not have.\n"
             "Return as the 'highlighted_technologies' array."
         ),
     },
@@ -482,7 +481,9 @@ _RULES: dict[str, dict[int, str]] = {
         0: (
             "NATURAL KEYWORD EMBEDDING POLICY (applies at ALL creativity levels):\n"
             "- Extract key phrases from the job description and use them as your keyword set.\n"
-            "- Embed only 1-2 relevant JD keywords per experience bullet — never more than 2.\n"
+            "- Embed typically 1-2 relevant JD keywords per experience bullet. Three keywords "
+            "are acceptable ONLY when they are naturally related in the same toolchain or "
+            "workflow and each has clear base-CV evidence.\n"
             "- Every keyword embedded in a bullet MUST be backed by at least one piece of evidence "
             "from the base CV (a specific bullet, technology, skill, or project).\n"
             "- Every keyword MUST be tied to a concrete action the candidate took or a measurable "
@@ -536,6 +537,37 @@ _RULES: dict[str, dict[int, str]] = {
             "answer 'why did this matter?'"
         ),
     },
+    "recruiter_plausibility": {
+        0: (
+            "RECRUITER PLAUSIBILITY RULES (applies at ALL creativity levels):\n"
+            "TRUTHFUL PLACEMENT: Place JD keywords ONLY in roles where the base CV "
+            "provides real, role-level evidence. If the candidate used GitHub Actions at "
+            "Company A, say GitHub Actions — do NOT replace with GitLab CI to match the JD. "
+            "If a keyword has evidence only in skills, place it in the skills section, "
+            "not in experience bullets. If a keyword has no evidence anywhere, omit it.\n"
+            "INFERENCE EXCEPTION: Role-level placement MAY use explicitly allowed inference "
+            "rules (technology adjacency, responsibility adjacency, domain adjacency) per "
+            "the active creativity-level inference and substitution rules. However, do NOT "
+            "invent unsupported keyword mimicry — if an inference rule does NOT cover a "
+            "keyword, it must have direct base-CV evidence or be omitted.\n"
+            "NATURAL LANGUAGE: Use JD language as inspiration, not a template. Translate "
+            "JD phrases into real project descriptions. Avoid mechanical keyword chains "
+            "like 'Kubernetes container orchestration auto-scaling.' Instead, write "
+            "natural sentences: 'Designed an event-driven pipeline using S3, SQS, and "
+            "KEDA to autoscale Kubernetes workloads based on demand.'\n"
+            "PRESERVE STRONGER BULLETS: If a base-CV bullet is already well-written, "
+            "specific, and accurate, KEEP IT. Do not rewrite just to match JD phrasing. "
+            "A truthful, specific bullet is better than a JD-aligned but vague rewrite.\n"
+            "KEYWORD DISCIPLINE: Keep 1-2 target JD keywords per bullet. Three keywords "
+            "are acceptable ONLY if they are naturally related in the same project "
+            "toolchain and each has clear base-CV evidence. Never force unrelated keywords "
+            "into the same sentence.\n"
+            "PLACEMENT CATEGORIES: For each JD keyword, decide its defensible placement: "
+            "(a) experience — can be substantiated in a specific role's bullet, "
+            "(b) skills — defensible in the skills section only, not in bullets, "
+            "(c) omit — no defensible placement, omit entirely."
+        ),
+    },
 }
 
 
@@ -574,6 +606,7 @@ def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2, use
     highlighted_tech_rule = _resolve_rule("highlighted_tech", level)
     keyword_policy_rule = _resolve_rule("keyword_policy", level)
     bullet_strategy_rule = _resolve_rule("bullet_strategy", level)
+    recruiter_plausibility_rule = _resolve_rule("recruiter_plausibility", level)
 
     level_label = Creativity(level).name
 
@@ -623,6 +656,7 @@ EXPERIENCE:
 {length_rule}
 {keyword_policy_rule}
 {bullet_strategy_rule}
+{recruiter_plausibility_rule}
 Additional constraints:
 - Preserve exact role structure from the base CV. If the base CV has ONE entry for a company, output exactly ONE entry. Do NOT split a single role into multiple entries.
 - Never change dates (start, end) from the base CV.
@@ -782,6 +816,7 @@ def _build_system_prompt_for_chat(creativity_level: int = 2) -> str:
     highlighted_tech_rule = _resolve_rule("highlighted_tech", level)
     keyword_policy_rule = _resolve_rule("keyword_policy", level)
     bullet_strategy_rule = _resolve_rule("bullet_strategy", level)
+    recruiter_plausibility_rule = _resolve_rule("recruiter_plausibility", level)
 
     return f"""\
 {injection_rule}
@@ -818,6 +853,7 @@ EXPERIENCE:
 {length_rule}
 {keyword_policy_rule}
 {bullet_strategy_rule}
+{recruiter_plausibility_rule}
 - Preserve exact role structure from base CV. One entry per company = one output entry. Do NOT split roles.
 - Preserve dates and reverse chronological order. Natural, professional language — no keyword-stuffing.
 - Preserve ownership levels. Don't upgrade verbs unless supported.
@@ -946,6 +982,76 @@ as a single JSON object matching this schema:
 
 
 # ---------------------------------------------------------------------------
+# Deterministic technology bolding
+# ---------------------------------------------------------------------------
+
+
+def apply_tech_bolding(tailored: TailoredCV) -> TailoredCV:
+    """Apply **bold** markers to technology names in bullet text.
+
+    Uses highlighted_technologies (global, bolded everywhere) and each role's
+    technologies list (bolded only within that role). Matches case-insensitively
+    with word boundaries. Skips already-bolded text. Resolves known aliases.
+    Mutates and returns the TailoredCV.
+    """
+    # Reuse alias map from validation (lightweight copy)
+    _TECH_ALIASES: dict[str, str] = {
+        "k8s": "kubernetes",
+        "gh actions": "github actions",
+        "gha": "github actions",
+        "tf": "terraform",
+        "cicd": "ci/cd",
+        "iac": "infrastructure as code",
+    }
+
+    def _resolve_aliases(text: str) -> str:
+        return _TECH_ALIASES.get(text.lower(), text)
+
+    # Collect global highlighted technologies (bolded in all roles)
+    global_techs_lower: set[str] = {
+        t.strip().lower() for t in tailored.highlighted_technologies if t.strip()
+    }
+
+    def _bold_tech_in_text(text: str, techs: set[str]) -> str:
+        """Bold tech names in text, skipping already-bolded occurrences."""
+        # Build reverse alias map: canonical -> [aliases]
+        reverse_aliases: dict[str, list[str]] = {}
+        for alias_key, canonical in _TECH_ALIASES.items():
+            reverse_aliases.setdefault(canonical, []).append(alias_key)
+
+        for tech in sorted(techs, key=len, reverse=True):  # longest first
+            tech_lower = tech.lower()
+            canonical = _resolve_aliases(tech_lower).lower()
+            # Collect all forms to match: the tech itself + its aliases
+            forms = {re.escape(tech)}
+            if canonical != tech_lower:
+                forms.add(re.escape(canonical))
+            # Also add reverse aliases (e.g., if tech is "kubernetes", also match "k8s")
+            for rev_alias in reverse_aliases.get(tech_lower, []):
+                forms.add(re.escape(rev_alias))
+            for rev_alias in reverse_aliases.get(canonical, []):
+                forms.add(re.escape(rev_alias))
+            pattern = re.compile(
+                r"(?<!\*\*)(?<!\w)(?:" + "|".join(forms) + r")(?!\w)(?!\*\*)",
+                re.IGNORECASE,
+            )
+            text = pattern.sub(lambda m: f"**{m.group()}**", text)
+        return text
+
+    for exp in tailored.experience:
+        # Role-specific techs (bolded only in this role)
+        role_techs: set[str] = {
+            t.strip().lower() for t in exp.technologies if t.strip()
+        }
+        # Combine with global techs
+        all_techs = global_techs_lower | role_techs
+        for i, bullet in enumerate(exp.bullets):
+            exp.bullets[i] = _bold_tech_in_text(bullet, all_techs)
+
+    return tailored
+
+
+# ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
 
@@ -958,6 +1064,9 @@ def run_pipeline(base_cv: BaseCV, job_text: str, creativity_level: int = 2, cli_
     """
     prompt = _build_prompt(base_cv, job_text, creativity_level, user_notes)
     result = _invoke_with_retry(prompt, TailoredCV, cli_model=cli_model)
+
+    # Apply deterministic technology bolding before validation
+    apply_tech_bolding(result)
 
     # Post-generation validation — hard violations raise ValueError
     from core.validation import validate_tailored_cv
@@ -1150,6 +1259,12 @@ EVIDENCE MAPPING RULES:
   reduced_cost, improved_security_posture, increased_coverage, simplified_operations.
   Leave empty if none apply. These describe impact even without numeric metrics —
   only tag if the base CV evidence supports the claim.
+- For each evidence match, populate placement with the defensible placement
+  category: "experience" (can embed in a specific role's bullet), "skills"
+  (defensible in skills section only, not in bullets), or "omit" (no
+  defensible placement — omit entirely). Populate placement_reason with a
+  brief explanation (e.g., "Only in base CV skills, no bullet evidence").
+  Leave placement_reason empty when placement is "experience".
 - Compute coverage_summary as: total_requirements, strong_matches,
   partial_matches, missing (integers).
 
@@ -1179,7 +1294,9 @@ Return ONLY valid JSON matching this schema:
       "allowed_keywords": ["<jd keyword>"],
       "inference_rule": "<rule name or null>",
       "differentiator_categories": [],
-      "impact_signals": []
+      "impact_signals": [],
+      "placement": "experience",
+      "placement_reason": ""
     }}
   ],
   "pairing_plan": {{
@@ -1309,6 +1426,7 @@ def generate_tailored_cv(
     substitution_rule = _resolve_rule("substitution", level)
     keyword_policy_rule = _resolve_rule("keyword_policy", level)
     bullet_strategy_rule = _resolve_rule("bullet_strategy", level)
+    recruiter_plausibility_rule = _resolve_rule("recruiter_plausibility", level)
 
     user_notes_block = ""
     if user_notes.strip():
@@ -1347,6 +1465,7 @@ EXPERIENCE:
 {length_rule}
 {keyword_policy_rule}
 {bullet_strategy_rule}
+{recruiter_plausibility_rule}
 - Preserve exact role structure from base CV. Do NOT split roles.
 - Never change dates (start, end). Keep reverse chronological order.
 - Write natural, professional bullets — avoid keyword-stuffing.
@@ -1487,6 +1606,9 @@ def run_pipeline_staged(
         base_cv, requirements, evidence_map, provider_fn,
         creativity_level=creativity_level, user_notes=user_notes,
     )
+
+    # Apply deterministic technology bolding before validation
+    apply_tech_bolding(tailored)
 
     # Post-generation validation with JD keywords for stuffing checks
     jd_keywords = [r.phrase for r in requirements.requirements]
