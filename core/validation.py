@@ -39,15 +39,86 @@ _DOLLAR_RE = re.compile(r"\$\d+(?:\.\d+)?[KMB]?(?:\s*(?:million|billion|thousand
 # Uptime patterns like "99.9%", "99.95%"
 _UPTIME_RE = re.compile(r"\b\d{2,3}\.\d+%?\s*uptime\b", re.IGNORECASE)
 
+# Keyword alias map — maps known tech abbreviations to canonical forms for
+# comparison during keyword-stuffing checks.
+_KEYWORD_ALIASES: dict[str, str] = {
+    "k8s": "kubernetes",
+    "gh actions": "github actions",
+    "gha": "github actions",
+    "ec2": "aws ec2",
+    "ecs": "aws ecs",
+    "eks": "aws eks",
+    "rds": "aws rds",
+    "s3": "aws s3",
+    "gke": "google kubernetes engine",
+    "gcb": "google cloud build",
+    "tf": "terraform",
+    "cicd": "ci/cd",
+    "iac": "infrastructure as code",
+    "oop": "object-oriented programming",
+    "fp": "functional programming",
+}
 
-def validate_tailored_cv(base: BaseCV, tailored: TailoredCV) -> list[str]:
+# Suffix patterns to strip for keyword stemming (non-destructive — used only
+# for comparison, not for display).
+_KEYWORD_SUFFIX_RE = re.compile(r"(ing|ed|s|ment|tion|ing|ness|able|ible)$", re.IGNORECASE)
+
+# List of weak action verbs that suggest a bullet has action language
+# (vs. being a bare keyword list).
+_ACTION_VERBS = frozenset({
+    "built", "designed", "implemented", "developed", "created", "led", "managed",
+    "deployed", "migrated", "optimized", "reduced", "increased", "automated",
+    "configured", "integrated", "launched", "architected", "engineered",
+    "maintained", "monitored", "scaled", "secured", "tested", "delivered",
+    "owned", "drove", "established", "improved", "streamlined", "orchestrated",
+})
+
+# Generic phrases that suggest passive participation rather than active ownership.
+# Matched case-insensitively with word boundaries.
+_GENERIC_PHRASE_RE = re.compile(
+    r"\b(?:worked on|responsible for|helped with|involved in|collaborated with|"
+    r"assisted with|participated in|supported\b(?!\s+(?:decision|resolution|team|"
+    r"initiative|migration|launch|deployment))|handled\b|was part of)\b",
+    re.IGNORECASE,
+)
+
+# Keywords that indicate ownership, impact, or leadership in a bullet.
+# Used for aggregate density checking.
+_OWNERSHIP_IMPACT_KEYWORDS = frozenset({
+    "incident", "on-call", "rca", "reduced", "improved", "automated",
+    "mentored", "owned", "led", "designed", "architected", "saved",
+    "optimized", "standardized", "streamlined", "eliminated", "enabled",
+    "launched", "migrated", "scaled", "achieved", "delivered",
+    "root cause", "postmortem", "sla", "slo", "sli",
+    "uptime", "availability", "reliability",
+})
+
+# Regex for common generic DevOps/cloud bullets that appear on most resumes.
+# These patterns catch task+tool phrasing without specificity, context, or result.
+_GENERIC_PATTERN_RE = re.compile(
+    r"^(?:managed|deployed|configured|used|set up|setup|provisioned)\s+"
+    r"(?:a |an |the )?\w+(?:\s+\w+){0,2}\s+(?:for|with|to|in|on|using|across)\b",
+    re.IGNORECASE,
+)
+
+
+def validate_tailored_cv(
+    base: BaseCV, tailored: TailoredCV, jd_keywords: list[str] | None = None
+) -> list[str]:
     """Compare BaseCV vs TailoredCV.
 
     Raises ValueError on hard violations (contact changed, role count
     mismatch, company/title/date change). Returns soft warnings for
-    review (suspicious new metrics, etc.).
+    review (suspicious new metrics, keyword stuffing, etc.).
 
     The caller should log warnings and optionally surface them to the user.
+
+    Args:
+        base: The original base CV.
+        tailored: The AI-tailored CV to validate.
+        jd_keywords: Optional list of JD keyword phrases. When provided,
+            keyword-stuffing soft checks run. When None (default, for
+            backward compat), keyword checks are skipped entirely.
     """
     warnings: list[str] = []
 
@@ -63,6 +134,13 @@ def validate_tailored_cv(base: BaseCV, tailored: TailoredCV) -> list[str]:
 
     # ── Soft checks (invented metrics) ───────────────────────────────
     _check_invented_metrics(base, tailored, warnings)
+
+    # ── Soft checks (keyword stuffing) ───────────────────────────────
+    if jd_keywords:
+        _check_keyword_stuffing(base, tailored, jd_keywords, warnings)
+
+    # ── Soft checks (generic / low-substance bullets) ─────────────────
+    _check_generic_bullets(base, tailored, warnings)
 
     return warnings
 
@@ -237,3 +315,222 @@ def _normalise(v: object) -> str:
     if v is None:
         return ""
     return str(v).strip()
+
+
+# ── Keyword-stuffing soft checks ────────────────────────────────────────────
+
+
+def _normalize_keyword(kw: str) -> str:
+    """Normalize a keyword for comparison: lowercase, strip punctuation,
+    resolve known aliases, and apply simple suffix stemming.
+    """
+    kw = kw.strip().lower()
+    # Strip leading/trailing punctuation
+    kw = kw.strip(".,;:!?()[]{}'\"*")
+    # Resolve aliases
+    kw = _KEYWORD_ALIASES.get(kw, kw)
+    # Simple suffix stemming (non-destructive — only for comparison)
+    kw = _KEYWORD_SUFFIX_RE.sub("", kw)
+    return kw
+
+
+def _count_jd_keywords_in_text(text: str, jd_keywords: set[str]) -> int:
+    """Count how many distinct JD keywords appear in the given text.
+    Uses normalized matching (case-insensitive, aliased, stemmed).
+    """
+    text_lower = text.lower()
+    found: set[str] = set()
+    for kw in jd_keywords:
+        norm = _normalize_keyword(kw)
+        if norm and norm in text_lower:
+            found.add(norm)
+    return len(found)
+
+
+def _has_action_verb(text: str) -> bool:
+    """Check if text contains at least one action verb suggesting
+    substantive content rather than a bare keyword list.
+    """
+    words = text.lower().split()
+    return any(w in _ACTION_VERBS for w in words)
+
+
+def _check_keyword_stuffing(
+    base: BaseCV, tailored: TailoredCV, jd_keywords: list[str], warnings: list[str]
+) -> None:
+    """Soft-check for keyword stuffing in the tailored CV.
+
+    Checks:
+    - Excessive keyword density per bullet (3+ distinct JD keywords)
+    - Bare keyword-list bullets (comma-separated tech without action verbs)
+    - Keyword overuse across many bullets (4+ bullets for same keyword)
+    - Unsubstantiated keywords in skills section
+
+    All findings are appended as soft warnings — never hard failures.
+    """
+    norm_keywords: set[str] = {_normalize_keyword(k) for k in jd_keywords}
+    norm_keywords.discard("")  # remove empty strings from normalization
+
+    # Collect base CV evidence: all tech names, skills, and bullet text
+    base_techs: set[str] = set()
+    for e in base.experience:
+        for t in e.technologies:
+            base_techs.add(t.strip().lower())
+    base_skills_lower = {s.strip().lower() for s in base.skills}
+    base_techs |= base_skills_lower
+
+    # ── Per-bullet checks ────────────────────────────────────────────
+    all_bullets: list[str] = []
+    for exp in tailored.experience:
+        for bi, bullet in enumerate(exp.bullets):
+            all_bullets.append(bullet)
+            count = _count_jd_keywords_in_text(bullet, norm_keywords)
+            if count >= 3:
+                warnings.append(
+                    f"Keyword stuffing suspected: bullet contains {count} "
+                    f"distinct JD keywords — '{bullet[:80]}...'"
+                )
+            # Bare keyword list detection: if bullet has no action verb
+            # and reads like a tech enumeration
+            if not _has_action_verb(bullet) and count >= 2:
+                # Heuristic: if the bullet is short and has multiple commas,
+                # it's likely a bare list
+                comma_count = bullet.count(",")
+                if comma_count >= 2 and len(bullet.split()) < 20:
+                    warnings.append(
+                        f"Keyword list detected: bullet appears to be a bare "
+                        f"technology enumeration without substantive action — "
+                        f"'{bullet[:80]}...'"
+                    )
+
+    # ── Keyword reuse across bullets ─────────────────────────────────
+    keyword_bullet_counts: dict[str, int] = {}
+    for kw in norm_keywords:
+        for bullet in all_bullets:
+            if _normalize_keyword(kw) in bullet.lower():
+                keyword_bullet_counts[kw] = keyword_bullet_counts.get(kw, 0) + 1
+
+    for kw, count in keyword_bullet_counts.items():
+        if count >= 4:
+            warnings.append(
+                f"Keyword overused: '{kw}' appears in {count} bullets — "
+                f"natural distribution is typically 1-3 mentions"
+            )
+
+    # ── Skills section keyword dumping ───────────────────────────────
+    for skill in tailored.skills:
+        skill_norm = skill.strip().lower()
+        # Check if this skill appears to be a JD keyword with no base CV evidence
+        is_jd_keyword = any(
+            _normalize_keyword(k) in skill_norm or skill_norm in _normalize_keyword(k)
+            for k in jd_keywords
+        )
+        if is_jd_keyword and skill_norm not in base_techs:
+            # Also check if it appears in any tailored bullet (weak evidence)
+            in_bullets = any(skill_norm in b.lower() for b in all_bullets)
+            if not in_bullets:
+                warnings.append(
+                    f"Unsubstantiated keyword in skills: '{skill}' has no "
+                    f"evidence trace in base CV"
+                )
+
+
+# ── Generic / low-substance bullet soft checks ────────────────────────────────
+
+
+def _check_generic_bullets(
+    base: BaseCV, tailored: TailoredCV, warnings: list[str]
+) -> None:
+    """Soft-check for generic, low-substance bullets.
+
+    Checks:
+    - Generic phrasing (worked on, responsible for, etc.)
+    - Common generic DevOps bullet patterns (task+tool without specificity)
+    - Task-only bullets lacking specificity, context, or result
+    - Low ownership/impact signal density across all bullets
+
+    All findings are soft warnings — never hard failures.
+    """
+    all_bullets: list[str] = [b for e in tailored.experience for b in e.bullets]
+    if not all_bullets:
+        return
+
+    # Strip **bold** markdown for pattern-based checks so that
+    # "Managed **Kubernetes** deployments" matches the same patterns
+    # as "Managed Kubernetes deployments".
+    def _strip_bold(text: str) -> str:
+        return text.replace("**", "")
+
+    # ── Per-bullet: generic phrase detection ──────────────────────────
+    for bullet in all_bullets:
+        m = _GENERIC_PHRASE_RE.search(bullet)
+        if m:
+            warnings.append(
+                f"Generic phrase detected: '{m.group()}' suggests passive "
+                f"participation — use active ownership language — "
+                f"'{bullet[:80]}...'"
+            )
+
+    # ── Per-bullet: common generic DevOps pattern detection ───────────
+    for bullet in all_bullets:
+        stripped = _strip_bold(bullet)
+        if _GENERIC_PATTERN_RE.match(stripped.strip()):
+            words = stripped.split()
+            has_number = bool(re.search(r"\d+", stripped))
+            has_result = any(kw in stripped.lower() for kw in [
+                "reduce", "improve", "increase", "decrease", "save", "cut",
+                "achieve", "deliver", "enable", "launch", "migrate", "scale",
+                "standardize", "automate", "optimize", "%", "percent",
+            ])
+            # Only flag if the bullet is short AND has no numeric/result signal.
+            # Longer bullets with the same starting pattern often add context.
+            if len(words) <= 12 and not has_number and not has_result:
+                warnings.append(
+                    f"Common generic pattern detected: '{bullet[:80]}...' — "
+                    f"add specificity, scale, and result"
+                )
+
+    # ── Per-bullet: task-only detection ───────────────────────────────
+    # A bullet is task-only if it's very short, has no numeric qualifier,
+    # no result/context language, and no specific technology/tool mention
+    # beyond the action verb.
+    for bullet in all_bullets:
+        stripped = _strip_bold(bullet)
+        words = stripped.split()
+        has_number = bool(re.search(r"\d+", stripped))
+        has_result = any(kw in stripped.lower() for kw in [
+            "reduce", "improve", "increase", "decrease", "save", "cut",
+            "achieve", "deliver", "enable", "launch", "migrate", "scale",
+            "standardize", "automate", "optimize", "%", "percent",
+            "uptime", "availability", "team", "across", "adopted by",
+            "resulting in", "leading to",
+        ])
+        # Also consider specific nouns/technologies as evidence of substance
+        has_specific_noun = bool(re.search(
+            r"\b(?:api|service|platform|system|module|library|framework|"
+            r"pipeline|cluster|infrastructure|tool|internal|custom|"
+            r"microservice|database|network|application)s?\b",
+            bullet, re.IGNORECASE,
+        ))
+        if len(words) <= 6 and not has_number and not has_result and not has_specific_noun:
+            warnings.append(
+                f"Generic bullet detected: task-only without specificity, "
+                f"context, or result — '{bullet[:80]}...'"
+            )
+
+    # ── Aggregate: ownership / impact signal density ──────────────────
+    # Only meaningful when there are enough bullets to assess a pattern.
+    if len(all_bullets) >= 5:
+        ownership_count = 0
+        for bullet in all_bullets:
+            bullet_lower = bullet.lower()
+            if any(kw in bullet_lower for kw in _OWNERSHIP_IMPACT_KEYWORDS):
+                ownership_count += 1
+        density = ownership_count / len(all_bullets)
+        if density < 0.20:
+            pct = int(density * 100)
+            warnings.append(
+                f"Low ownership signal: only {pct}% of bullets contain "
+                f"impact/ownership language — consider surfacing results, "
+                f"mentorship, or ownership where base CV supports it"
+            )

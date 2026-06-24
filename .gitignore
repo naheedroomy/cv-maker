@@ -11,6 +11,12 @@ build/
 frontend/dist/
 .env
 
+# Local agent/tooling and generated runtime output
+.codegraph/
+.opencode/
+.sisyphus/
+output/
+
 # Backend database (created at runtime)
 backend/cv_maker.db
 backend/cv_maker.db-wal

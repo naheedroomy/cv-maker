@@ -3,6 +3,7 @@
 # Two sequential claude -p invocations with JSON parse-retry (AI-07).
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -10,12 +11,21 @@ import re
 import subprocess
 import time
 from enum import IntEnum
+from typing import Callable
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
-from core.models import BaseCV, GapItem, TailoredCV
+from core.models import (
+    BaseCV,
+    EvidenceMap,
+    GapItem,
+    JDRequirement,
+    KeywordPairingPlan,
+    RequirementExtraction,
+    TailoredCV,
+)
 
 # ---------------------------------------------------------------------------
 # Creativity levels
@@ -468,6 +478,64 @@ _RULES: dict[str, dict[int, str]] = {
         ),
         6: "Unrestricted technology substitution and fabrication.",
     },
+    "keyword_policy": {
+        0: (
+            "NATURAL KEYWORD EMBEDDING POLICY (applies at ALL creativity levels):\n"
+            "- Extract key phrases from the job description and use them as your keyword set.\n"
+            "- Embed only 1-2 relevant JD keywords per experience bullet — never more than 2.\n"
+            "- Every keyword embedded in a bullet MUST be backed by at least one piece of evidence "
+            "from the base CV (a specific bullet, technology, skill, or project).\n"
+            "- Every keyword MUST be tied to a concrete action the candidate took or a measurable "
+            "outcome, not merely listed as a term they 'know'.\n"
+            "- Pair semantically related keywords naturally in the same bullet (e.g., "
+            "'Kubernetes + auto-scaling', 'Python + FastAPI') rather than dumping unrelated "
+            "keywords into one sentence.\n"
+            "- Do NOT dump JD keywords into the skills section to inflate keyword match scores. "
+            "Skills must only list technologies the candidate demonstrably has.\n"
+            "- Avoid keyword stuffing: bullets that read as bare technology enumerations "
+            "('Used Python, Docker, Kubernetes, Terraform') violate this policy. "
+            "Rewrite to show action and impact."
+        ),
+    },
+    "bullet_strategy": {
+        0: (
+            "IMPACT-DRIVEN BULLET STRATEGY (applies at ALL creativity levels):\n"
+            "STRUCTURE: Every bullet SHALL use What + How + Result pattern — what you did "
+            "(specific action/tech), how (method/scale/context), and the result "
+            "(quantitative metric or qualitative impact). When numeric metrics are absent, "
+            "qualitative results like 'improved consistency', 'standardized process', "
+            "'reduced manual effort', 'enabled self-service' are acceptable if the base "
+            "CV supports them.\n"
+            "DEPTH OVER EXPOSURE: Surface depth signals where base CV supports them — "
+            "reusable modules/libraries/templates, standardization efforts, "
+            "multi-environment experience (dev/staging/prod), scale context "
+            "(services/teams/regions). Surface tool expertise beyond basic usage.\n"
+            "MODERN PRACTICES: Highlight evidence-supported modern practices — GitOps "
+            "(Argo CD, Flux), platform engineering (Internal Developer Platforms), "
+            "DevSecOps (shift-left security, policy as code), cost optimization (FinOps, "
+            "right-sizing), observability beyond monitoring (metrics/logs/traces, SLOs), "
+            "governance/compliance automation.\n"
+            "OWNERSHIP SIGNALS: Surface ownership — incident response / on-call / RCA, "
+            "cost optimization initiatives, security work (vulnerability scanning, secret "
+            "management, policy validation, compliance), automation beyond CI/CD "
+            "(Python/Shell operational automation). For 4+ years experience: mentorship, "
+            "developer experience, reusable internal platforms, onboarding reduction.\n"
+            "ROLE-WEIGHTED DISTRIBUTION: Current/latest role: 7-8 strong detailed bullets "
+            "with highest differentiator density. Previous roles: 5-7 simpler bullets "
+            "appropriate to era/stack. Older roles: 2-3 bullets minimum.\n"
+            "IDEAL COMPOSITION: ~50% core skills bullets (required tech/methodologies), "
+            "~30% advanced differentiator bullets (depth, modern practices, automation, "
+            "cost/security), ~20% ownership/leadership bullets (incident response, "
+            "mentorship, platform impact). This is aspirational — deviate when base CV "
+            "evidence does not support the mix. NEVER fabricate.\n"
+            "AVOID GENERIC BULLETS: These phrases appear on most DevOps/cloud resumes and "
+            "fail to differentiate: 'managed CI/CD pipelines', 'deployed Kubernetes "
+            "clusters', 'provisioned infrastructure with Terraform', 'set up monitoring "
+            "with Prometheus/Grafana', 'collaborated with cross-functional teams'. "
+            "Rewrite with specificity, scale, context, and result. Every bullet must "
+            "answer 'why did this matter?'"
+        ),
+    },
 }
 
 
@@ -504,6 +572,8 @@ def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2, use
     length_rule = _resolve_rule("length_guidance", level)
     injection_rule = _resolve_rule("prompt_injection", level)
     highlighted_tech_rule = _resolve_rule("highlighted_tech", level)
+    keyword_policy_rule = _resolve_rule("keyword_policy", level)
+    bullet_strategy_rule = _resolve_rule("bullet_strategy", level)
 
     level_label = Creativity(level).name
 
@@ -551,6 +621,8 @@ EXPERIENCE:
 {bullet_rule}
 {inferred_rule}
 {length_rule}
+{keyword_policy_rule}
+{bullet_strategy_rule}
 Additional constraints:
 - Preserve exact role structure from the base CV. If the base CV has ONE entry for a company, output exactly ONE entry. Do NOT split a single role into multiple entries.
 - Never change dates (start, end) from the base CV.
@@ -708,6 +780,8 @@ def _build_system_prompt_for_chat(creativity_level: int = 2) -> str:
     length_rule = _resolve_rule("length_guidance", level)
     injection_rule = _resolve_rule("prompt_injection", level)
     highlighted_tech_rule = _resolve_rule("highlighted_tech", level)
+    keyword_policy_rule = _resolve_rule("keyword_policy", level)
+    bullet_strategy_rule = _resolve_rule("bullet_strategy", level)
 
     return f"""\
 {injection_rule}
@@ -742,6 +816,8 @@ EXPERIENCE:
 {bullet_rule}
 {inferred_rule}
 {length_rule}
+{keyword_policy_rule}
+{bullet_strategy_rule}
 - Preserve exact role structure from base CV. One entry per company = one output entry. Do NOT split roles.
 - Preserve dates and reverse chronological order. Natural, professional language — no keyword-stuffing.
 - Preserve ownership levels. Don't upgrade verbs unless supported.
@@ -890,3 +966,533 @@ def run_pipeline(base_cv: BaseCV, job_text: str, creativity_level: int = 2, cli_
         logger.warning("TailoredCV soft warning: %s", w)
 
     return result, result.gap_diff
+
+
+def _invoke_provider_with_retry(
+    prompt: str,
+    schema_cls,
+    provider_fn: ProviderFn,
+    max_attempts: int = 3,
+):  # Return type is the schema_cls instance — caller should cast if needed
+    """Invoke a provider function with JSON parse-retry.
+
+    Uses provider_fn to get raw text, extracts JSON, and validates
+    against the given Pydantic schema class. Retries on parse/validation
+    failures up to max_attempts times.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(max_attempts):
+        logger.info(
+            "Provider attempt %d/%d for %s", attempt + 1, max_attempts,
+            schema_cls.__name__,
+        )
+        effective_prompt = prompt
+        if attempt > 0:
+            logger.warning("Retrying — previous attempt failed: %s", last_exc)
+            effective_prompt = (
+                prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
+            )
+        try:
+            raw = provider_fn(effective_prompt)
+            data = _extract_json(raw)
+            result = schema_cls.model_validate(data)
+            logger.info(
+                "Provider JSON parse + validation succeeded for %s",
+                schema_cls.__name__,
+            )
+            return result
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            logger.warning("Provider attempt %d failed: %s", attempt + 1, exc)
+    raise RuntimeError(
+        f"Provider failed to return valid {schema_cls.__name__} after "
+        f"{max_attempts} attempts. Last error: {last_exc}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Multi-stage pipeline (Requirement Extraction → Evidence Mapping → CV Generation)
+# ---------------------------------------------------------------------------
+
+
+# Provider callable type: takes a prompt string, returns raw text output.
+ProviderFn = Callable[[str], str]
+
+
+def _compute_hash(text: str) -> str:
+    """Compute SHA-256 hex digest of a string for traceability."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def extract_requirements(
+    job_text: str,
+    provider_fn: ProviderFn,
+    cli_model: str = "",
+) -> RequirementExtraction:
+    """Stage 1: Parse a job description into structured requirements.
+
+    Builds a prompt instructing the model to extract JD requirements as
+    a structured list (keyword phrases, categories, tiers, related phrases).
+    Returns a RequirementExtraction with traceability metadata.
+
+    Args:
+        job_text: Raw job description text.
+        provider_fn: Callable that takes a prompt string and returns raw text.
+        cli_model: Passed to _invoke_claude if provider_fn is not set.
+    """
+    jd_hash = _compute_hash(job_text)
+
+    prompt = f"""\
+You are a precise job-description parser. Extract every requirement from the
+job listing below as structured JSON. Capture keyword phrases, not full sentences.
+
+RULES:
+- Extract 8-15 distinct requirements/keyword phrases. Err toward 10-12 for
+  typical JDs (200-500 words).
+- Each requirement must include:
+  - phrase: the keyword or short requirement phrase (e.g., "Kubernetes", "CI/CD pipelines")
+  - category: one of "technology", "methodology", "domain", "responsibility", "soft_skill"
+  - tier: 1 (core tech stack, explicitly required), 2 (core responsibilities),
+    3 (nice-to-have or mentioned once)
+  - related_phrases: list of semantically linked terms
+  - description: the full sentence or clause from which this was extracted
+- Assign tier 1 to technologies/tools the JD says are required (not optional).
+- Assign tier 2 to responsibilities and methodologies.
+- Assign tier 3 to items marked "nice to have", "bonus", "familiarity with", etc.
+- Do NOT extract company culture values, generic soft skills unless explicitly
+  listed, or application process requirements.
+- Do NOT extract duplicate requirements — if the JD mentions a technology
+  multiple times in different contexts, consolidate into one requirement.
+
+JOB LISTING:
+---
+{job_text}
+---
+
+Return ONLY valid JSON matching this schema:
+{{
+  "requirements": [
+    {{
+      "phrase": "<keyword>",
+      "category": "technology|methodology|domain|responsibility|soft_skill",
+      "tier": 1,
+      "related_phrases": ["<related term>"],
+      "description": "<source sentence>"
+    }}
+  ]
+}}"""
+
+    result = _invoke_provider_with_retry(prompt, RequirementExtraction, provider_fn)
+    # Override hash with the actual input hash (model might fabricate it)
+    result.raw_jd_hash = jd_hash
+    return result
+
+
+def map_evidence(
+    requirements: RequirementExtraction,
+    base_cv: BaseCV,
+    provider_fn: ProviderFn,
+    creativity_level: int = 2,
+) -> EvidenceMap:
+    """Stage 2: Map JD requirements to concrete base-CV evidence.
+
+    Sends the structured requirements + full base CV to the model and asks
+    it to produce an EvidenceMap with match levels, source references, allowed
+    keywords, and a keyword pairing plan.
+
+    Args:
+        requirements: Stage 1 output (structured JD requirements).
+        base_cv: The candidate's base CV.
+        provider_fn: Callable that takes a prompt string and returns raw text.
+        creativity_level: Creativity level for inference rules.
+    """
+    base_cv_yaml = _serialize_base_cv(base_cv)
+    base_cv_hash = _compute_hash(base_cv_yaml)
+    level = max(0, min(6, creativity_level))
+
+    req_list_yaml = yaml.dump(
+        [r.model_dump() for r in requirements.requirements],
+        default_flow_style=False,
+        allow_unicode=True,
+    )
+
+    prompt = f"""\
+You are a meticulous CV evidence auditor. For each JD requirement below, scan the
+ENTIRE base CV for evidence. Be thorough — check every role, every bullet, every
+technology list, every skill.
+
+EVIDENCE MAPPING RULES:
+- For each requirement, assign match_level:
+  - "strong": base CV has direct, explicit evidence (named tool, stated
+    responsibility, measured outcome).
+  - "partial": base CV has related/implicit evidence via an allowed inference
+    rule (technology adjacency, responsibility adjacency, domain adjacency).
+    Document the inference rule used.
+  - "missing": no evidence found, not even via inference.
+- For "strong" matches: cite the EXACT source — company, role, bullet index
+  (0-based), and verbatim or paraphrased evidence text.
+- For "partial" matches: explain the inference chain and set inference_rule
+  to the rule name.
+- allowed_keywords: list of JD keyword phrases this specific evidence
+  substantiates (usually 1-3 keywords).
+- After mapping all requirements, produce a KEYWORD PAIRING PLAN:
+  Group keywords that appear together in the same role or are semantically
+  related. Each pair should have 2-3 keywords, a rationale for pairing,
+  the evidence source, and 1-2 suggested bullets.
+- For each evidence match, populate differentiator_categories with relevant
+  tags from: cost_optimization, security, mentorship, platform_engineering,
+  incident_response, automation, observability, governance, developer_experience,
+  reliability, scalability, migration, standardization. Leave empty if none apply.
+- For each evidence match, populate impact_signals with qualitative impact tags
+  from: reduced_latency, improved_consistency, standardized_process,
+  automated_workflow, reduced_manual_effort, enabled_self_service,
+  improved_reliability, reduced_onboarding_time, increased_velocity,
+  reduced_cost, improved_security_posture, increased_coverage, simplified_operations.
+  Leave empty if none apply. These describe impact even without numeric metrics —
+  only tag if the base CV evidence supports the claim.
+- Compute coverage_summary as: total_requirements, strong_matches,
+  partial_matches, missing (integers).
+
+CREATIVITY LEVEL: {level}
+
+REQUIREMENTS:
+---
+{req_list_yaml}
+---
+
+BASE CV:
+---
+{base_cv_yaml}
+---
+
+Return ONLY valid JSON matching this schema:
+{{
+  "matches": [
+    {{
+      "requirement_phrase": "<keyword from JD>",
+      "match_level": "strong|partial|missing",
+      "source_company": "<company name or null>",
+      "source_role": "<role title or null>",
+      "source_bullet_index": 0,
+      "source_field": "<e.g. skills, experience.bullets[2]>",
+      "evidence_text": "<quoted or paraphrased evidence>",
+      "allowed_keywords": ["<jd keyword>"],
+      "inference_rule": "<rule name or null>",
+      "differentiator_categories": [],
+      "impact_signals": []
+    }}
+  ],
+  "pairing_plan": {{
+    "pairs": [
+      {{
+        "keywords": ["<kw1>", "<kw2>"],
+        "rationale": "<why these pair well>",
+        "evidence_source": "<base CV role or section>",
+        "suggested_bullet_count": 1
+      }}
+    ]
+  }},
+  "coverage_summary": {{
+    "total_requirements": 10,
+    "strong_matches": 4,
+    "partial_matches": 3,
+    "missing": 3
+  }}
+}}"""
+
+    result = _invoke_provider_with_retry(prompt, EvidenceMap, provider_fn)
+    result.base_cv_hash = base_cv_hash
+    return result
+
+
+def generate_tailored_cv(
+    base_cv: BaseCV,
+    requirements: RequirementExtraction,
+    evidence_map: EvidenceMap,
+    provider_fn: ProviderFn,
+    creativity_level: int = 2,
+    user_notes: str = "",
+) -> TailoredCV:
+    """Stage 3: Generate the final TailoredCV from structured inputs only.
+
+    Builds a CV generation prompt using ONLY the base CV, requirement extraction
+    summary, evidence map, and keyword pairing plan. The raw JD text is NOT
+    included — the model must work from the curated evidence map.
+
+    Args:
+        base_cv: The candidate's base CV.
+        requirements: Stage 1 output (structured JD requirements).
+        evidence_map: Stage 2 output (evidence mapping with pairing plan).
+        provider_fn: Callable that takes a prompt string and returns raw text.
+        creativity_level: Creativity level for bullet rewriting rules.
+        user_notes: Optional user guidance.
+    """
+    level = max(0, min(6, creativity_level))
+    level_label = Creativity(level).name
+
+    base_cv_yaml = _serialize_base_cv(base_cv)
+
+    # Build a compact evidence summary for the prompt
+    strong_reqs = [m for m in evidence_map.matches if m.match_level == "strong"]
+    partial_reqs = [m for m in evidence_map.matches if m.match_level == "partial"]
+    missing_reqs = [m for m in evidence_map.matches if m.match_level == "missing"]
+
+    evidence_summary_lines = ["EVIDENCE MAP SUMMARY:", ""]
+    evidence_summary_lines.append("STRONG MATCHES (direct base-CV evidence):")
+    for m in strong_reqs:
+        evidence_summary_lines.append(
+            f"  - {m.requirement_phrase}: {m.source_company} / {m.source_role} "
+            f"/ bullet[{m.source_bullet_index}]: {m.evidence_text[:120]}"
+        )
+    evidence_summary_lines.append("")
+    if partial_reqs:
+        evidence_summary_lines.append("PARTIAL MATCHES (inference-based):")
+        for m in partial_reqs:
+            evidence_summary_lines.append(
+                f"  - {m.requirement_phrase}: via {m.inference_rule} — "
+                f"{m.evidence_text[:120]}"
+            )
+        evidence_summary_lines.append("")
+    evidence_summary_lines.append(f"MISSING: {len(missing_reqs)} requirements have no evidence.")
+    evidence_summary_lines.append("")
+    coverage = evidence_map.coverage_summary
+    evidence_summary_lines.append(
+        f"COVERAGE: {coverage.get('total_requirements', '?')} total, "
+        f"{coverage.get('strong_matches', '?')} strong, "
+        f"{coverage.get('partial_matches', '?')} partial, "
+        f"{coverage.get('missing', '?')} missing."
+    )
+    evidence_summary_lines.append("")
+
+    # Keyword pairing plan summary
+    if evidence_map.pairing_plan and evidence_map.pairing_plan.pairs:
+        evidence_summary_lines.append("KEYWORD PAIRING PLAN (embed these pairs naturally):")
+        for pair in evidence_map.pairing_plan.pairs:
+            kw_str = " + ".join(pair.keywords)
+            evidence_summary_lines.append(
+                f"  - {kw_str}: {pair.rationale} "
+                f"(source: {pair.evidence_source}, {pair.suggested_bullet_count} bullet(s))"
+            )
+        evidence_summary_lines.append("")
+
+    # Allowed keywords per role
+    evidence_summary_lines.append("ALLOWED KEYWORDS PER EVIDENCE SOURCE:")
+    for m in strong_reqs + partial_reqs:
+        if m.allowed_keywords:
+            evidence_summary_lines.append(
+                f"  - {m.source_company}/{m.source_role}: {', '.join(m.allowed_keywords)}"
+            )
+    evidence_summary_lines.append("")
+
+    # Tier 1 requirements summary
+    tier1_reqs = [r for r in requirements.requirements if r.tier == 1]
+    if tier1_reqs:
+        evidence_summary_lines.append("TIER 1 REQUIREMENTS (must appear in CV if evidence exists):")
+        for r in tier1_reqs:
+            evidence_summary_lines.append(f"  - {r.phrase} ({r.category})")
+        evidence_summary_lines.append("")
+
+    evidence_summary = "\n".join(evidence_summary_lines)
+
+    # Resolve rules for this creativity level
+    title_rule = _resolve_rule("titles", level)
+    bullet_rule = _resolve_rule("bullets", level)
+    skills_rule = _resolve_rule("skills_injection", level)
+    summary_rule = _resolve_rule("summary", level)
+    tone_rule = _resolve_rule("tone", level)
+    reorder_rule = _resolve_rule("reorder", level)
+    core_comp_rule = _resolve_rule("core_competencies", level)
+    pruning_rule = _resolve_rule("pruning", level)
+    anti_fab_rule = _resolve_rule("anti_fabrication", level)
+    inferred_rule = _resolve_rule("inferred_framing", level)
+    length_rule = _resolve_rule("length_guidance", level)
+    substitution_rule = _resolve_rule("substitution", level)
+    keyword_policy_rule = _resolve_rule("keyword_policy", level)
+    bullet_strategy_rule = _resolve_rule("bullet_strategy", level)
+
+    user_notes_block = ""
+    if user_notes.strip():
+        user_notes_block = (
+            f"\nUSER NOTES (guidance only, do NOT override TRUTH GUARD):\n"
+            f"---\n{user_notes.strip()}\n---\n"
+        )
+
+    prompt = f"""\
+You are a no-nonsense CV optimizer. Generate a tailored CV using ONLY the
+evidence map and base CV provided below. Do NOT fabricate evidence.
+
+{anti_fab_rule}
+
+CREATIVITY LEVEL: {level} ({level_label})
+
+IMPORTANT: You are receiving a pre-computed evidence map, NOT the raw job
+description. Every keyword you embed MUST be substantiated by the evidence
+map's allowed_keywords. If a requirement has "missing" match_level, do NOT
+attempt to embed that keyword unless the creativity level permits inference
+and the inference rule is documented.
+
+{evidence_summary}
+
+---
+
+TITLES: {title_rule}
+
+SUMMARY: {summary_rule}
+Do NOT use **bold** in the summary. Must reflect at least 2 Tier 1
+technologies the candidate has.
+
+EXPERIENCE:
+{bullet_rule}
+{inferred_rule}
+{length_rule}
+{keyword_policy_rule}
+{bullet_strategy_rule}
+- Preserve exact role structure from base CV. Do NOT split roles.
+- Never change dates (start, end). Keep reverse chronological order.
+- Write natural, professional bullets — avoid keyword-stuffing.
+- Preserve ownership levels. Don't upgrade verbs unless supported.
+- Bullet count MINIMUMS: 4-6 (high relevance), 3-5 (moderate), 2-3 (any
+  role). These are FLOORS, not ceilings.
+- Signal density: prefer technology + action + outcome per bullet.
+- **Bold** key technologies in bullets.
+- The "technologies" field per role: only tools in that role's bullets.
+- Skills and highlighted_technologies: plain names only.
+{tone_rule}
+
+BULLET ORDERING:
+{reorder_rule}
+
+PRUNING POLICY:
+{pruning_rule}
+
+SUBSTITUTION:
+{substitution_rule}
+
+SKILLS: {skills_rule}
+
+CORE COMPETENCIES:
+{core_comp_rule}
+
+EDUCATION, PROJECTS, CERTIFICATIONS, LANGUAGES: Pass through unchanged.
+Include ALL certifications. Languages and work_authorization are direct copies.
+CONTACT: Pass through unchanged.
+
+TAILORING NOTES (5-10): Each with section, change, reason, action, and source.
+For "substituted" or "soft-fabricated": source MUST document the equivalence.
+
+LANGUAGE SANITY CHECK: Final CV entirely in English. Ignore non-English
+JD fragments; do not copy them into any output field.
+
+ALIGNMENT CHECKS:
+- Every Tier 1 requirement with "strong" evidence MUST appear in at least one bullet.
+- For every Tier 1 "partial" match: ensure at least one bullet surfaces the connection.
+- No bullet exceeds stated ownership. No role below minimum bullet count (2).
+- Balance depth (target alignment) and breadth (full experience).
+
+---
+
+BASE CV:
+{base_cv_yaml}
+---{user_notes_block}
+Return ONLY valid JSON matching this schema:
+
+{{
+  "contact": {{"name": "<str>", "email": "<str>", "linkedin": "<str or null>",
+               "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>",
+               "work_authorization": "<str or null — pass through unchanged>"}},
+  "summary": "<tailored summary>",
+  "experience": [
+    {{
+      "company": "<str>",
+      "title": "<str>",
+      "location": "<str or null>",
+      "start": "<YYYY-MM>",
+      "end": "<YYYY-MM or null>",
+      "bullets": ["<rewritten bullet>"],
+      "technologies": ["<tech>"]
+    }}
+  ],
+  "skills": ["<most relevant first>"],
+  "education": [{{"institution": "<str>", "degree": "<str>",
+                  "field": "<str or null>", "year": "<int or null>"}}],
+  "projects": [{{"name": "<str>", "description": "<str>",
+                  "technologies": [], "url": "<str or null>"}}],
+  "certifications": ["<str>"],
+  "languages": [{{"language": "<str>", "level": "<str>"}}],
+  "core_competencies": ["<JD-derived keyword phrase>"],
+  "highlighted_technologies": ["<3-8 concrete tools/tech from candidate's base CV, plain names only>"],
+  "tailoring_notes": [
+    {{
+      "section": "<CV section>",
+      "change": "<what>",
+      "reason": "<why>",
+      "action": "modified",
+      "source": "<evidence>"
+    }}
+  ],
+  "gap_diff": [
+    {{
+      "requirement": "<str>",
+      "match_level": "strong|partial|missing",
+      "tier": 1,
+      "evidence": "<str>"
+    }}
+  ]
+}}"""
+
+    result = _invoke_provider_with_retry(prompt, TailoredCV, provider_fn)
+    return result
+
+
+def run_pipeline_staged(
+    base_cv: BaseCV,
+    job_text: str,
+    provider_fn: ProviderFn,
+    creativity_level: int = 2,
+    cli_model: str = "",
+    user_notes: str = "",
+) -> tuple[TailoredCV, list[GapItem]]:
+    """Multi-stage pipeline: Requirement Extraction → Evidence Mapping → CV Generation.
+
+    Each stage is a separate model call with structured intermediate artifacts.
+    The final TailoredCV is validated with keyword-stuffing checks using the
+    extracted JD keywords.
+
+    Returns same (TailoredCV, list[GapItem]) tuple as run_pipeline() for
+    interface compatibility.
+
+    Args:
+        base_cv: The candidate's base CV.
+        job_text: Raw job description text.
+        provider_fn: Callable that takes a prompt string and returns raw text.
+        creativity_level: Creativity level for all stages.
+        cli_model: Passed through to _invoke_with_retry for CLI compatibility.
+        user_notes: Optional user guidance passed to Stage 3.
+    """
+    logger.info("Staged pipeline: starting Stage 1 — Requirement Extraction")
+    requirements = extract_requirements(job_text, provider_fn, cli_model=cli_model)
+    logger.info(
+        "Staged pipeline: extracted %d requirements", len(requirements.requirements)
+    )
+
+    logger.info("Staged pipeline: starting Stage 2 — Evidence Mapping")
+    evidence_map = map_evidence(requirements, base_cv, provider_fn, creativity_level)
+    logger.info(
+        "Staged pipeline: evidence mapping complete — %s",
+        evidence_map.coverage_summary,
+    )
+
+    logger.info("Staged pipeline: starting Stage 3 — CV Generation")
+    tailored = generate_tailored_cv(
+        base_cv, requirements, evidence_map, provider_fn,
+        creativity_level=creativity_level, user_notes=user_notes,
+    )
+
+    # Post-generation validation with JD keywords for stuffing checks
+    jd_keywords = [r.phrase for r in requirements.requirements]
+    from core.validation import validate_tailored_cv
+    warnings = validate_tailored_cv(base_cv, tailored, jd_keywords=jd_keywords)
+    for w in warnings:
+        logger.warning("TailoredCV soft warning: %s", w)
+
+    return tailored, tailored.gap_diff
