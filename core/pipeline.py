@@ -407,7 +407,8 @@ _RULES: dict[str, dict[int, str]] = {
         2: "Do NOT substitute any technologies, tools, or platforms.",
         3: (
             "LIMITED STACK SUBSTITUTION — swap equivalent technologies in AT MOST 1 role "
-            "(the most recent or most JD-aligned) to show familiarity with the target stack. "
+            "(prefer the second most recent role when it has credible evidence) to show familiarity "
+            "with the target stack without rewriting the current/latest role's actual stack. "
             "No new bullets, no soft-fabricated content.\n"
             "Valid swap categories:\n"
             "- Cloud providers: AWS <-> GCP <-> Azure (EC2/Compute Engine/VM, S3/GCS/Blob Storage, "
@@ -422,6 +423,10 @@ _RULES: dict[str, dict[int, str]] = {
             "- Messaging: Kafka <-> RabbitMQ <-> SQS <-> Pub/Sub\n"
             "CRITICAL CONSTRAINTS for Level 3:\n"
             "- Swap technologies in AT MOST 1 role. All other roles keep their ORIGINAL stack.\n"
+            "- Do NOT substitute technologies in the most recent/current role unless there is direct "
+            "evidence that the target technology was actually used there. Keep the latest role maximally factual.\n"
+            "- Prefer the second most recent role for equivalent-tech swaps, but only when that role's "
+            "responsibilities make the swap interview-defensible. If not defensible, do not swap.\n"
             "- Do NOT add new bullets. Only change technology names within existing bullets.\n"
             "- Do NOT soft-fabricate any content. Every claim must trace back to the base CV.\n"
             "- Swap the technology name but keep the achievement, metrics, and scope intact.\n"

@@ -291,6 +291,8 @@ class TestParameterizedPrompt:
         assert "LIMITED STACK SUBSTITUTION" in result
         assert "AT MOST 1 role" in result
         assert "No new bullets" in result
+        assert "Prefer the second most recent role" in result
+        assert "Do NOT substitute technologies in the most recent/current role" in result
 
     def test_level_4_contains_exposure_language(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """Level 5 prompt includes 'exposure, not ownership' language."""
