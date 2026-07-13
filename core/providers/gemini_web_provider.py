@@ -12,7 +12,13 @@ from gemini_webapi import GeminiClient
 from gemini_webapi.exceptions import AuthError, APIError
 
 from core.models import BaseCV, GapItem, TailoredCV
-from core.pipeline import _build_system_prompt_for_chat, _build_user_prompt, _extract_json
+from core.pipeline import (
+    _build_system_prompt_for_chat,
+    _build_user_prompt,
+    _extract_json,
+    _retry_feedback,
+    run_pipeline_staged,
+)
 from core.providers.base import BaseProvider
 from core.validation import check_tailored_cv
 
@@ -98,10 +104,7 @@ class GeminiWebProvider(BaseProvider):
             effective_user = user_prompt
             if attempt > 0:
                 logger.warning("Retrying -- previous attempt failed: %s", last_exc)
-                effective_user = (
-                    user_prompt
-                    + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
-                )
+                effective_user = user_prompt + _retry_feedback(last_exc)
 
             # Fresh client per attempt — stream suspension corrupts client state
             client = GeminiClient(self._psid, self._psidts)
@@ -134,4 +137,32 @@ class GeminiWebProvider(BaseProvider):
         raise RuntimeError(
             f"GeminiWeb failed to return valid TailoredCV after 3 attempts. "
             f"Last: {last_exc}"
+        )
+
+    async def _generate_once(self, prompt: str) -> str:
+        """One-shot generation with a fresh client (stream suspension corrupts state)."""
+        client = GeminiClient(self._psid, self._psidts)
+        await client.init(timeout=30, auto_close=True, close_delay=60, auto_refresh=True)
+        try:
+            response = await client.generate_content(prompt, model=self._model)
+            return self._sanitize_gemini_output(response.text)
+        finally:
+            await client.close()
+
+    def run_staged(
+        self, base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = ""
+    ) -> tuple[TailoredCV, list[GapItem]]:
+        """Multi-stage pipeline (requirements → evidence map → generation).
+
+        Each stage is a separate one-shot web request. gemini-webapi has no
+        system prompt, so the stage prompts (already self-contained) are sent
+        as-is. Runs in a thread-pool thread, so asyncio.run() per call is safe.
+        """
+
+        def _call(prompt: str) -> str:
+            return asyncio.run(self._generate_once(prompt))
+
+        return run_pipeline_staged(
+            base_cv, job_text, _call,
+            creativity_level=creativity_level, user_notes=user_notes,
         )

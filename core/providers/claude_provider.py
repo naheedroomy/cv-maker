@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from core.models import BaseCV, GapItem, TailoredCV
-from core.pipeline import run_pipeline
+from core.pipeline import _invoke_claude, run_pipeline, run_pipeline_staged
 from core.providers.base import BaseProvider
 
 
@@ -13,3 +13,16 @@ class ClaudeProvider(BaseProvider):
 
     def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = "") -> tuple[TailoredCV, list[GapItem]]:
         return run_pipeline(base_cv, job_text, creativity_level, cli_model=self._cli_model, user_notes=user_notes)
+
+    def run_staged(
+        self, base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = ""
+    ) -> tuple[TailoredCV, list[GapItem]]:
+        """Multi-stage pipeline via claude -p, one CLI invocation per stage."""
+
+        def _call(prompt: str) -> str:
+            return _invoke_claude(prompt, cli_model=self._cli_model)
+
+        return run_pipeline_staged(
+            base_cv, job_text, _call,
+            creativity_level=creativity_level, user_notes=user_notes,
+        )

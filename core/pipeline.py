@@ -98,15 +98,25 @@ def _extract_json(text: str) -> dict:
         if m:
             data = json.loads(m.group(1))
         else:
-            # Include the actual parse error position for diagnosis
-            pos = first_err.pos or 0
-            ctx_start = max(0, pos - 60)
-            ctx_end = min(len(text), pos + 60)
-            raise ValueError(
-                f"No JSON object found in LLM output: {text[:300]!r}\n"
-                f"  Parse error: {first_err.msg} at pos {pos}\n"
-                f"  Context around error: ...{text[ctx_start:ctx_end]!r}..."
-            )
+            # Fallback: slice from first '{' to last '}' — rescues outputs with a
+            # text preamble ("Here is the JSON: {...") or trailing commentary.
+            start, end = text.find("{"), text.rfind("}")
+            data = None
+            if start != -1 and end > start:
+                try:
+                    data = json.loads(text[start : end + 1])
+                except json.JSONDecodeError:
+                    data = None
+            if data is None:
+                # Include the actual parse error position for diagnosis
+                pos = first_err.pos or 0
+                ctx_start = max(0, pos - 60)
+                ctx_end = min(len(text), pos + 60)
+                raise ValueError(
+                    f"No JSON object found in LLM output: {text[:300]!r}\n"
+                    f"  Parse error: {first_err.msg} at pos {pos}\n"
+                    f"  Context around error: ...{text[ctx_start:ctx_end]!r}..."
+                )
 
     # Normalize tailoring_notes: convert plain strings to structured dicts
     if "tailoring_notes" in data and isinstance(data["tailoring_notes"], list):
@@ -138,6 +148,25 @@ def _extract_json(text: str) -> dict:
     return data
 
 
+def _retry_feedback(last_exc: Exception | None) -> str:
+    """Build a retry suffix that tells the model WHAT failed last time.
+
+    Retrying with the identical prompt wastes attempts when the failure was a
+    schema/validation error — the model needs to see the error to fix it.
+    """
+    if last_exc is None:
+        return "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
+    detail = str(last_exc)
+    if len(detail) > 600:
+        detail = detail[:600] + "..."
+    return (
+        "\n\nYour previous response FAILED with this error:\n"
+        f"{detail}\n"
+        "Fix that issue and return ONLY valid JSON matching the schema — "
+        "no markdown fences, no commentary."
+    )
+
+
 def _invoke_with_retry(prompt: str, schema_cls, max_attempts: int = 3, cli_model: str = ""):
     """Invoke claude -p with JSON parse-retry. Returns validated Pydantic model instance."""
     last_exc: Exception | None = None
@@ -146,9 +175,7 @@ def _invoke_with_retry(prompt: str, schema_cls, max_attempts: int = 3, cli_model
         effective_prompt = prompt
         if attempt > 0:
             logger.warning("Retrying — previous attempt failed: %s", last_exc)
-            effective_prompt = (
-                prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
-            )
+            effective_prompt = prompt + _retry_feedback(last_exc)
         try:
             raw = _invoke_claude(effective_prompt, cli_model=cli_model)
             data = _extract_json(raw)
@@ -497,7 +524,9 @@ _RULES: dict[str, dict[int, str]] = {
             "'Kubernetes + auto-scaling', 'Python + FastAPI') rather than dumping unrelated "
             "keywords into one sentence.\n"
             "- Do NOT dump JD keywords into the skills section to inflate keyword match scores. "
-            "Skills must only list technologies the candidate demonstrably has.\n"
+            "Skills must only list technologies the candidate demonstrably has, plus any "
+            "additions the SKILLS rule for the active creativity level explicitly permits "
+            "(e.g., an inferred technology already woven into an experience bullet).\n"
             "- Avoid keyword stuffing: bullets that read as bare technology enumerations "
             "('Used Python, Docker, Kubernetes, Terraform') violate this policy. "
             "Rewrite to show action and impact."
@@ -505,7 +534,32 @@ _RULES: dict[str, dict[int, str]] = {
     },
     "bullet_strategy": {
         0: (
-            "IMPACT-DRIVEN BULLET STRATEGY (applies at ALL creativity levels):\n"
+            "IMPACT-DRIVEN BULLET STRATEGY (subordinate to the WRITING STYLE rules — "
+            "select, reorder, and lightly rewrite; never expand or pad a bullet to force "
+            "this structure):\n"
+            "STRUCTURE: Prefer the What + How + Result pattern — what was done (specific "
+            "action/tech), how (method/scale/context), and the result — but surface the "
+            "Result ONLY where the base CV states or directly supports it (a metric, or a "
+            "qualitative outcome like 'standardized process', 'reduced manual effort'). "
+            "If the base CV gives no result for a bullet, leave it as a clean What + How "
+            "bullet. A result-free bullet is better than one padded with a hollow or "
+            "invented outcome.\n"
+            "DEPTH OVER EXPOSURE: Where the base CV supports them, surface depth signals — "
+            "reusable modules/libraries/templates, standardization efforts, "
+            "multi-environment experience (dev/staging/prod), scale context "
+            "(services/teams/regions) — and evidence-supported modern practices (GitOps, "
+            "platform engineering, DevSecOps, FinOps, observability/SLOs) and ownership "
+            "signals (incident response/RCA, cost optimization, security work, "
+            "operational automation).\n"
+            "AVOID GENERIC BULLETS: These phrases appear on most DevOps/cloud resumes and "
+            "fail to differentiate: 'managed CI/CD pipelines', 'deployed Kubernetes "
+            "clusters', 'provisioned infrastructure with Terraform', 'set up monitoring "
+            "with Prometheus/Grafana', 'collaborated with cross-functional teams'. "
+            "Where the base CV provides specifics (scale, context, result), use them "
+            "instead of the generic phrasing. Do NOT fabricate specifics."
+        ),
+        4: (
+            "IMPACT-DRIVEN BULLET STRATEGY:\n"
             "STRUCTURE: Every bullet SHALL use What + How + Result pattern — what you did "
             "(specific action/tech), how (method/scale/context), and the result "
             "(quantitative metric or qualitative impact). When numeric metrics are absent, "
@@ -571,6 +625,40 @@ _RULES: dict[str, dict[int, str]] = {
             "(a) experience — can be substantiated in a specific role's bullet, "
             "(b) skills — defensible in the skills section only, not in bullets, "
             "(c) omit — no defensible placement, omit entirely."
+        ),
+        3: (
+            "RECRUITER PLAUSIBILITY RULES:\n"
+            "TRUTHFUL PLACEMENT: Place JD keywords ONLY in roles where the base CV "
+            "provides real, role-level evidence, OR where the SUBSTITUTION rule for this "
+            "creativity level explicitly permits an equivalent-technology swap. A permitted "
+            "swap is NOT a violation of this rule — perform it per the SUBSTITUTION "
+            "constraints and document it in tailoring_notes with action 'substituted'. "
+            "Outside a permitted swap, do NOT replace one tool with another to match the JD. "
+            "If a keyword has evidence only in skills, place it in the skills section, "
+            "not in experience bullets. If a keyword has no evidence anywhere and neither "
+            "an inference rule nor a permitted swap covers it, omit it.\n"
+            "INFERENCE EXCEPTION: Role-level placement MAY use explicitly allowed inference "
+            "rules (technology adjacency, responsibility adjacency, domain adjacency) per "
+            "the active creativity-level inference and substitution rules. However, do NOT "
+            "invent unsupported keyword mimicry — if neither an inference rule nor the "
+            "SUBSTITUTION rule covers a keyword, it must have direct base-CV evidence or "
+            "be omitted.\n"
+            "NATURAL LANGUAGE: Use JD language as inspiration, not a template. Translate "
+            "JD phrases into real project descriptions. Avoid mechanical keyword chains "
+            "like 'Kubernetes container orchestration auto-scaling.' Instead, write "
+            "natural sentences: 'Designed an event-driven pipeline using S3, SQS, and "
+            "KEDA to autoscale Kubernetes workloads based on demand.'\n"
+            "PRESERVE STRONGER BULLETS: If a base-CV bullet is already well-written, "
+            "specific, and accurate, KEEP IT. Do not rewrite just to match JD phrasing. "
+            "A truthful, specific bullet is better than a JD-aligned but vague rewrite.\n"
+            "KEYWORD DISCIPLINE: Keep 1-2 target JD keywords per bullet. Three keywords "
+            "are acceptable ONLY if they are naturally related in the same project "
+            "toolchain and each has clear base-CV evidence. Never force unrelated keywords "
+            "into the same sentence.\n"
+            "PLACEMENT CATEGORIES: For each JD keyword, decide its defensible placement: "
+            "(a) experience — can be substantiated in a specific role's bullet (or a "
+            "permitted substitution), (b) skills — defensible in the skills section only, "
+            "not in bullets, (c) omit — no defensible placement, omit entirely."
         ),
     },
 }
@@ -670,7 +758,8 @@ Additional constraints:
 - Preserve ownership levels from the base CV. Do not upgrade verbs ("worked on" -> "led") unless clearly supported.
 - Bullet count per role: MINIMUMS are 4-6 for highly relevant, 3-5 for moderate, 2-3 for any included role. These are FLOORS, not ceilings. If the base CV has 7 bullets for a role, you may keep all 7 — do NOT drop bullets just to fit a number. Only remove a bullet if it actively adds zero value for this specific application.
 - Signal density: prefer a technology, an action, and an outcome per bullet. Avoid "worked on", "involved in", "helped with". But do NOT merge or remove bullets just to increase density — preserving meaningful experience matters more.
-- **Bold** key technologies in bullets.
+- **Bold** ONLY the JD-critical technologies in bullets (those in highlighted_technologies). \
+Bold sparingly — at most 1-2 bolded terms per bullet. Do NOT bold every tool mentioned.
 - Keep bullets concise — one accomplishment each, 1-2 lines max.
 - The "technologies" field per role must only list tools referenced in that role's bullets.
 - Avoid overusing em dashes; vary punctuation.
@@ -684,6 +773,14 @@ AFTER: "Managed 40+ EC2 instances across 3 AWS regions. 99.95% uptime over 18 mo
 
 BEFORE: "Developed and implemented comprehensive CI/CD pipelines that significantly improved deployment efficiency for the engineering team"
 AFTER: "Built CI/CD pipeline with **GitHub Actions**. Cut deploy time from 45 min to 6 min. Team shipped daily instead of weekly."
+
+BEFORE: "Worked on automating infrastructure provisioning tasks for different environments \
+using configuration management tooling"
+AFTER: "Automated environment provisioning with **Ansible** playbooks, replacing manual \
+server setup."
+(The base CV had no metric for this bullet, so the rewrite has none. NEVER invent a number \
+to imitate the earlier examples — a metric appears in the output ONLY if it appears in the \
+base CV.)
 
 BULLET ORDERING:
 {reorder_rule}
@@ -770,7 +867,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary) matching thi
                   "technologies": [], "url": "<str or null>"}}],
   "certifications": ["<str>"],
   "languages": [{{"language": "<str>", "level": "<str>"}}],
-  "core_competencies": ["<JD-derived keyword phrase>"],
+  "core_competencies": ["<capability/methodology from base CV, 1-3 words — NOT a concrete tool>"],
   "highlighted_technologies": ["<surfaced tech>"],
   "tailoring_notes": [
     {{
@@ -864,7 +961,8 @@ EXPERIENCE:
 - Preserve ownership levels. Don't upgrade verbs unless supported.
 - Bullet count MINIMUMS: 4-6 (high relevance), 3-5 (moderate), 2-3 (any role). These are FLOORS, not ceilings — if the base CV has more bullets, keep them unless a bullet adds zero value.
 - Signal density: prefer technology + action + outcome per bullet. But do NOT merge/remove bullets just for density.
-- **Bold** key technologies. Concise — 1 accomplishment per bullet, 1-2 lines max.
+- **Bold** ONLY JD-critical technologies (those in highlighted_technologies), at most 1-2 \
+per bullet. Concise — 1 accomplishment per bullet, 1-2 lines max.
 - "technologies" field per role: only tools referenced in that role's bullets.
 - Skills and highlighted_technologies: plain names only — no parenthetical qualifiers.
 {tone_rule}
@@ -876,6 +974,14 @@ AFTER: "Managed 40+ EC2 instances across 3 AWS regions. 99.95% uptime over 18 mo
 
 BEFORE: "Developed and implemented comprehensive CI/CD pipelines that significantly improved deployment efficiency for the engineering team"
 AFTER: "Built CI/CD pipeline with **GitHub Actions**. Cut deploy time from 45 min to 6 min. Team shipped daily instead of weekly."
+
+BEFORE: "Worked on automating infrastructure provisioning tasks for different environments \
+using configuration management tooling"
+AFTER: "Automated environment provisioning with **Ansible** playbooks, replacing manual \
+server setup."
+(The base CV had no metric for this bullet, so the rewrite has none. NEVER invent a number \
+to imitate the earlier examples — a metric appears in the output ONLY if it appears in the \
+base CV.)
 
 BULLET ORDERING:
 {reorder_rule}
@@ -964,7 +1070,7 @@ as a single JSON object matching this schema:
                   "technologies": [], "url": "<str or null>"}}],
   "certifications": ["<str>"],
   "languages": [{{"language": "<str>", "level": "<str>"}}],
-  "core_competencies": ["<JD-derived keyword phrase>"],
+  "core_competencies": ["<capability/methodology from base CV, 1-3 words — NOT a concrete tool>"],
   "highlighted_technologies": ["<3-8 concrete tools/tech from candidate's base CV that JD requires, plain names only>"],
   "tailoring_notes": [
     {{
@@ -992,28 +1098,14 @@ as a single JSON object matching this schema:
 
 
 def apply_tech_bolding(tailored: TailoredCV) -> TailoredCV:
-    """Apply **bold** markers to technology names in bullet text.
+    """Apply **bold** markers to highlighted technology names in bullet text.
 
-    Uses highlighted_technologies (global), each role's technologies list
-    (role-scoped), and a built-in allowlist of known concrete DevOps/cloud
-    tools (global). Matches case-insensitively with word boundaries.
-    Skips already-bolded text. Resolves known aliases.
+    Bolds ONLY highlighted_technologies (the 3-8 JD-relevant tools) so bold
+    stays a signal that directs the reader's eye — bolding every tool in every
+    bullet turns the CV into visual noise. Matches case-insensitively with
+    word boundaries, skips already-bolded text, resolves known aliases.
     Mutates and returns the TailoredCV.
     """
-    # Known concrete DevOps/cloud tools — bolded globally to catch tools the
-    # model mentioned in bullets but forgot to include in technology fields.
-    # Sorted longest-first to avoid partial conflicts (e.g. "AWS CloudWatch"
-    # before "AWS"). Generic concepts excluded — only concrete named tools.
-    _CONCRETE_TOOLS_ALLOWLIST: set[str] = {
-        "github actions", "gitlab ci", "aws codepipeline", "codepipeline",
-        "aws codebuild", "codebuild", "aws cloudwatch", "cloudwatch",
-        "fastapi", "postgresql", "kubernetes", "terraform", "cloudformation",
-        "prometheus", "sonarqube", "mongodb", "jenkins", "ansible", "docker",
-        "datadog", "argocd", "django", "python", "azure", "linux",
-        "nexus", "helm", "oidc", "oauth", "vpn", "dns", "s3", "sqs", "keda",
-        "iam", "sso", "eks", "bash", "aws",
-    }
-
     # Reuse alias map from validation (lightweight copy)
     _TECH_ALIASES: dict[str, str] = {
         "k8s": "kubernetes",
@@ -1059,14 +1151,8 @@ def apply_tech_bolding(tailored: TailoredCV) -> TailoredCV:
         return text
 
     for exp in tailored.experience:
-        # Role-specific techs (bolded only in this role)
-        role_techs: set[str] = {
-            t.strip().lower() for t in exp.technologies if t.strip()
-        }
-        # Combine with global techs and concrete-tool allowlist
-        all_techs = global_techs_lower | role_techs | _CONCRETE_TOOLS_ALLOWLIST
         for i, bullet in enumerate(exp.bullets):
-            exp.bullets[i] = _bold_tech_in_text(bullet, all_techs)
+            exp.bullets[i] = _bold_tech_in_text(bullet, global_techs_lower)
 
     return tailored
 
@@ -1118,9 +1204,7 @@ def _invoke_provider_with_retry(
         effective_prompt = prompt
         if attempt > 0:
             logger.warning("Retrying — previous attempt failed: %s", last_exc)
-            effective_prompt = (
-                prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
-            )
+            effective_prompt = prompt + _retry_feedback(last_exc)
         try:
             raw = provider_fn(effective_prompt)
             data = _extract_json(raw)
@@ -1493,7 +1577,8 @@ EXPERIENCE:
 - Bullet count MINIMUMS: 4-6 (high relevance), 3-5 (moderate), 2-3 (any
   role). These are FLOORS, not ceilings.
 - Signal density: prefer technology + action + outcome per bullet.
-- **Bold** key technologies in bullets.
+- **Bold** ONLY JD-critical technologies (those in highlighted_technologies), at most \
+1-2 per bullet.
 - The "technologies" field per role: only tools in that role's bullets.
 - Skills and highlighted_technologies: plain names only.
 {tone_rule}
@@ -1558,7 +1643,7 @@ Return ONLY valid JSON matching this schema:
                   "technologies": [], "url": "<str or null>"}}],
   "certifications": ["<str>"],
   "languages": [{{"language": "<str>", "level": "<str>"}}],
-  "core_competencies": ["<JD-derived keyword phrase>"],
+  "core_competencies": ["<capability/methodology from base CV, 1-3 words — NOT a concrete tool>"],
   "highlighted_technologies": ["<3-8 concrete tools/tech from candidate's base CV, plain names only>"],
   "tailoring_notes": [
     {{

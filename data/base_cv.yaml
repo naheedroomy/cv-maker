@@ -8,6 +8,11 @@ contact:
   location: Ulm, Germany
   name: Naheed Roomy
   phone: +49 155 105 00653
+  # TODO(naheed): fill in your real status — this is one of the highest-ROI lines
+  # for German recruiters, who otherwise resolve visa ambiguity against you.
+  # Example: work_authorization: EU Blue Card — authorized to work in Germany
+  # (Also update the base CV stored in the app's Settings/Base CV page — the DB
+  # copy takes precedence over this file.)
 education:
 - degree: BSc (Honours)
   field: Computer Science
@@ -71,9 +76,9 @@ experience:
     automation.
   - Automated 5+ critical bioinformatics workflows using Bash and WGS Linux tooling
     (BLAST, SRA), reducing manual processing time by over 60%.
-  - Re-engineered Python Django management commands to batch-process 30M+ database
+  - Re-engineered Python Django management commands to batch-process 30M+ PostgreSQL
     records, cutting per-job execution time and freeing up system resources for concurrent
-    workloads, PostgreSQL.
+    workloads.
   - Designed and maintained scalable REST APIs, ensuring reliable data flow between
     frontend and backend services within the containerized platform.
   company: Goenomics GmbH

@@ -728,13 +728,18 @@ class TestKeywordPolicyInPrompt:
 class TestBulletStrategyInPrompt:
     """Tests verifying the impact/differentiator bullet strategy in prompts."""
 
+    # Phrases present at every level (evidence-first version).
     KEY_PHRASES = [
         "IMPACT-DRIVEN BULLET STRATEGY",
         "What + How + Result",
         "DEPTH OVER EXPOSURE",
-        "role-weighted",
         "ownership signal",
         "avoid generic bullet",
+    ]
+
+    # Phrases exclusive to the aggressive level 4+ version.
+    LEVEL_4_PHRASES = [
+        "role-weighted",
         "50% core skills",
     ]
 
@@ -743,6 +748,17 @@ class TestBulletStrategyInPrompt:
     ) -> None:
         prompt = _build_prompt(base_cv, sample_job_text, 0)
         for phrase in self.KEY_PHRASES:
+            assert phrase.lower() in prompt.lower(), f"Missing: {phrase}"
+        # Aggressive expansion targets must NOT leak into low levels — they
+        # conflict with the tone rule's select/reorder/lightly-rewrite mandate.
+        for phrase in self.LEVEL_4_PHRASES:
+            assert phrase.lower() not in prompt.lower(), f"Level 4 phrase leaked: {phrase}"
+
+    def test_strategy_in_build_prompt_level_4(
+        self, base_cv: BaseCV, sample_job_text: str,
+    ) -> None:
+        prompt = _build_prompt(base_cv, sample_job_text, 4)
+        for phrase in self.KEY_PHRASES + self.LEVEL_4_PHRASES:
             assert phrase.lower() in prompt.lower(), f"Missing: {phrase}"
 
     def test_strategy_in_build_prompt_level_2(
@@ -1280,7 +1296,7 @@ class TestTechBolding:
     def test_alias_resolution_k8s(self) -> None:
         cv = self._make_tailored(
             ["Managed K8s clusters"],
-            ["Kubernetes"], [],
+            ["Kubernetes"], ["Kubernetes"],
         )
         from core.pipeline import apply_tech_bolding
         apply_tech_bolding(cv)
@@ -1305,7 +1321,9 @@ class TestTechBolding:
         assert "**Docker**" in cv.experience[0].bullets[0]
         assert "**Docker**" in cv.experience[1].bullets[0]
 
-    def test_role_specific_tech_bolded_only_in_its_role(self) -> None:
+    def test_role_tech_not_bolded_unless_highlighted(self) -> None:
+        """Role technologies are NOT bolded on their own — bold is reserved for
+        highlighted_technologies so it stays a JD-relevance signal, not noise."""
         cv = TailoredCV.model_validate({
             "contact": {"name": "Test", "email": "t@t.com"},
             "summary": "test",
@@ -1319,18 +1337,20 @@ class TestTechBolding:
             ],
             "skills": [],
             "education": [{"institution": "U", "degree": "B"}],
+            "highlighted_technologies": ["Docker"],
         })
         from core.pipeline import apply_tech_bolding
         apply_tech_bolding(cv)
-        # Python bolded in role C only (role tech, not highlighted)
-        assert "**Python**" in cv.experience[0].bullets[0]
-        # Docker bolded in role D
+        # Python is only a role tech — NOT bolded
+        assert "**Python**" not in cv.experience[0].bullets[0]
+        # Docker is highlighted — bolded everywhere it appears
+        assert "**Docker**" in cv.experience[0].bullets[0]
         assert "**Docker**" in cv.experience[1].bullets[0]
 
-    # ── Allowlist bolding tests ──────────────────────────────────────
+    # ── Highlighted-only bolding tests ──────────────────────────
 
-    def test_allowlisted_tool_bolded_even_absent_from_tech_fields(self) -> None:
-        """Concrete tools in bullets get bolded even if not in technology lists."""
+    def test_non_highlighted_tools_not_bolded(self) -> None:
+        """Concrete tools NOT in highlighted_technologies stay unbolded."""
         cv = TailoredCV.model_validate({
             "contact": {"name": "Test", "email": "t@t.com"},
             "summary": "test",
@@ -1339,12 +1359,13 @@ class TestTechBolding:
                             "technologies": []}],
             "skills": [],
             "education": [{"institution": "U", "degree": "B"}],
+            "highlighted_technologies": ["ArgoCD"],
         })
         from core.pipeline import apply_tech_bolding
         apply_tech_bolding(cv)
         bullet = cv.experience[0].bullets[0]
         assert "**ArgoCD**" in bullet
-        assert "**Helm**" in bullet
+        assert "**Helm**" not in bullet
 
     def test_generic_concepts_not_bolded(self) -> None:
         """Generic concepts like 'automation', 'infrastructure' are NOT bolded."""
@@ -1366,7 +1387,7 @@ class TestTechBolding:
         assert "**scalability**" not in bullet
 
     def test_aws_s3_sqs_keda_sentence_all_bolded(self) -> None:
-        """Complex sentence with AWS/S3/SQS/KEDA/Kubernetes bolds all concrete tools."""
+        """Complex sentence bolds all highlighted concrete tools."""
         cv = TailoredCV.model_validate({
             "contact": {"name": "Test", "email": "t@t.com"},
             "summary": "test",
@@ -1378,6 +1399,7 @@ class TestTechBolding:
                             "technologies": []}],
             "skills": [],
             "education": [{"institution": "U", "degree": "B"}],
+            "highlighted_technologies": ["AWS", "S3", "SQS", "KEDA", "Kubernetes"],
         })
         from core.pipeline import apply_tech_bolding
         apply_tech_bolding(cv)
@@ -1389,7 +1411,7 @@ class TestTechBolding:
         assert "**Kubernetes**" in bullet
 
     def test_argocd_github_actions_terraform_sentence_all_bolded(self) -> None:
-        """ArgoCD + GitHub Actions + Terraform all bolded from allowlist."""
+        """ArgoCD + GitHub Actions + Terraform all bolded when highlighted."""
         cv = TailoredCV.model_validate({
             "contact": {"name": "Test", "email": "t@t.com"},
             "summary": "test",
@@ -1400,6 +1422,7 @@ class TestTechBolding:
                             "technologies": []}],
             "skills": [],
             "education": [{"institution": "U", "degree": "B"}],
+            "highlighted_technologies": ["ArgoCD", "GitHub Actions", "Terraform"],
         })
         from core.pipeline import apply_tech_bolding
         apply_tech_bolding(cv)

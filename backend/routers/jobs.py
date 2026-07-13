@@ -48,6 +48,11 @@ def _row_to_response(row) -> JobResponse:
         updated_at=row["updated_at"],
         tailored_cv=json.loads(row["tailored_cv_json"]) if row["tailored_cv_json"] else None,
         gap_diff=json.loads(row["gap_diff_json"]) if row["gap_diff_json"] else None,
+        validation_warnings=(
+            json.loads(row["validation_warnings_json"])
+            if "validation_warnings_json" in row.keys() and row["validation_warnings_json"]
+            else None
+        ),
         pdf_url=f"/api/jobs/{row['id']}/pdf" if row["pdf_path"] else None,
         cover_letter_text=row["cover_letter_text"] if "cover_letter_text" in row.keys() else None,
         cover_letter_notes=row["cover_letter_notes"] if "cover_letter_notes" in row.keys() else None,
@@ -446,6 +451,7 @@ async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depe
             """UPDATE jobs SET
                 status='pending', model=?, creativity_level=?, user_notes=?,
                 tailored_cv_json=NULL, gap_diff_json=NULL, pdf_path=NULL,
+                validation_warnings_json=NULL,
                 cv_history_json=?,
                 updated_at=?
             WHERE id=? AND user_id=?""",

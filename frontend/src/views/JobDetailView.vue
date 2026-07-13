@@ -297,6 +297,17 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 
     <!-- Analysis Tab -->
     <div v-show="activeTab === 'analysis' && ['complete', 'failed', 'cancelled'].includes(currentJob.status)" class="tab-panel">
+      <!-- Validation Warnings -->
+      <section v-if="currentJob.validation_warnings && currentJob.validation_warnings.length > 0" class="analysis-section">
+        <h3 class="section-heading">Validation Warnings</h3>
+        <p class="warnings-hint">Review these before sending — they flag possible invented metrics, keyword stuffing, or generic bullets.</p>
+        <ul class="validation-warnings">
+          <li v-for="(warning, i) in currentJob.validation_warnings" :key="i" class="validation-warning-item">
+            {{ warning }}
+          </li>
+        </ul>
+      </section>
+
       <!-- Gap Analysis -->
       <section v-if="currentJob.gap_diff && currentJob.gap_diff.length > 0" class="analysis-section">
         <h3 class="section-heading">Gap Analysis</h3>
@@ -631,6 +642,30 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 /* Analysis section headings */
 .analysis-section {
   margin-bottom: 32px;
+}
+
+.warnings-hint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.validation-warnings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.validation-warning-item {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background: rgba(234, 179, 8, 0.08);
+  border-left: 3px solid #eab308;
+  border-radius: 4px;
+  padding: 8px 12px;
 }
 
 .section-heading {

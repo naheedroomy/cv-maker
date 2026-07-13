@@ -92,6 +92,7 @@ export interface JobResponse {
   updated_at: string
   tailored_cv: TailoredCV | null
   gap_diff: GapItem[] | null
+  validation_warnings: string[] | null
   pdf_url: string | null
   cover_letter_text: string | null
   cover_letter_notes: string | null

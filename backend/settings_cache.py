@@ -22,6 +22,9 @@ _DEFAULTS = {
     "openai_api_key": "",
     "gemini_web_psid": "",
     "gemini_web_model": "gemini-3-pro",
+    # "staged" = multi-stage pipeline (requirements -> evidence map -> generation)
+    # with automatic fallback to single-shot; "single" forces single-shot only.
+    "pipeline_mode": "staged",
 }
 
 # Mapping from settings key -> environment variable name

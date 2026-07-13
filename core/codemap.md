@@ -8,7 +8,8 @@ The `core/` package is the shared, UI-free engine of cv-maker. It owns all data 
 | Pattern | Where | Why |
 |---------|-------|-----|
 | **Pydantic v2 models** | `models.py` | Single source of truth for all structured data; validation at boundaries |
-| **Pipeline (batch)** | `pipeline.py` → `run_pipeline()` | Single-function entry point: BaseCV + job text → TailoredCV + gap diff |
+| **Pipeline (batch)** | `pipeline.py` → `run_pipeline()` | Single-shot entry point: BaseCV + job text → TailoredCV + gap diff |
+| **Pipeline (staged)** | `pipeline.py` → `run_pipeline_staged()` | Three-stage entry point (requirement extraction → evidence mapping → generation); all providers implement `run_staged()` over it |
 | **Strategy (providers)** | `providers/base.py` → `BaseProvider` | Abstract `run()` interface; 5 concrete providers with per-user key resolution |
 | **Template Method** | `renderer.py` | Jinja2 rendering: TailoredCV → LaTeX string (`render_latex`) → PDF bytes (`render_pdf`) |
 | **Factory (async)** | `providers/__init__.py` → `get_provider()` | Async factory: resolves per-user settings from DB, constructs correct provider |

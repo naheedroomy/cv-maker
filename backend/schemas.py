@@ -31,6 +31,7 @@ class JobResponse(BaseModel):
     updated_at: str  # ISO 8601 timestamp
     tailored_cv: dict | None = None  # populated on complete (from tailored_cv_json column)
     gap_diff: list | None = None  # populated on complete (from gap_diff_json column)
+    validation_warnings: list[str] | None = None  # soft pipeline warnings (metrics, stuffing)
     pdf_url: str | None = None  # populated on complete, format: /api/jobs/{id}/pdf
     cover_letter_text: str | None = None  # populated when cover letter is generated
     cover_letter_notes: str | None = None  # user notes used for generation

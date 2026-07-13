@@ -12,6 +12,7 @@ from core.pipeline import (
     _build_system_prompt_for_chat,
     _build_user_prompt,
     _extract_json,
+    _retry_feedback,
     run_pipeline_staged,
 )
 from core.providers.base import BaseProvider
@@ -38,9 +39,7 @@ class ClaudeAPIProvider(BaseProvider):
             effective_user = user_prompt
             if attempt > 0:
                 logger.warning("Retrying — previous attempt failed: %s", last_exc)
-                effective_user = (
-                    user_prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
-                )
+                effective_user = user_prompt + _retry_feedback(last_exc)
             try:
                 response = self._client.messages.create(
                     model=self._model,

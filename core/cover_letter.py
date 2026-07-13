@@ -7,7 +7,7 @@ import logging
 from pydantic import BaseModel
 
 from core.models import BaseCV, GapItem, TailoredCV
-from core.pipeline import _extract_json, _invoke_with_retry, _serialize_base_cv
+from core.pipeline import _extract_json, _invoke_with_retry, _retry_feedback, _serialize_base_cv
 from core.providers.base import BaseProvider
 
 logger = logging.getLogger(__name__)
@@ -256,10 +256,10 @@ Never echo these example phrases in your output.
     individual contributions."
     GOOD: Name specific things you did. Drop the range framing.
 
-16. NO PERFECTLY HYPHENATED WORD PAIRS: Do not hyphenate common word pairs like
-    "cross-functional", "data-driven", "client-facing", "decision-making", "well-known",
-    "high-quality", "real-time", "long-term", "end-to-end". AI over-hyphenates these.
-    Write them without hyphens or rephrase.
+16. NO STACKED HYPHENATED BUZZWORD PAIRS: Standard compounds used correctly are fine
+    ("end-to-end tests", "real-time dashboards"). What reads as AI is stacking hyphenated
+    modifiers as filler. Use at most one hyphenated modifier per sentence, and only when
+    it carries concrete meaning. Do NOT "fix" correct grammar by dropping needed hyphens.
     BAD: "cross-functional, data-driven, client-facing team"
     GOOD: "team that worked across functions, used data to guide decisions, and talked
     directly to users"
@@ -339,19 +339,21 @@ STEP 2: Self-critique. Read your draft as a hostile AI-detection reviewer
         Check for rule-of-three abstract noun clusters.
         Check for synonym cycling (different words for same concept).
         Check for false ranges ("from X to Y" where X and Y aren't a real spectrum).
-        Check for perfectly hyphenated word pairs (AI over-hyphenates these).
+        Check for stacked hyphenated buzzword pairs used as filler.
         Check for persuasive authority tropes ("at its core", "what really matters").
         Check for generic closings ("I look forward to discussing", "I am excited to apply").
         Check for grounding: does every factual claim trace to the CV, job listing, or notes?
         Does this read like a PERSON wrote it, or like an AI summarized a CV?
-        Find at least 5 issues. If you find fewer, look harder.
+        List every GENUINE issue with the specific sentence it appears in.
+        Do NOT invent violations to hit a quota — a clean sentence stays untouched.
 
 STEP 3: Hostile AI-detector pass. Ask yourself: "What makes this text so obviously
         AI-generated?" Answer with specific remaining tells — particular sentences,
-        word choices, rhythm problems, or tone issues. Be brutal. If you can't find
-        at least 2 remaining tells after your revision, you haven't looked hard enough.
+        word choices, rhythm problems, or tone issues. Be brutal and specific.
+        If nothing remains, state that explicitly rather than manufacturing tells.
 
-STEP 4: Rewrite the draft to fix every issue found. Then read it aloud (in your head).
+STEP 4: Rewrite the draft to fix every issue found in Steps 2-3. Leave sentences with
+        no genuine issue untouched. Then read it aloud (in your head).
         If any sentence feels stiff, unnatural, or "written," rewrite it again.
 
 STEP 5: Return ONLY valid JSON (no markdown fences):
@@ -474,22 +476,27 @@ def generate_cover_letter(
         effective_user = user_prompt
         if attempt > 0:
             logger.warning("Retrying cover letter — previous attempt failed: %s", last_exc)
-            effective_user = (
-                user_prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
-            )
+            effective_user = user_prompt + _retry_feedback(last_exc)
         try:
             if provider_model == "gemini-flash":
                 from google.genai import types as genai_types
 
+                config_kwargs: dict = {
+                    "system_instruction": system_prompt,
+                    "response_mime_type": "application/json",
+                }
+                # Disable thinking only on Flash models — the prompt already has
+                # a self-critique step and thinking adds 30-60s of latency.
+                # Pro models REJECT thinking_budget=0 (thinking cannot be
+                # disabled there), so leave their default thinking on.
+                if "flash" in (provider._model or "").lower():
+                    config_kwargs["thinking_config"] = genai_types.ThinkingConfig(
+                        thinking_budget=0
+                    )
                 response = provider._client.models.generate_content(
                     model=provider._model,
                     contents=effective_user,
-                    config=genai_types.GenerateContentConfig(
-                        system_instruction=system_prompt,
-                        # Disable thinking — the prompt already has a self-critique step.
-                        # Thinking adds 30-60s of latency for no benefit here.
-                        thinking_config=genai_types.ThinkingConfig(thinking_budget=0),
-                    ),
+                    config=genai_types.GenerateContentConfig(**config_kwargs),
                 )
                 raw_text = response.text
 
@@ -505,14 +512,9 @@ def generate_cover_letter(
                 )
 
             elif provider_model == "openai":
-                response = provider._client.chat.completions.create(
-                    model=provider._model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": effective_user},
-                    ],
-                )
-                raw_text = response.choices[0].message.content
+                # Reuse the provider's JSON-mode-aware chat helper (handles
+                # endpoints that reject response_format).
+                raw_text = provider._chat(system_prompt, effective_user)
 
             elif provider_model == "gemini-web":
                 import asyncio

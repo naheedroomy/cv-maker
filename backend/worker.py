@@ -133,12 +133,35 @@ async def job_worker(
             # ----------------------------------------------------------------
             t0 = time.monotonic()
             provider = await get_provider(model, user_id=user_id)
-            logger.info("Job %s: [2/4] Starting %s pipeline...", job_id, type(provider).__name__)
-            tailored_cv, gap_diff = await run_provider_async(provider, base_cv, job_text, creativity_level, user_notes)
+            from backend.settings_cache import get_setting as _get_setting
+
+            pipeline_mode = await _get_setting("pipeline_mode", user_id)
+            staged = pipeline_mode != "single"
+            logger.info(
+                "Job %s: [2/4] Starting %s pipeline (mode=%s)...",
+                job_id, type(provider).__name__, "staged" if staged else "single",
+            )
+            tailored_cv, gap_diff = await run_provider_async(
+                provider, base_cv, job_text, creativity_level, user_notes, staged=staged
+            )
             logger.info(
                 "Job %s: [2/4] %s pipeline done (%.1fs)",
                 job_id, type(provider).__name__, time.monotonic() - t0,
             )
+
+            # ----------------------------------------------------------------
+            # Soft validation warnings (invented metrics, keyword stuffing,
+            # generic bullets, ...) — persisted so the UI can show them.
+            # ----------------------------------------------------------------
+            from core.validation import validate_tailored_cv
+
+            try:
+                validation_warnings = validate_tailored_cv(base_cv, tailored_cv)
+            except Exception:
+                logger.exception("Job %s: validation warning pass failed", job_id)
+                validation_warnings = []
+            for w in validation_warnings:
+                logger.warning("Job %s: TailoredCV soft warning: %s", job_id, w)
 
             # ----------------------------------------------------------------
             # Render LaTeX source (sync Jinja2 string templating — fast, no I/O)
@@ -189,11 +212,12 @@ async def job_worker(
                 await db.execute(
                     """UPDATE jobs
                        SET status='complete', tailored_cv_json=?, gap_diff_json=?,
-                           pdf_path=?, updated_at=?
+                           validation_warnings_json=?, pdf_path=?, updated_at=?
                        WHERE id=?""",
                     (
                         tailored_cv.model_dump_json(),
                         json.dumps([g.model_dump() for g in gap_diff]),
+                        json.dumps(validation_warnings),
                         str(pdf_path),
                         _completed_at,
                         job_id,
@@ -212,6 +236,7 @@ async def job_worker(
                 "updated_at": _completed_at,
                 "tailored_cv": tailored_cv.model_dump(),
                 "gap_diff": [g.model_dump() for g in gap_diff],
+                "validation_warnings": validation_warnings,
                 "pdf_url": f"/api/jobs/{job_id}/pdf",
             }
             await _push_event(job_id, "complete", full_result)
