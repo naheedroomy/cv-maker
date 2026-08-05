@@ -90,6 +90,20 @@ async function handleDelete() {
   }
 }
 
+function handleDownloadJobText() {
+  if (!currentJob.value?.job_text) return
+  const blob = new Blob([currentJob.value.job_text], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  const safeName = (currentJob.value.company_name || 'job').replace(/[^a-z0-9]+/gi, '-').toLowerCase()
+  a.href = url
+  a.download = `${safeName}-job-description.txt`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
 async function handleSaveListing() {
   if (!currentJob.value) return
   savingListing.value = true
@@ -336,13 +350,22 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
             placeholder="Paste the job listing here..."
           />
         </div>
-        <button
-          class="btn-secondary"
-          :disabled="savingListing"
-          @click="handleSaveListing"
-        >
-          {{ savingListing ? 'Saving...' : 'Save Changes' }}
-        </button>
+        <div class="listing-actions">
+          <button
+            class="btn-secondary"
+            :disabled="savingListing"
+            @click="handleSaveListing"
+          >
+            {{ savingListing ? 'Saving...' : 'Save Changes' }}
+          </button>
+          <button
+            class="btn-secondary"
+            :disabled="!currentJob.job_text"
+            @click="handleDownloadJobText"
+          >
+            Download .txt
+          </button>
+        </div>
       </section>
     </div>
 
@@ -643,6 +666,11 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
 /* Job listing editor */
 .listing-field {
   margin-bottom: 12px;
+}
+
+.listing-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .listing-label {
