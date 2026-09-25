@@ -7,7 +7,6 @@ import logging
 
 from google import genai
 from google.genai import errors as genai_errors
-
 from google.genai import types as genai_types
 
 from core.models import BaseCV, GapItem, TailoredCV
@@ -21,18 +20,55 @@ logger = logging.getLogger(__name__)
 class GeminiProvider(BaseProvider):
     DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
 
-    def __init__(self, api_key: str = "", model: str = "") -> None:
+    def __init__(
+        self,
+        api_key: str = "",
+        model: str = "",
+        reasoning_effort: str = "auto",
+    ) -> None:
         if not api_key:
-            raise RuntimeError("Gemini API key not configured (set in Settings or .env as GEMINI_API_KEY)")
+            raise RuntimeError(
+                "Gemini API key not configured (set in Settings or .env as GEMINI_API_KEY)"
+            )
         self._client = genai.Client(api_key=api_key)
         self._model = model or self.DEFAULT_MODEL
+        self._reasoning_effort = reasoning_effort or "auto"
 
-    def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = "") -> tuple[TailoredCV, list[GapItem]]:
+    def run(
+        self,
+        base_cv: BaseCV,
+        job_text: str,
+        creativity_level: int = 2,
+        user_notes: str = "",
+    ) -> tuple[TailoredCV, list[GapItem]]:
         system_prompt = _build_system_prompt_for_chat(creativity_level)
         user_prompt = _build_user_prompt(base_cv, job_text, user_notes)
         last_exc: Exception | None = None
+
+        thinking_config = None
+        effort = self._reasoning_effort.lower()
+        if effort == "off":
+            thinking_config = genai_types.ThinkingConfig(thinking_budget=0)
+        elif effort == "low":
+            thinking_config = genai_types.ThinkingConfig(
+                thinking_level=genai_types.ThinkingLevel.LOW
+            )
+        elif effort == "medium":
+            thinking_config = genai_types.ThinkingConfig(
+                thinking_level=genai_types.ThinkingLevel.MEDIUM
+            )
+        elif effort == "high":
+            thinking_config = genai_types.ThinkingConfig(
+                thinking_level=genai_types.ThinkingLevel.HIGH
+            )
+
         for attempt in range(3):
-            logger.info("Gemini attempt %d/3 for TailoredCV", attempt + 1)
+            logger.info(
+                "Gemini attempt %d/3 for TailoredCV (model=%s, reasoning=%s)",
+                attempt + 1,
+                self._model,
+                self._reasoning_effort,
+            )
             effective_user = user_prompt
             if attempt > 0:
                 logger.warning("Retrying — previous attempt failed: %s", last_exc)
@@ -40,12 +76,14 @@ class GeminiProvider(BaseProvider):
                     user_prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
                 )
             try:
+                gen_config = genai_types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    thinking_config=thinking_config,
+                )
                 response = self._client.models.generate_content(
                     model=self._model,
                     contents=effective_user,
-                    config=genai_types.GenerateContentConfig(
-                        system_instruction=system_prompt,
-                    ),
+                    config=gen_config,
                 )
                 data = _extract_json(response.text)
                 result = TailoredCV.model_validate(data)

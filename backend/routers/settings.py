@@ -16,8 +16,11 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 class SettingsResponse(BaseModel):
     claude_cli_model: str
     claude_api_model: str
+    claude_reasoning_effort: str
     gemini_model: str
+    gemini_reasoning_effort: str
     openai_model: str
+    openai_reasoning_effort: str
     openai_base_url: str
     cv_filename: str
     anthropic_api_key: str
@@ -30,8 +33,11 @@ class SettingsResponse(BaseModel):
 class SettingsUpdate(BaseModel):
     claude_cli_model: str | None = None
     claude_api_model: str | None = None
+    claude_reasoning_effort: str | None = None
     gemini_model: str | None = None
+    gemini_reasoning_effort: str | None = None
     openai_model: str | None = None
+    openai_reasoning_effort: str | None = None
     openai_base_url: str | None = None
     cv_filename: str | None = None
     anthropic_api_key: str | None = None
@@ -68,20 +74,71 @@ async def get_settings(user: dict = Depends(get_current_user)) -> SettingsRespon
     return SettingsResponse(
         claude_cli_model=stored.get("claude_cli_model", _DEFAULTS["claude_cli_model"]),
         claude_api_model=stored.get("claude_api_model", _DEFAULTS["claude_api_model"]),
+        claude_reasoning_effort=stored.get(
+            "claude_reasoning_effort", _DEFAULTS["claude_reasoning_effort"]
+        ),
         gemini_model=stored.get("gemini_model", _DEFAULTS["gemini_model"]),
+        gemini_reasoning_effort=stored.get(
+            "gemini_reasoning_effort", _DEFAULTS["gemini_reasoning_effort"]
+        ),
         openai_model=stored.get("openai_model", _DEFAULTS["openai_model"]),
+        openai_reasoning_effort=stored.get(
+            "openai_reasoning_effort", _DEFAULTS["openai_reasoning_effort"]
+        ),
         openai_base_url=stored.get("openai_base_url", _DEFAULTS["openai_base_url"]),
         cv_filename=stored.get("cv_filename", _DEFAULTS["cv_filename"]),
-        anthropic_api_key=_mask_key(stored.get("anthropic_api_key", _DEFAULTS["anthropic_api_key"])),
-        gemini_api_key=_mask_key(stored.get("gemini_api_key", _DEFAULTS["gemini_api_key"])),
-        openai_api_key=_mask_key(stored.get("openai_api_key", _DEFAULTS["openai_api_key"])),
-        gemini_web_psid=_mask_key(stored.get("gemini_web_psid", _DEFAULTS["gemini_web_psid"])),
+        anthropic_api_key=_mask_key(
+            stored.get("anthropic_api_key", _DEFAULTS["anthropic_api_key"])
+        ),
+        gemini_api_key=_mask_key(
+            stored.get("gemini_api_key", _DEFAULTS["gemini_api_key"])
+        ),
+        openai_api_key=_mask_key(
+            stored.get("openai_api_key", _DEFAULTS["openai_api_key"])
+        ),
+        gemini_web_psid=_mask_key(
+            stored.get("gemini_web_psid", _DEFAULTS["gemini_web_psid"])
+        ),
         gemini_web_model=stored.get("gemini_web_model", _DEFAULTS["gemini_web_model"]),
     )
 
 
+@router.get("/models")
+async def list_provider_models(
+    provider: str,
+    api_key: str | None = None,
+    user: dict = Depends(get_current_user),
+) -> dict[str, list[dict[str, str]]]:
+    """Discover available models for a provider, using provided key or stored key."""
+    from backend.settings_cache import get_api_key
+    from core.providers.model_discovery import discover_provider_models
+
+    effective_key = api_key
+    if not effective_key or effective_key.startswith("***"):
+        prov_lower = provider.lower()
+        if prov_lower in ("gemini", "gemini-flash"):
+            effective_key = await get_api_key("gemini_api_key", user["id"])
+        elif prov_lower in ("claude", "claude-api"):
+            effective_key = await get_api_key("anthropic_api_key", user["id"])
+        elif prov_lower == "openai":
+            effective_key = await get_api_key("openai_api_key", user["id"])
+
+    base_url = None
+    if provider.lower() == "openai":
+        base_url = (await get_setting("openai_base_url", user["id"])) or None
+
+    models = await discover_provider_models(
+        provider,
+        api_key=effective_key or "",
+        base_url=base_url,
+    )
+    return {"models": models}
+
+
 @router.put("", response_model=SettingsResponse)
-async def update_settings(body: SettingsUpdate, user: dict = Depends(get_current_user)) -> SettingsResponse:
+async def update_settings(
+    body: SettingsUpdate, user: dict = Depends(get_current_user)
+) -> SettingsResponse:
     """Update provider settings. Only provided fields are updated."""
     db = await get_db()
     try:

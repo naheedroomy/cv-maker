@@ -84,6 +84,8 @@ export interface JobResponse {
   job_link: string | null
   job_text: string | null
   model: string
+  model_id?: string | null
+  reasoning_effort?: string | null
   creativity_level: number
   applied: boolean
   applied_at: string | null
@@ -123,6 +125,8 @@ export interface JobCreate {
   job_link?: string
   job_text: string
   model?: string  // "claude-haiku" (default) or "gemini-flash"
+  model_id?: string
+  reasoning_effort?: string
   creativity_level?: number  // 0-6, default 2 (Moderate)
   user_notes?: string  // optional guidance for CV tailoring
 }

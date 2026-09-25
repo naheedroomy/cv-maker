@@ -5,8 +5,11 @@ import { apiFetch } from '@/utils/apiFetch'
 interface Settings {
   claude_cli_model: string
   claude_api_model: string
+  claude_reasoning_effort: string
   gemini_model: string
+  gemini_reasoning_effort: string
   openai_model: string
+  openai_reasoning_effort: string
   openai_base_url: string
   cv_filename: string
   anthropic_api_key: string
@@ -16,12 +19,20 @@ interface Settings {
   gemini_web_model: string
 }
 
+interface ModelOption {
+  id: string
+  label: string
+}
+
 const activeTab = ref<'general' | 'claude-cli' | 'claude-api' | 'gemini' | 'openai' | 'gemini-web'>('general')
 const settings = ref<Settings>({
   claude_cli_model: 'haiku',
   claude_api_model: 'claude-haiku-4-5',
+  claude_reasoning_effort: 'auto',
   gemini_model: 'gemini-2.5-flash',
+  gemini_reasoning_effort: 'auto',
   openai_model: 'gpt-4o-mini',
+  openai_reasoning_effort: 'auto',
   openai_base_url: '',
   cv_filename: '',
   anthropic_api_key: '',
@@ -35,6 +46,89 @@ const saved = ref(false)
 const error = ref<string | null>(null)
 const cookieChecking = ref(false)
 const cookieStatus = ref<{ ok: boolean; message: string } | null>(null)
+
+const providerModels = ref<Record<string, ModelOption[]>>({
+  'claude-cli': [],
+  'claude-api': [],
+  'gemini': [],
+  'openai': [],
+  'gemini-web': [],
+})
+const fetchingModels = ref<Record<string, boolean>>({
+  'claude-cli': false,
+  'claude-api': false,
+  'gemini': false,
+  'openai': false,
+  'gemini-web': false,
+})
+const modelFetchErrors = ref<Record<string, string | null>>({
+  'claude-cli': null,
+  'claude-api': null,
+  'gemini': null,
+  'openai': null,
+  'gemini-web': null,
+})
+
+const reasoningOptions = [
+  { value: 'auto', label: 'Auto / Default' },
+  { value: 'off', label: 'Off' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+]
+
+function ensureCurrentModelInOptions(provider: string) {
+  const currentModel =
+    provider === 'claude-cli' ? settings.value.claude_cli_model :
+    provider === 'claude-api' ? settings.value.claude_api_model :
+    provider === 'gemini' ? settings.value.gemini_model :
+    provider === 'openai' ? settings.value.openai_model :
+    provider === 'gemini-web' ? settings.value.gemini_web_model : ''
+
+  if (currentModel && !providerModels.value[provider]?.some(m => m.id === currentModel)) {
+    providerModels.value[provider] = [
+      { id: currentModel, label: currentModel },
+      ...(providerModels.value[provider] || []),
+    ]
+  }
+}
+
+function getProviderOptions(provider: string): ModelOption[] {
+  ensureCurrentModelInOptions(provider)
+  return providerModels.value[provider] || []
+}
+
+async function fetchModels(provider: 'claude-cli' | 'claude-api' | 'gemini' | 'openai' | 'gemini-web') {
+  fetchingModels.value[provider] = true
+  modelFetchErrors.value[provider] = null
+  try {
+    let url = `/api/settings/models?provider=${provider}`
+    let apiKey = ''
+    if (provider === 'claude-api' && settings.value.anthropic_api_key && !settings.value.anthropic_api_key.startsWith('***')) {
+      apiKey = settings.value.anthropic_api_key
+    } else if (provider === 'gemini' && settings.value.gemini_api_key && !settings.value.gemini_api_key.startsWith('***')) {
+      apiKey = settings.value.gemini_api_key
+    } else if (provider === 'openai' && settings.value.openai_api_key && !settings.value.openai_api_key.startsWith('***')) {
+      apiKey = settings.value.openai_api_key
+    }
+    if (apiKey) {
+      url += `&api_key=${encodeURIComponent(apiKey)}`
+    }
+    const res = await apiFetch(url)
+    if (!res.ok) {
+      throw new Error(`Failed to load models (${res.status})`)
+    }
+    const data = await res.json()
+    if (data.models && Array.isArray(data.models)) {
+      providerModels.value[provider] = data.models
+      ensureCurrentModelInOptions(provider)
+    }
+  } catch (err) {
+    modelFetchErrors.value[provider] = err instanceof Error ? err.message : 'Failed to fetch models'
+  } finally {
+    fetchingModels.value[provider] = false
+  }
+}
 
 async function checkCookie() {
   cookieChecking.value = true
@@ -63,6 +157,11 @@ onMounted(async () => {
   } catch {
     error.value = 'Failed to load settings'
   }
+  fetchModels('claude-api')
+  fetchModels('gemini')
+  fetchModels('openai')
+  fetchModels('claude-cli')
+  fetchModels('gemini-web')
 })
 
 async function handleSave() {
@@ -88,10 +187,22 @@ async function handleSave() {
     settings.value = await res.json()
     saved.value = true
     setTimeout(() => { saved.value = false }, 2000)
+
+    // Re-fetch models in case API key was updated
+    fetchModels('claude-api')
+    fetchModels('gemini')
+    fetchModels('openai')
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Save failed'
   } finally {
     saving.value = false
+  }
+}
+
+function selectTab(key: typeof activeTab.value) {
+  activeTab.value = key
+  if (key !== 'general' && (!providerModels.value[key] || providerModels.value[key].length === 0)) {
+    fetchModels(key)
   }
 }
 
@@ -117,7 +228,7 @@ const tabs = [
         :key="tab.key"
         class="tab"
         :class="{ 'tab--active': activeTab === tab.key }"
-        @click="activeTab = tab.key"
+        @click="selectTab(tab.key)"
       >{{ tab.label }}</button>
     </div>
 
@@ -134,8 +245,12 @@ const tabs = [
     <div v-if="activeTab === 'claude-cli'" class="tab-content">
       <div class="field">
         <label class="field-label">Model</label>
-        <input v-model="settings.claude_cli_model" class="field-input" placeholder="haiku" />
-        <p class="field-hint">Passed to <code>claude -p --model &lt;value&gt;</code>. Examples: haiku, sonnet, opus</p>
+        <select v-model="settings.claude_cli_model" class="field-input field-select">
+          <option v-for="m in getProviderOptions('claude-cli')" :key="m.id" :value="m.id">
+            {{ m.label }} ({{ m.id }})
+          </option>
+        </select>
+        <p class="field-hint">Passed to <code>claude -p --model &lt;value&gt;</code>.</p>
       </div>
       <div class="field">
         <label class="field-label">Authentication</label>
@@ -146,9 +261,35 @@ const tabs = [
     <!-- Claude API -->
     <div v-if="activeTab === 'claude-api'" class="tab-content">
       <div class="field">
-        <label class="field-label">Model</label>
-        <input v-model="settings.claude_api_model" class="field-input" placeholder="claude-haiku-4-5" />
-        <p class="field-hint">Anthropic model ID. Examples: claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-6</p>
+        <div class="field-header-row">
+          <label class="field-label">Model</label>
+          <button
+            type="button"
+            class="btn-refresh-inline"
+            :disabled="fetchingModels['claude-api']"
+            @click="fetchModels('claude-api')"
+          >
+            {{ fetchingModels['claude-api'] ? 'Refreshing...' : '↻ Refresh Models' }}
+          </button>
+        </div>
+        <select v-model="settings.claude_api_model" class="field-input field-select">
+          <option v-for="m in getProviderOptions('claude-api')" :key="m.id" :value="m.id">
+            {{ m.label }} ({{ m.id }})
+          </option>
+        </select>
+        <p v-if="modelFetchErrors['claude-api']" class="field-error-hint">
+          {{ modelFetchErrors['claude-api'] }}
+        </p>
+        <p class="field-hint">Models discovered from Anthropic API. Click Refresh to reload with your API key.</p>
+      </div>
+      <div class="field">
+        <label class="field-label">Reasoning / Thinking Effort</label>
+        <select v-model="settings.claude_reasoning_effort" class="field-input field-select">
+          <option v-for="opt in reasoningOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+        <p class="field-hint">Controls extended or adaptive thinking for Claude 3.7+ and Claude 5 models.</p>
       </div>
       <div class="field">
         <label class="field-label">API Key</label>
@@ -160,9 +301,35 @@ const tabs = [
     <!-- Gemini -->
     <div v-if="activeTab === 'gemini'" class="tab-content">
       <div class="field">
-        <label class="field-label">Model</label>
-        <input v-model="settings.gemini_model" class="field-input" placeholder="gemini-2.5-flash" />
-        <p class="field-hint">Google model ID. Examples: gemini-2.5-flash, gemini-2.5-pro, gemini-2.0-flash</p>
+        <div class="field-header-row">
+          <label class="field-label">Model</label>
+          <button
+            type="button"
+            class="btn-refresh-inline"
+            :disabled="fetchingModels['gemini']"
+            @click="fetchModels('gemini')"
+          >
+            {{ fetchingModels['gemini'] ? 'Refreshing...' : '↻ Refresh Models' }}
+          </button>
+        </div>
+        <select v-model="settings.gemini_model" class="field-input field-select">
+          <option v-for="m in getProviderOptions('gemini')" :key="m.id" :value="m.id">
+            {{ m.label }} ({{ m.id }})
+          </option>
+        </select>
+        <p v-if="modelFetchErrors['gemini']" class="field-error-hint">
+          {{ modelFetchErrors['gemini'] }}
+        </p>
+        <p class="field-hint">Models discovered from Google AI Studio. Click Refresh to reload with your API key.</p>
+      </div>
+      <div class="field">
+        <label class="field-label">Reasoning / Thinking Effort</label>
+        <select v-model="settings.gemini_reasoning_effort" class="field-input field-select">
+          <option v-for="opt in reasoningOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+        <p class="field-hint">Controls thinking level (Low, Medium, High) or disables thinking for Gemini 2.5+ models.</p>
       </div>
       <div class="field">
         <label class="field-label">API Key</label>
@@ -174,9 +341,35 @@ const tabs = [
     <!-- OpenAI -->
     <div v-if="activeTab === 'openai'" class="tab-content">
       <div class="field">
-        <label class="field-label">Model</label>
-        <input v-model="settings.openai_model" class="field-input" placeholder="gpt-4o-mini" />
-        <p class="field-hint">OpenAI model ID. Examples: gpt-4o-mini, gpt-4o, gpt-4.1-mini</p>
+        <div class="field-header-row">
+          <label class="field-label">Model</label>
+          <button
+            type="button"
+            class="btn-refresh-inline"
+            :disabled="fetchingModels['openai']"
+            @click="fetchModels('openai')"
+          >
+            {{ fetchingModels['openai'] ? 'Refreshing...' : '↻ Refresh Models' }}
+          </button>
+        </div>
+        <select v-model="settings.openai_model" class="field-input field-select">
+          <option v-for="m in getProviderOptions('openai')" :key="m.id" :value="m.id">
+            {{ m.label }} ({{ m.id }})
+          </option>
+        </select>
+        <p v-if="modelFetchErrors['openai']" class="field-error-hint">
+          {{ modelFetchErrors['openai'] }}
+        </p>
+        <p class="field-hint">Models discovered from OpenAI. Click Refresh to reload with your API key.</p>
+      </div>
+      <div class="field">
+        <label class="field-label">Reasoning / Thinking Effort</label>
+        <select v-model="settings.openai_reasoning_effort" class="field-input field-select">
+          <option v-for="opt in reasoningOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+        <p class="field-hint">Reasoning effort for reasoning models (o1, o3, o4, gpt-5+). Automatically omitted for standard models.</p>
       </div>
       <div class="field">
         <label class="field-label">Base URL</label>
@@ -209,8 +402,12 @@ const tabs = [
       </div>
       <div class="field">
         <label class="field-label">Model</label>
-        <input v-model="settings.gemini_web_model" class="field-input" placeholder="gemini-3-pro" />
-        <p class="field-hint">Gemini web model name. Examples: gemini-3-pro, gemini-3-flash</p>
+        <select v-model="settings.gemini_web_model" class="field-input field-select">
+          <option v-for="m in getProviderOptions('gemini-web')" :key="m.id" :value="m.id">
+            {{ m.label }} ({{ m.id }})
+          </option>
+        </select>
+        <p class="field-hint">Gemini web model name.</p>
       </div>
       <div class="field">
         <label class="field-label">Check Cookie</label>
@@ -443,5 +640,43 @@ const tabs = [
   font-size: 13px;
   font-weight: 600;
   color: var(--color-error);
+}
+
+.field-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-refresh-inline {
+  background: none;
+  border: none;
+  color: var(--color-accent-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background-color 150ms ease, opacity 150ms ease;
+}
+
+.btn-refresh-inline:hover:not(:disabled) {
+  background: var(--color-surface-2);
+}
+
+.btn-refresh-inline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-select {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.field-error-hint {
+  font-size: 12px;
+  color: var(--color-error);
+  margin-top: 2px;
 }
 </style>

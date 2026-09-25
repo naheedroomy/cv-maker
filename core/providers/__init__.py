@@ -13,7 +13,12 @@ __all__ = [
 ]
 
 
-async def get_provider(model: str, user_id: int | None = None) -> BaseProvider:
+async def get_provider(
+    model: str,
+    user_id: int | None = None,
+    model_override: str | None = None,
+    reasoning_effort: str | None = None,
+) -> BaseProvider:
     """Async factory: resolve per-user settings, then construct the provider.
 
     Supported values:
@@ -31,25 +36,30 @@ async def get_provider(model: str, user_id: int | None = None) -> BaseProvider:
     if model == "claude-api":
         from core.providers.claude_api_provider import ClaudeAPIProvider
         api_key = await get_setting("anthropic_api_key", user_id)
-        api_model = await get_setting("claude_api_model", user_id)
-        return ClaudeAPIProvider(api_key=api_key, model=api_model)
+        api_model = model_override or await get_setting("claude_api_model", user_id)
+        effort = reasoning_effort or await get_setting("claude_reasoning_effort", user_id) or "auto"
+        return ClaudeAPIProvider(api_key=api_key, model=api_model, reasoning_effort=effort)
     if model == "gemini-flash":
         from core.providers.gemini_provider import GeminiProvider
         api_key = await get_setting("gemini_api_key", user_id)
-        gem_model = await get_setting("gemini_model", user_id)
-        return GeminiProvider(api_key=api_key, model=gem_model)
+        gem_model = model_override or await get_setting("gemini_model", user_id)
+        effort = reasoning_effort or await get_setting("gemini_reasoning_effort", user_id) or "auto"
+        return GeminiProvider(api_key=api_key, model=gem_model, reasoning_effort=effort)
     if model == "openai":
         from core.providers.openai_provider import OpenAIProvider
         api_key = await get_setting("openai_api_key", user_id)
-        oai_model = await get_setting("openai_model", user_id)
+        oai_model = model_override or await get_setting("openai_model", user_id)
         base_url = (await get_setting("openai_base_url", user_id)) or None
-        return OpenAIProvider(api_key=api_key, model=oai_model, base_url=base_url)
+        effort = reasoning_effort or await get_setting("openai_reasoning_effort", user_id) or "auto"
+        return OpenAIProvider(
+            api_key=api_key, model=oai_model, base_url=base_url, reasoning_effort=effort
+        )
     if model == "gemini-web":
         from core.providers.gemini_web_provider import GeminiWebProvider
         psid = await get_setting("gemini_web_psid", user_id)
-        web_model = await get_setting("gemini_web_model", user_id)
+        web_model = model_override or await get_setting("gemini_web_model", user_id)
         return GeminiWebProvider(psid=psid, model=web_model)
     # Default: "claude-haiku" and any unknown value
     from core.providers.claude_provider import ClaudeProvider
-    cli_model = await get_setting("claude_cli_model", user_id)
+    cli_model = model_override or await get_setting("claude_cli_model", user_id)
     return ClaudeProvider(cli_model=cli_model)

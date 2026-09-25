@@ -11,6 +11,8 @@ class JobCreate(BaseModel):
     job_link: str | None = None
     job_text: str
     model: str = "claude-haiku"
+    model_id: str | None = None
+    reasoning_effort: str | None = None
     creativity_level: int = Field(default=2, ge=0, le=6)
     user_notes: str = ""
 
@@ -23,6 +25,8 @@ class JobResponse(BaseModel):
     job_link: str | None = None
     job_text: str | None = None
     model: str = "claude-haiku"
+    model_id: str | None = None
+    reasoning_effort: str | None = None
     creativity_level: int = 2
     applied: bool = False
     applied_at: str | None = None  # ISO 8601 timestamp when applied was toggled to true
@@ -61,7 +65,12 @@ class CoverLetterRequest(BaseModel):
     """Request body for POST /api/jobs/:id/cover-letter."""
 
     model: str = "claude-haiku"
-    tone: str = Field(default="professional", pattern="^(formal|professional|confident|direct|casual|enthusiastic)$")
+    model_id: str | None = None
+    reasoning_effort: str | None = None
+    tone: str = Field(
+        default="professional",
+        pattern="^(formal|professional|confident|direct|casual|enthusiastic)$",
+    )
     user_notes: str = ""
     writing_sample: str = ""
 

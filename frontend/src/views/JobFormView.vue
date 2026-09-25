@@ -18,6 +18,8 @@ const userNotes = ref('')
 const submitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const selectedModel = ref('gemini-flash')
+const selectedModelId = ref('')
+const selectedReasoningEffort = ref('auto')
 const selectedCreativity = ref(2)
 const claudeApiAvailable = ref(false)
 const geminiAvailable = ref(false)
@@ -58,6 +60,8 @@ async function handleSubmit(): Promise<void> {
       job_link: jobLink.value.trim(),
       job_text: jobText.value.trim(),
       model: selectedModel.value,
+      model_id: selectedModelId.value || undefined,
+      reasoning_effort: selectedReasoningEffort.value || undefined,
       creativity_level: selectedCreativity.value,
       user_notes: userNotes.value.trim(),
     })
@@ -139,11 +143,14 @@ function handleRetry(): void {
 
       <ModelSelector
         v-model="selectedModel"
+        v-model:model-id="selectedModelId"
+        v-model:reasoning-effort="selectedReasoningEffort"
         :claude-api-available="claudeApiAvailable"
         :gemini-available="geminiAvailable"
         :openai-available="openaiAvailable"
         :gemini-web-available="geminiWebAvailable"
         :disabled="submitting"
+        :show-model-details="true"
       />
 
       <CreativitySlider

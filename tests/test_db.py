@@ -6,7 +6,6 @@ import asyncio
 from pathlib import Path
 
 import aiosqlite
-import pytest
 
 
 def test_init_db_creates_file(tmp_path: Path) -> None:
@@ -66,6 +65,8 @@ def test_init_db_jobs_table_columns(tmp_path: Path) -> None:
         "cv_history_json",
         "cl_history_json",
         "user_notes",
+        "model_id",
+        "reasoning_effort",
     }
 
     async def get_columns() -> set[str]:
