@@ -262,7 +262,19 @@ _RULES: dict[str, dict[int, str]] = {
         1: "Keep the summary closely aligned with the base CV's original framing.",
         2: (
             "Position the candidate to match the role's core identity. Reflect seniority signals "
-            "like ownership and cross-team impact. Prioritize the top 3 themes from the job description.\n"
+            "like ownership and cross-team impact. Prioritize the top 3 themes from the job "
+            "description.\n"
+            "STRUCTURE — The summary MUST follow this 3-Part High-Converting Anchor Formula "
+            "(2-4 dense sentences):\n"
+            "1. Professional Anchor: State target role title/specialization, total years of "
+            "experience, and primary operational domain (e.g. 'Senior Platform Engineer with 8+ "
+            "years specializing in distributed systems and cloud infrastructure...').\n"
+            "2. Core Stack Matrix: Directly highlight the top 3-4 Tier 1 technologies and "
+            "architectural patterns verified in the candidate's base CV (e.g. 'Deep expertise "
+            "in Kubernetes orchestration, Terraform IaC, and automated CI/CD pipelines...').\n"
+            "3. Scale & Caliber Anchor: Highlight verifiable scale, reliability, or business "
+            "impact from the base CV (e.g. 'Track record operating multi-region production "
+            "clusters across 30+ services while maintaining 99.95% availability.').\n"
             "Use Chain of Density: draft a summary, then compress by replacing filler adjectives "
             "with specific entities (tools, metrics, domain terms) from the base CV WITHOUT "
             "increasing word count. Final summary: 2-4 sentences of dense, factual text. "
@@ -270,7 +282,16 @@ _RULES: dict[str, dict[int, str]] = {
         ),
         3: (
             "Position the candidate to match the role's core identity. Reflect seniority signals "
-            "like ownership and cross-team impact. Prioritize the top 3 themes from the job description.\n"
+            "like ownership and cross-team impact. Prioritize the top 3 themes from the job "
+            "description.\n"
+            "STRUCTURE — The summary MUST follow this 3-Part High-Converting Anchor Formula "
+            "(2-4 dense sentences):\n"
+            "1. Professional Anchor: State target role title/specialization, total years of "
+            "experience, and primary operational domain.\n"
+            "2. Core Stack Matrix: Highlight the top 3-4 Tier 1 technologies and architectural "
+            "patterns verified in the candidate's base CV.\n"
+            "3. Scale & Caliber Anchor: Highlight verifiable scale, reliability, or business "
+            "impact from the base CV.\n"
             "Use Chain of Density: draft a summary, then compress by replacing filler adjectives "
             "with specific entities (tools, metrics, domain terms) from the base CV WITHOUT "
             "increasing word count. Final summary: 2-4 sentences of dense, factual text. "
@@ -278,6 +299,8 @@ _RULES: dict[str, dict[int, str]] = {
         ),
         4: (
             "Be assertive in positioning the candidate as a strong fit for the role.\n"
+            "STRUCTURE — Follow the 3-Part High-Converting Anchor Formula (Professional Anchor, "
+            "Core Stack Matrix, and Scale/Caliber Anchor).\n"
             "Use Chain of Density: draft, then compress — replace every filler adjective with a "
             "specific tool, metric, or domain term. 2-4 dense sentences. If a phrase could apply "
             "to any engineer, cut it and replace with something only THIS candidate can claim."
@@ -292,14 +315,23 @@ _RULES: dict[str, dict[int, str]] = {
             "Do NOT pad bullets with filler adjectives or adverbs. Specifically avoid: "
             "'robust', 'comprehensive', 'seamless', 'cutting-edge', 'critical', 'significant', "
             "'efficiently', 'effectively', 'proactively', 'strategically', 'innovative'.\n"
+            "BANNED AI VERBS (instant disqualification signals in modern screening):\n"
+            "Do NOT use overused AI cliché verbs: 'spearheaded', 'orchestrated', 'leveraged', "
+            "'championed', 'pioneered', 'facilitated', 'utilized', 'fostered', 'navigated', "
+            "'synergized'.\n"
+            "Use crisp, concrete engineering verbs instead: 'built', 'engineered', 'architected', "
+            "'deployed', 'migrated', 'automated', 'reduced', 'refactored', 'configured', 'eliminated'.\n"
             "Do NOT inflate the base CV's language. If the base CV says 'Built a CI/CD pipeline', "
             "do NOT rewrite it as 'Developed a comprehensive, robust CI/CD pipeline'. "
             "Match or tighten the base CV's tone — never expand it.\n"
             "The base CV bullets are already well-written. Your job is to SELECT, REORDER, "
             "and LIGHTLY REWRITE for relevance — not to 'improve' the prose. "
             "Shorter is better. If a rewrite is longer than the original, you're probably adding filler.\n"
-            "Do NOT add trailing qualifiers like 'ensuring reliability and performance' or "
-            "'improving efficiency and scalability' unless the base CV included them."
+            "BANNED SYNTACTIC PATTERNS:\n"
+            "- Do NOT add trailing qualifiers like 'ensuring reliability and performance', "
+            "'driving organizational excellence', or 'improving efficiency and scalability' unless "
+            "the base CV included them.\n"
+            "- Avoid overusing em dashes (—); use clean compound sentences or direct periods."
         ),
     },
     "reorder": {
@@ -486,6 +518,19 @@ _RULES: dict[str, dict[int, str]] = {
         0: (
             "NATURAL KEYWORD EMBEDDING POLICY (applies at ALL creativity levels):\n"
             "- Extract key phrases from the job description and use them as your keyword set.\n"
+            "- SEMANTIC CO-OCCURRENCE (Vector ATS Match Optimization): Modern ATS platforms "
+            "evaluate vector similarity across semantic clusters. When weaving a primary JD "
+            "technology, naturally pair it with verified ecosystem tooling from the candidate's "
+            "experience:\n"
+            "  * Kubernetes: pair with Helm, Ingress, HPA, RBAC, pods, or ArgoCD.\n"
+            "  * Terraform: pair with modules, state locking, S3/DynamoDB backends, or drift "
+            "detection.\n"
+            "  * CI/CD: pair with GitHub Actions/GitLab CI, reusable workflows, automated tests, "
+            "or artifacts.\n"
+            "  * Observability: pair with Prometheus, Grafana, alerting rules, metrics/logs/traces, "
+            "or SLOs.\n"
+            "  * Cloud: pair with VPC, multi-AZ, IAM least-privilege, security groups, or load "
+            "balancers.\n"
             "- Embed typically 1-2 relevant JD keywords per experience bullet. Three keywords "
             "are acceptable ONLY when they are naturally related in the same toolchain or "
             "workflow and each has clear base-CV evidence.\n"
@@ -512,6 +557,14 @@ _RULES: dict[str, dict[int, str]] = {
             "qualitative results like 'improved consistency', 'standardized process', "
             "'reduced manual effort', 'enabled self-service' are acceptable if the base "
             "CV supports them.\n"
+            "GOOGLE XYZ FORMULA & FRONT-LOADING:\n"
+            "- Format accomplishments using the Google XYZ structure: Accomplished [X] as measured "
+            "by [Y], by doing [Z]. Front-load the achievement or high-impact technical action in "
+            "the first 4-5 words of the bullet for 6-second recruiter scanning.\n"
+            "- NON-NUMERIC SCALE FALLBACK: If the base CV lacks numbers or percentages, DO NOT "
+            "fabricate them. Instead, anchor impact through verifiable technical scope: multi-AZ/"
+            "multi-region architecture, high-availability design, production-grade zero-downtime "
+            "workflows, reusable modular templates, and automated drift elimination.\n"
             "DEPTH OVER EXPOSURE: Surface depth signals where base CV supports them — "
             "reusable modules/libraries/templates, standardization efforts, "
             "multi-environment experience (dev/staging/prod), scale context "
@@ -526,9 +579,13 @@ _RULES: dict[str, dict[int, str]] = {
             "management, policy validation, compliance), automation beyond CI/CD "
             "(Python/Shell operational automation). For 4+ years experience: mentorship, "
             "developer experience, reusable internal platforms, onboarding reduction.\n"
-            "ROLE-WEIGHTED DISTRIBUTION: Current/latest role: 7-8 strong detailed bullets "
-            "with highest differentiator density. Previous roles: 5-7 simpler bullets "
-            "appropriate to era/stack. Older roles: 2-3 bullets minimum.\n"
+            "ROLE-WEIGHTED DISTRIBUTION & RECENCY (Temporal ATS Scoring):\n"
+            "- Modern ATS algorithms heavily weight skill recency. The current/latest role MUST carry "
+            "the highest density of the target job's Tier 1 technologies (60-70% of relevant "
+            "technology mentions).\n"
+            "- Current/latest role: 7-8 strong detailed bullets with highest differentiator density.\n"
+            "- Previous roles: 5-7 simpler bullets appropriate to era/stack.\n"
+            "- Older roles: 2-3 bullets minimum.\n"
             "IDEAL COMPOSITION: ~50% core skills bullets (required tech/methodologies), "
             "~30% advanced differentiator bullets (depth, modern practices, automation, "
             "cost/security), ~20% ownership/leadership bullets (incident response, "
@@ -685,6 +742,10 @@ AFTER: "Managed 40+ EC2 instances across 3 AWS regions. 99.95% uptime over 18 mo
 BEFORE: "Developed and implemented comprehensive CI/CD pipelines that significantly improved deployment efficiency for the engineering team"
 AFTER: "Built CI/CD pipeline with **GitHub Actions**. Cut deploy time from 45 min to 6 min. Team shipped daily instead of weekly."
 
+BEFORE: "Configured Terraform for cloud provisioning across development and production environments"
+AFTER: "Engineered modular **Terraform** configurations for multi-AZ AWS VPCs and EKS clusters, \
+eliminating manual configuration drift across environments."
+
 BULLET ORDERING:
 {reorder_rule}
 
@@ -737,6 +798,14 @@ least 2 bullet points. If a role in the base CV has 2 or fewer bullets, keep all
 optimize wording but never remove. Never return an experience entry with an empty bullets list.
 - The CV reflects both depth (target alignment) and breadth (full experience).
 - Optimize for BOTH relevance and coverage — not just a narrow match to the job listing.
+- RECRUITER RED-TEAM AUDIT (final quality gate before generating output):
+  * 6-Second Glance: Are primary Tier 1 technologies bolded in summary and latest role?
+  * AI-Cliché Check: Are all banned verbs ('spearheaded', 'orchestrated', 'leveraged') \
+and trailing fluff clauses completely eliminated?
+  * Front-Loading: Do bullets start with strong engineering verbs or metrics in the \
+first 4-5 words?
+  * Defensibility: Is every technical scope or metric strictly defensible from the base CV \
+with zero hallucination?
 
 ---
 BASE CV:
@@ -877,6 +946,10 @@ AFTER: "Managed 40+ EC2 instances across 3 AWS regions. 99.95% uptime over 18 mo
 BEFORE: "Developed and implemented comprehensive CI/CD pipelines that significantly improved deployment efficiency for the engineering team"
 AFTER: "Built CI/CD pipeline with **GitHub Actions**. Cut deploy time from 45 min to 6 min. Team shipped daily instead of weekly."
 
+BEFORE: "Configured Terraform for cloud provisioning across development and production environments"
+AFTER: "Engineered modular **Terraform** configurations for multi-AZ AWS VPCs and EKS clusters, \
+eliminating manual configuration drift across environments."
+
 BULLET ORDERING:
 {reorder_rule}
 
@@ -913,6 +986,8 @@ ALIGNMENT CHECKS:
 Never return empty bullets lists. If a role has 2 or fewer bullets, keep all of them.
 - Balance depth (target alignment) and breadth (full experience).
 - LANGUAGE SANITY CHECK: The final CV must be entirely in English. Ignore non-English job-listing fragments except proper nouns; do not copy German, Spanish, French, or other non-English wording into any output field.
+- RECRUITER RED-TEAM AUDIT: 6-second glance (bold primary tools in latest role/summary), \
+zero banned AI verbs/trailing fluff, front-loaded bullets, and 100% defensible facts.
 
 Return ONLY valid JSON (no fences, no commentary) matching the schema provided in the user message."""
 

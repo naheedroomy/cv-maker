@@ -1407,3 +1407,75 @@ class TestTechBolding:
         assert "**ArgoCD**" in bullet
         assert "**GitHub Actions**" in bullet
         assert "**Terraform**" in bullet
+
+
+# ---------------------------------------------------------------------------
+# Modern ATS & Recruiter AI Screening prompt tests
+# ---------------------------------------------------------------------------
+
+
+class TestModernAtsAndRecruiterPromptUpgrades:
+    """Tests verifying modern ATS vector clustering, recruiter red-teaming, and anti-AI rules."""
+
+    def test_banned_ai_verbs_in_tone_rule(self) -> None:
+        """Tone rule bans common AI buzzwords like 'spearheaded' and 'leveraged'."""
+        tone_rule = _resolve_rule("tone", 2)
+        assert "BANNED AI VERBS" in tone_rule
+        assert "spearheaded" in tone_rule
+        assert "orchestrated" in tone_rule
+        assert "leveraged" in tone_rule
+        assert "built" in tone_rule
+        assert "BANNED SYNTACTIC PATTERNS" in tone_rule
+
+    def test_summary_anchor_formula_in_summary_rule(self) -> None:
+        """Summary rules enforce the 3-part high-converting anchor formula."""
+        for level in (2, 3, 4):
+            summary_rule = _resolve_rule("summary", level)
+            assert "3-Part High-Converting Anchor Formula" in summary_rule or (
+                "3-Part High-Converting" in summary_rule
+            )
+            assert "Professional Anchor" in summary_rule
+            assert "Core Stack Matrix" in summary_rule
+            assert "Scale" in summary_rule
+
+    def test_semantic_cooccurrence_in_keyword_policy(self) -> None:
+        """Keyword policy includes semantic co-occurrence clusters for vector ATS."""
+        rule = _resolve_rule("keyword_policy", 0)
+        assert "SEMANTIC CO-OCCURRENCE" in rule
+        assert "Kubernetes: pair with Helm" in rule
+        assert "Terraform: pair with modules" in rule
+
+    def test_google_xyz_and_scale_fallback_in_bullet_strategy(self) -> None:
+        """Bullet strategy includes Google XYZ formula and non-numeric scale fallback."""
+        rule = _resolve_rule("bullet_strategy", 0)
+        assert "GOOGLE XYZ FORMULA & FRONT-LOADING" in rule
+        assert "NON-NUMERIC SCALE FALLBACK" in rule
+        assert "multi-AZ" in rule
+        assert "ROLE-WEIGHTED DISTRIBUTION & RECENCY" in rule
+        assert "60-70%" in rule
+
+    def test_recruiter_red_team_audit_in_prompts(
+        self, base_cv: BaseCV, sample_job_text: str
+    ) -> None:
+        """Recruiter red-team audit is present in both CLI and chat prompt builders."""
+        cli_prompt = _build_prompt(base_cv, sample_job_text, 2)
+        chat_prompt = pipeline._build_system_prompt_for_chat(2)
+
+        assert "RECRUITER RED-TEAM AUDIT" in cli_prompt
+        assert "6-Second Glance" in cli_prompt
+        assert "AI-Cliché Check" in cli_prompt
+        assert "Defensibility" in cli_prompt
+
+        assert "RECRUITER RED-TEAM AUDIT" in chat_prompt
+        assert "6-second glance" in chat_prompt
+
+    def test_modular_terraform_style_anchor_in_prompts(
+        self, base_cv: BaseCV, sample_job_text: str
+    ) -> None:
+        """Both prompt templates include the non-numeric scale Terraform style anchor."""
+        cli_prompt = _build_prompt(base_cv, sample_job_text, 2)
+        chat_prompt = pipeline._build_system_prompt_for_chat(2)
+
+        assert "Engineered modular **Terraform** configurations" in cli_prompt
+        assert "Engineered modular **Terraform** configurations" in chat_prompt
+
