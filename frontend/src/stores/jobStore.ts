@@ -87,12 +87,21 @@ export const useJobStore = defineStore('jobs', () => {
     closeSSE()
   }
 
-  async function regenerateJob(job: JobResponse, model?: string, creativityLevel?: number, userNotes?: string): Promise<string> {
+  async function regenerateJob(
+    job: JobResponse,
+    model?: string,
+    creativityLevel?: number,
+    userNotes?: string,
+    modelId?: string,
+    reasoningEffort?: string,
+  ): Promise<string> {
     const res = await apiFetch(`/api/jobs/${job.id}/regenerate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: model ?? null,
+        model_id: modelId ?? null,
+        reasoning_effort: reasoningEffort ?? null,
         creativity_level: creativityLevel ?? null,
         user_notes: userNotes ?? null,
       }),

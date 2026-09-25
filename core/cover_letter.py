@@ -423,6 +423,7 @@ def generate_cover_letter(
     user_notes: str = "",
     tone: str = "professional",
     writing_sample: str = "",
+    reasoning_effort: str | None = None,
 ) -> str:
     """Generate a cover letter using the specified provider. Returns plain text.
 
@@ -437,6 +438,8 @@ def generate_cover_letter(
         tone: One of "formal", "professional", "confident", "direct", "casual".
         writing_sample: Optional sample of the candidate's own writing for voice calibration.
             If provided, calibrate tone and rhythm to match — do NOT copy content.
+        reasoning_effort: Optional reasoning effort override ("off", "low", "medium",
+            "high", "auto").
 
     Returns:
         Plain text cover letter (paragraphs separated by blank lines).
@@ -481,37 +484,55 @@ def generate_cover_letter(
             if provider_model == "gemini-flash":
                 from google.genai import types as genai_types
 
+                thinking_config = genai_types.ThinkingConfig(thinking_budget=0)
+                if reasoning_effort and reasoning_effort.lower() not in ("off", "auto"):
+                    lvl = getattr(genai_types.ThinkingLevel, reasoning_effort.upper(), None)
+                    if lvl:
+                        thinking_config = genai_types.ThinkingConfig(thinking_level=lvl)
+
                 response = provider._client.models.generate_content(
                     model=provider._model,
                     contents=effective_user,
                     config=genai_types.GenerateContentConfig(
                         system_instruction=system_prompt,
-                        # Disable thinking — the prompt already has a self-critique step.
-                        # Thinking adds 30-60s of latency for no benefit here.
-                        thinking_config=genai_types.ThinkingConfig(thinking_budget=0),
+                        thinking_config=thinking_config,
                     ),
                 )
                 raw_text = response.text
 
             elif provider_model == "claude-api":
-                response = provider._client.messages.create(
-                    model=provider._model,
-                    max_tokens=4000,
-                    system=system_prompt,
-                    messages=[{"role": "user", "content": effective_user}],
-                )
+                kwargs: dict = {
+                    "model": provider._model,
+                    "max_tokens": 4000,
+                    "system": system_prompt,
+                    "messages": [{"role": "user", "content": effective_user}],
+                }
+                if hasattr(provider, "_build_thinking_param"):
+                    thinking = provider._build_thinking_param()
+                    if thinking:
+                        kwargs["thinking"] = thinking
+                response = provider._client.messages.create(**kwargs)
                 raw_text = next(
                     (b.text for b in response.content if b.type == "text"), ""
                 )
 
             elif provider_model == "openai":
-                response = provider._client.chat.completions.create(
-                    model=provider._model,
-                    messages=[
+                req_kwargs: dict = {
+                    "model": provider._model,
+                    "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": effective_user},
                     ],
-                )
+                }
+                from core.providers.openai_provider import _is_openai_reasoning_model
+                if _is_openai_reasoning_model(provider._model):
+                    default_effort = getattr(provider, "_reasoning_effort", "auto")
+                    effort = (reasoning_effort or default_effort).lower()
+                    if effort == "off":
+                        req_kwargs["reasoning_effort"] = "none"
+                    elif effort in ("low", "medium", "high"):
+                        req_kwargs["reasoning_effort"] = effort
+                response = provider._client.chat.completions.create(**req_kwargs)
                 raw_text = response.choices[0].message.content
 
             elif provider_model == "gemini-web":

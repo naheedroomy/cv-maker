@@ -23,18 +23,49 @@ logger = logging.getLogger(__name__)
 class ClaudeAPIProvider(BaseProvider):
     DEFAULT_MODEL = "claude-haiku-4-5"
 
-    def __init__(self, api_key: str = "", model: str = "") -> None:
+    def __init__(
+        self,
+        api_key: str = "",
+        model: str = "",
+        reasoning_effort: str = "auto",
+    ) -> None:
         if not api_key:
-            raise RuntimeError("Anthropic API key not configured (set in Settings or .env as ANTHROPIC_API_KEY)")
+            raise RuntimeError(
+                "Anthropic API key not configured (set in Settings or .env as ANTHROPIC_API_KEY)"
+            )
         self._client = anthropic.Anthropic(api_key=api_key)
         self._model = model or self.DEFAULT_MODEL
+        self._reasoning_effort = reasoning_effort or "auto"
 
-    def run(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = "") -> tuple[TailoredCV, list[GapItem]]:
+    def _build_thinking_param(self) -> dict | None:
+        effort = self._reasoning_effort.lower()
+        if effort == "off":
+            return None
+        mid = self._model.lower()
+        if "3-7" in mid or "3.7" in mid:
+            budgets = {"low": 1024, "medium": 4000, "high": 8000, "auto": 4000}
+            return {"type": "enabled", "budget_tokens": budgets.get(effort, 4000)}
+        return {"type": "adaptive"}
+
+    def run(
+        self,
+        base_cv: BaseCV,
+        job_text: str,
+        creativity_level: int = 2,
+        user_notes: str = "",
+    ) -> tuple[TailoredCV, list[GapItem]]:
         system_prompt = _build_system_prompt_for_chat(creativity_level)
         user_prompt = _build_user_prompt(base_cv, job_text, user_notes)
         last_exc: Exception | None = None
+        thinking = self._build_thinking_param()
+
         for attempt in range(3):
-            logger.info("Claude API attempt %d/3 for TailoredCV (model=%s)", attempt + 1, self._model)
+            logger.info(
+                "Claude API attempt %d/3 for TailoredCV (model=%s, reasoning=%s)",
+                attempt + 1,
+                self._model,
+                self._reasoning_effort,
+            )
             effective_user = user_prompt
             if attempt > 0:
                 logger.warning("Retrying — previous attempt failed: %s", last_exc)
@@ -42,12 +73,15 @@ class ClaudeAPIProvider(BaseProvider):
                     user_prompt + "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
                 )
             try:
-                response = self._client.messages.create(
-                    model=self._model,
-                    max_tokens=16000,
-                    system=system_prompt,
-                    messages=[{"role": "user", "content": effective_user}],
-                )
+                kwargs: dict = {
+                    "model": self._model,
+                    "max_tokens": 16000,
+                    "system": system_prompt,
+                    "messages": [{"role": "user", "content": effective_user}],
+                }
+                if thinking:
+                    kwargs["thinking"] = thinking
+                response = self._client.messages.create(**kwargs)
                 text = next(
                     (b.text for b in response.content if b.type == "text"), ""
                 )
@@ -63,20 +97,34 @@ class ClaudeAPIProvider(BaseProvider):
             f"Claude API failed to return valid TailoredCV after 3 attempts. Last: {last_exc}"
         )
 
-    def run_staged(self, base_cv: BaseCV, job_text: str, creativity_level: int = 2, user_notes: str = "") -> tuple[TailoredCV, list[GapItem]]:
+    def run_staged(
+        self,
+        base_cv: BaseCV,
+        job_text: str,
+        creativity_level: int = 2,
+        user_notes: str = "",
+    ) -> tuple[TailoredCV, list[GapItem]]:
         """Run the multi-stage pipeline using Claude API for each stage.
 
         Wraps the Claude Messages API as a provider_fn callable and delegates
         to run_pipeline_staged() in core/pipeline.py.
         """
+        thinking = self._build_thinking_param()
+
         def _call(prompt: str) -> str:
             """Provider function: send prompt to Claude API, return raw text."""
-            response = self._client.messages.create(
-                model=self._model,
-                max_tokens=16000,
-                system="You are a precise CV engineering assistant. Return ONLY valid JSON, no commentary.",
-                messages=[{"role": "user", "content": prompt}],
-            )
+            kwargs: dict = {
+                "model": self._model,
+                "max_tokens": 16000,
+                "system": (
+                    "You are a precise CV engineering assistant. "
+                    "Return ONLY valid JSON, no commentary."
+                ),
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            if thinking:
+                kwargs["thinking"] = thinking
+            response = self._client.messages.create(**kwargs)
             return next(
                 (b.text for b in response.content if b.type == "text"), ""
             )

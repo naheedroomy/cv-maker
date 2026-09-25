@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     creativity_level INTEGER NOT NULL DEFAULT 2,
     applied          INTEGER NOT NULL DEFAULT 0,
     applied_at       TEXT,
+    model_id         TEXT,
+    reasoning_effort TEXT,
     cover_letter_text TEXT,
     cover_letter_notes TEXT,
     cover_letter_model TEXT,
@@ -115,6 +117,10 @@ async def init_db(db_path: Path | None = None) -> None:
             await db.execute("ALTER TABLE jobs ADD COLUMN applied_at TEXT")
         if "user_notes" not in columns:
             await db.execute("ALTER TABLE jobs ADD COLUMN user_notes TEXT")
+        if "model_id" not in columns:
+            await db.execute("ALTER TABLE jobs ADD COLUMN model_id TEXT")
+        if "reasoning_effort" not in columns:
+            await db.execute("ALTER TABLE jobs ADD COLUMN reasoning_effort TEXT")
 
         # Seed placeholder local user (idempotent)
         await db.execute(

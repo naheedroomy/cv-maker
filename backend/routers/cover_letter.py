@@ -30,6 +30,8 @@ async def _cover_letter_worker(
     user_notes: str,
     tone: str,
     writing_sample: str = "",
+    model_id: str | None = None,
+    reasoning_effort: str | None = None,
 ) -> None:
     """Run cover letter generation in the background, update DB on completion."""
     try:
@@ -56,7 +58,12 @@ async def _cover_letter_worker(
         tailored_cv = TailoredCV.model_validate(json.loads(row["tailored_cv_json"]))
         gap_diff = [GapItem.model_validate(g) for g in json.loads(row["gap_diff_json"])]
         base_cv = await asyncio.to_thread(load_base_cv)
-        provider = await get_provider(model, user_id=user_id)
+        provider = await get_provider(
+            model,
+            user_id=user_id,
+            model_override=model_id,
+            reasoning_effort=reasoning_effort,
+        )
 
         cover_letter_text = await asyncio.to_thread(
             generate_cover_letter,
@@ -69,6 +76,7 @@ async def _cover_letter_worker(
             user_notes,
             tone,
             writing_sample,
+            reasoning_effort=reasoning_effort,
         )
 
         # Save result
@@ -170,7 +178,16 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, 
 
     # Fire and forget
     schedule_background_task(
-        _cover_letter_worker(job_id, user["id"], body.model, body.user_notes, body.tone, body.writing_sample)
+        _cover_letter_worker(
+            job_id,
+            user["id"],
+            body.model,
+            body.user_notes,
+            body.tone,
+            body.writing_sample,
+            model_id=body.model_id,
+            reasoning_effort=body.reasoning_effort,
+        )
     )
 
     return {"status": "generating"}

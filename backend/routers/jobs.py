@@ -40,6 +40,8 @@ def _row_to_response(row) -> JobResponse:
         job_link=row["job_link"],
         job_text=row["job_text"],
         model=row["model"],
+        model_id=row["model_id"] if "model_id" in row.keys() else None,
+        reasoning_effort=row["reasoning_effort"] if "reasoning_effort" in row.keys() else None,
         creativity_level=row["creativity_level"],
         applied=bool(row["applied"]),
         applied_at=row["applied_at"] if "applied_at" in row.keys() else None,
@@ -92,24 +94,58 @@ async def create_job(body: JobCreate, user: dict = Depends(get_current_user)) ->
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             "INSERT INTO jobs "
-            "(id, user_id, company_name, job_link, job_text, model, creativity_level, user_notes, status, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
-            (job_id, user["id"], body.company_name, body.job_link, body.job_text, body.model, body.creativity_level, body.user_notes, now, now),
+            "(id, user_id, company_name, job_link, job_text, model, model_id, "
+            "reasoning_effort, creativity_level, user_notes, status, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+            (
+                job_id,
+                user["id"],
+                body.company_name,
+                body.job_link,
+                body.job_text,
+                body.model,
+                body.model_id,
+                body.reasoning_effort,
+                body.creativity_level,
+                body.user_notes,
+                now,
+                now,
+            ),
         )
         await db.commit()
     finally:
         await db.close()
 
     task = schedule_background_task(
-        job_worker(job_id, body.company_name, body.job_text, body.model, body.creativity_level, user_id=user["id"], user_notes=body.user_notes)
+        job_worker(
+            job_id,
+            body.company_name,
+            body.job_text,
+            body.model,
+            body.creativity_level,
+            user_id=user["id"],
+            user_notes=body.user_notes,
+            model_id=body.model_id,
+            reasoning_effort=body.reasoning_effort,
+        )
     )
     _job_tasks[job_id] = task
-    logger.info("Job %s created for company=%s model=%s creativity=%d", job_id, body.company_name, body.model, body.creativity_level)
+    logger.info(
+        "Job %s created for company=%s model=%s (model_id=%s, reasoning=%s) creativity=%d",
+        job_id,
+        body.company_name,
+        body.model,
+        body.model_id,
+        body.reasoning_effort,
+        body.creativity_level,
+    )
 
     return JobResponse(
         id=job_id,
         company_name=body.company_name,
         model=body.model,
+        model_id=body.model_id,
+        reasoning_effort=body.reasoning_effort,
         creativity_level=body.creativity_level,
         status="pending",
         created_at=now,
@@ -393,6 +429,8 @@ async def get_pdf_version(job_id: str, version: int, user: dict = Depends(get_cu
 
 class RegenerateRequest(BaseModel):
     model: str | None = None
+    model_id: str | None = None
+    reasoning_effort: str | None = None
     creativity_level: int | None = None
     user_notes: str | None = None
 
@@ -420,8 +458,22 @@ async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depe
             raise HTTPException(status_code=404, detail="Job not found")
 
         model = body.model or row["model"]
-        creativity = body.creativity_level if body.creativity_level is not None else row["creativity_level"]
-        notes = body.user_notes if body.user_notes is not None else (row["user_notes"] if "user_notes" in row.keys() else "")
+        model_id = body.model_id if body.model_id is not None else (
+            row["model_id"] if "model_id" in row.keys() else None
+        )
+        reasoning_effort = body.reasoning_effort if body.reasoning_effort is not None else (
+            row["reasoning_effort"] if "reasoning_effort" in row.keys() else None
+        )
+        creativity = (
+            body.creativity_level
+            if body.creativity_level is not None
+            else row["creativity_level"]
+        )
+        notes = (
+            body.user_notes
+            if body.user_notes is not None
+            else (row["user_notes"] if "user_notes" in row.keys() else "")
+        )
         now = datetime.now(timezone.utc).isoformat()
 
         # Archive current CV into history (if it exists)
@@ -444,12 +496,23 @@ async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depe
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             """UPDATE jobs SET
-                status='pending', model=?, creativity_level=?, user_notes=?,
+                status='pending', model=?, model_id=?, reasoning_effort=?,
+                creativity_level=?, user_notes=?,
                 tailored_cv_json=NULL, gap_diff_json=NULL, pdf_path=NULL,
                 cv_history_json=?,
                 updated_at=?
             WHERE id=? AND user_id=?""",
-            (model, creativity, notes, history_json, now, job_id, user["id"]),
+            (
+                model,
+                model_id,
+                reasoning_effort,
+                creativity,
+                notes,
+                history_json,
+                now,
+                job_id,
+                user["id"],
+            ),
         )
         await db.commit()
 
@@ -460,11 +523,20 @@ async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depe
 
     # Kick off worker
     new_task = schedule_background_task(
-        job_worker(job_id, row["company_name"], row["job_text"], model, creativity, user_id=user["id"], user_notes=notes)
+        job_worker(
+            job_id,
+            row["company_name"],
+            row["job_text"],
+            model,
+            creativity,
+            user_id=user["id"],
+            user_notes=notes,
+            model_id=model_id,
+            reasoning_effort=reasoning_effort,
+        )
     )
     _job_tasks[job_id] = new_task
     logger.info("Job %s regenerating with model=%s creativity=%d", job_id, model, creativity)
-
     return _row_to_response(updated_row)
 
 

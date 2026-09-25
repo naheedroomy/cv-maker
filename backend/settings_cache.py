@@ -13,8 +13,11 @@ logger = logging.getLogger(__name__)
 _DEFAULTS = {
     "claude_cli_model": "haiku",
     "claude_api_model": "claude-haiku-4-5",
+    "claude_reasoning_effort": "auto",
     "gemini_model": "gemini-2.5-flash",
+    "gemini_reasoning_effort": "auto",
     "openai_model": "gpt-4o-mini",
+    "openai_reasoning_effort": "auto",
     "openai_base_url": "",
     "cv_filename": "",
     "anthropic_api_key": "",

@@ -67,6 +67,8 @@ async def job_worker(
     job_id: str, company_name: str, job_text: str, model: str = "claude-haiku",
     creativity_level: int = 2, user_id: int = 1,
     user_notes: str = "",
+    model_id: str | None = None,
+    reasoning_effort: str | None = None,
 ) -> None:
     """Background worker: runs pipeline, saves PDF, updates DB at each stage.
 
@@ -132,7 +134,12 @@ async def job_worker(
             # Run AI pipeline (provider-routed via async wrapper)
             # ----------------------------------------------------------------
             t0 = time.monotonic()
-            provider = await get_provider(model, user_id=user_id)
+            provider = await get_provider(
+                model,
+                user_id=user_id,
+                model_override=model_id,
+                reasoning_effort=reasoning_effort,
+            )
             logger.info("Job %s: [2/4] Starting %s pipeline...", job_id, type(provider).__name__)
             tailored_cv, gap_diff = await run_provider_async(provider, base_cv, job_text, creativity_level, user_notes)
             logger.info(
