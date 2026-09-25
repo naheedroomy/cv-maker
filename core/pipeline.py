@@ -558,13 +558,17 @@ _RULES: dict[str, dict[int, str]] = {
             "'reduced manual effort', 'enabled self-service' are acceptable if the base "
             "CV supports them.\n"
             "GOOGLE XYZ FORMULA & FRONT-LOADING:\n"
-            "- Format accomplishments using the Google XYZ structure: Accomplished [X] as measured "
-            "by [Y], by doing [Z]. Front-load the achievement or high-impact technical action in "
-            "the first 4-5 words of the bullet for 6-second recruiter scanning.\n"
+            "- Format accomplishments using the Google XYZ structure: Accomplished [X] as "
+            "measured by [Y], by doing [Z] whenever metrics exist in the base CV. If no metrics "
+            "exist, focus on Accomplished [X] by doing [Z] — do NOT fabricate [Y]. Front-load "
+            "the technical action or outcome in the first 4-5 words of the bullet for quick "
+            "scanning.\n"
             "- NON-NUMERIC SCALE FALLBACK: If the base CV lacks numbers or percentages, DO NOT "
-            "fabricate them. Instead, anchor impact through verifiable technical scope: multi-AZ/"
-            "multi-region architecture, high-availability design, production-grade zero-downtime "
-            "workflows, reusable modular templates, and automated drift elimination.\n"
+            "fabricate them. Instead, anchor impact through concrete, verifiable technical "
+            "scope already supported by the base CV (e.g., modular configurations, "
+            "multi-environment deployments, high availability, or standardized templates). "
+            "NEVER introduce advanced architectural scopes (like multi-AZ or clustering) "
+            "unless the base CV explicitly verifies them for that role.\n"
             "DEPTH OVER EXPOSURE: Surface depth signals where base CV supports them — "
             "reusable modules/libraries/templates, standardization efforts, "
             "multi-environment experience (dev/staging/prod), scale context "
@@ -579,11 +583,13 @@ _RULES: dict[str, dict[int, str]] = {
             "management, policy validation, compliance), automation beyond CI/CD "
             "(Python/Shell operational automation). For 4+ years experience: mentorship, "
             "developer experience, reusable internal platforms, onboarding reduction.\n"
-            "ROLE-WEIGHTED DISTRIBUTION & RECENCY (Temporal ATS Scoring):\n"
-            "- Modern ATS algorithms heavily weight skill recency. The current/latest role MUST carry "
-            "the highest density of the target job's Tier 1 technologies (60-70% of relevant "
-            "technology mentions).\n"
-            "- Current/latest role: 7-8 strong detailed bullets with highest differentiator density.\n"
+            "ROLE-WEIGHTED DISTRIBUTION & RECENCY:\n"
+            "- Prioritize target technologies in recent roles whenever supported by verified "
+            "base-CV evidence for those roles. Do NOT move or fabricate technologies into a "
+            "recent role if the evidence only exists in an older role; preserve true historical "
+            "roles and dates.\n"
+            "- Current/latest role: 7-8 strong detailed bullets with highest differentiator "
+            "density.\n"
             "- Previous roles: 5-7 simpler bullets appropriate to era/stack.\n"
             "- Older roles: 2-3 bullets minimum.\n"
             "IDEAL COMPOSITION: ~50% core skills bullets (required tech/methodologies), "
@@ -734,7 +740,7 @@ Additional constraints:
 - Skills and highlighted_technologies: plain names only — no parenthetical qualifiers or "alternative:" annotations.
 {tone_rule}
 
-BULLET REWRITING EXAMPLES (style anchor — mimic the transformation pattern, not the content):
+BULLET REWRITING EXAMPLES (style anchor — mimic the transformation pattern, not the content. Every specific tool, metric, or scope in AFTER must be directly supported by verified base-CV evidence):
 
 BEFORE: "Responsible for managing cloud infrastructure and ensuring system reliability across multiple environments"
 AFTER: "Managed 40+ EC2 instances across 3 AWS regions. 99.95% uptime over 18 months."
@@ -743,8 +749,9 @@ BEFORE: "Developed and implemented comprehensive CI/CD pipelines that significan
 AFTER: "Built CI/CD pipeline with **GitHub Actions**. Cut deploy time from 45 min to 6 min. Team shipped daily instead of weekly."
 
 BEFORE: "Configured Terraform for cloud provisioning across development and production environments"
-AFTER: "Engineered modular **Terraform** configurations for multi-AZ AWS VPCs and EKS clusters, \
-eliminating manual configuration drift across environments."
+BASE EVIDENCE: Base CV states candidate authored modular Terraform files for AWS infrastructure.
+AFTER: "Engineered modular **Terraform** configurations to provision AWS infrastructure across \
+development and production environments."
 
 BULLET ORDERING:
 {reorder_rule}
@@ -798,8 +805,9 @@ least 2 bullet points. If a role in the base CV has 2 or fewer bullets, keep all
 optimize wording but never remove. Never return an experience entry with an empty bullets list.
 - The CV reflects both depth (target alignment) and breadth (full experience).
 - Optimize for BOTH relevance and coverage — not just a narrow match to the job listing.
-- RECRUITER RED-TEAM AUDIT (final quality gate before generating output):
-  * 6-Second Glance: Are primary Tier 1 technologies bolded in summary and latest role?
+- RECRUITER RED-TEAM AUDIT (prompt self-check before outputting JSON):
+  * 6-Second Glance: Are primary Tier 1 technologies bolded in latest role bullets? \
+(Keep summary plain text — no markdown bold in summary).
   * AI-Cliché Check: Are all banned verbs ('spearheaded', 'orchestrated', 'leveraged') \
 and trailing fluff clauses completely eliminated?
   * Front-Loading: Do bullets start with strong engineering verbs or metrics in the \
@@ -938,7 +946,7 @@ EXPERIENCE:
 - Skills and highlighted_technologies: plain names only — no parenthetical qualifiers.
 {tone_rule}
 
-BULLET REWRITING EXAMPLES (style anchor — mimic the transformation pattern, not the content):
+BULLET REWRITING EXAMPLES (style anchor — mimic the transformation pattern, not the content. Every specific tool, metric, or scope in AFTER must be directly supported by verified base-CV evidence):
 
 BEFORE: "Responsible for managing cloud infrastructure and ensuring system reliability across multiple environments"
 AFTER: "Managed 40+ EC2 instances across 3 AWS regions. 99.95% uptime over 18 months."
@@ -947,8 +955,9 @@ BEFORE: "Developed and implemented comprehensive CI/CD pipelines that significan
 AFTER: "Built CI/CD pipeline with **GitHub Actions**. Cut deploy time from 45 min to 6 min. Team shipped daily instead of weekly."
 
 BEFORE: "Configured Terraform for cloud provisioning across development and production environments"
-AFTER: "Engineered modular **Terraform** configurations for multi-AZ AWS VPCs and EKS clusters, \
-eliminating manual configuration drift across environments."
+BASE EVIDENCE: Base CV states candidate authored modular Terraform files for AWS infrastructure.
+AFTER: "Engineered modular **Terraform** configurations to provision AWS infrastructure across \
+development and production environments."
 
 BULLET ORDERING:
 {reorder_rule}
@@ -986,8 +995,9 @@ ALIGNMENT CHECKS:
 Never return empty bullets lists. If a role has 2 or fewer bullets, keep all of them.
 - Balance depth (target alignment) and breadth (full experience).
 - LANGUAGE SANITY CHECK: The final CV must be entirely in English. Ignore non-English job-listing fragments except proper nouns; do not copy German, Spanish, French, or other non-English wording into any output field.
-- RECRUITER RED-TEAM AUDIT: 6-second glance (bold primary tools in latest role/summary), \
-zero banned AI verbs/trailing fluff, front-loaded bullets, and 100% defensible facts.
+- RECRUITER RED-TEAM AUDIT (prompt self-check): 6-second glance (bold primary tools in \
+latest role bullets; no bold in summary), zero banned AI verbs/trailing fluff, \
+front-loaded bullets, and 100% defensible facts.
 
 Return ONLY valid JSON (no fences, no commentary) matching the schema provided in the user message."""
 
@@ -1602,6 +1612,9 @@ ALIGNMENT CHECKS:
 - For every Tier 1 "partial" match: ensure at least one bullet surfaces the connection.
 - No bullet exceeds stated ownership. No role below minimum bullet count (2).
 - Balance depth (target alignment) and breadth (full experience).
+- RECRUITER RED-TEAM AUDIT (prompt self-check): 6-second glance (bold primary tools in \
+latest role bullets; no bold in summary), zero banned AI verbs/trailing fluff, \
+front-loaded bullets, and 100% defensible facts.
 
 ---
 
