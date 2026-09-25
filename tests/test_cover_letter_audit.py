@@ -25,7 +25,10 @@ class TestAuditCoverLetter:
         assert any("em_dash" in str(s) for s in result["style_tells"])
 
     def test_detects_ai_vocab(self) -> None:
-        text = "This role is a pivotal testament to the evolving landscape of cloud computing, showcasing intricate details."
+        text = (
+            "This role is a pivotal testament to the evolving landscape of cloud "
+            "computing, showcasing intricate details."
+        )
         result = audit_cover_letter(text)
         assert not result["is_clean"]
         # Should find at least "pivotal" or "testament" or "showcase"
@@ -55,3 +58,25 @@ class TestAuditCoverLetter:
         text = "In order to succeed, we built the pipeline."
         result = audit_cover_letter(text)
         assert any("in order to" in str(h).lower() for h in result["ai_vocab_hits"])
+
+    def test_conversational_storyteller_cover_letter_is_clean(self) -> None:
+        letter = (
+            "Hi Sarah,\n\n"
+            "Seeing your team tackle live streaming latency at scale caught my attention. "
+            "Over the last two years at MediaFlow, we encountered the same bottleneck when "
+            "our concurrent viewer count tripled during tournament finals.\n\n"
+            "We initially hit severe memory pressure in our edge proxies. Rather than just "
+            "throwing more hardware at it, I redesigned our caching topology and moved our "
+            "state fan-out to lightweight Go worker pools. That cut 95th percentile latency "
+            "by 40% and eliminated dropouts during peak traffic spikes.\n\n"
+            "While our pipeline ran on AWS with ArgoCD, the declarative deployment patterns "
+            "and telemetry practices translate directly to your GCP and Kubernetes stack.\n\n"
+            "Happy to walk through how we diagnosed and fixed the edge bottleneck if that "
+            "aligns with what you're tuning right now.\n\n"
+            "Best,\nAlex"
+        )
+        result = audit_cover_letter(letter)
+        assert result["is_clean"], f"Unexpected warnings: {result['warnings']}"
+        assert result["paragraph_count"] >= 4
+        assert 100 <= result["word_count"] <= 350
+
