@@ -1446,18 +1446,19 @@ class TestModernAtsAndRecruiterPromptUpgrades:
         assert "Terraform: pair with modules" in rule
 
     def test_google_xyz_and_scale_fallback_in_bullet_strategy(self) -> None:
-        """Bullet strategy includes Google XYZ formula and non-numeric scale fallback."""
+        """Bullet strategy includes Google XYZ formula, safe scale fallback, and recency."""
         rule = _resolve_rule("bullet_strategy", 0)
         assert "GOOGLE XYZ FORMULA & FRONT-LOADING" in rule
         assert "NON-NUMERIC SCALE FALLBACK" in rule
-        assert "multi-AZ" in rule
+        assert "NEVER introduce advanced architectural scopes" in rule
         assert "ROLE-WEIGHTED DISTRIBUTION & RECENCY" in rule
-        assert "60-70%" in rule
+        assert "60-70%" not in rule
+        assert "Do NOT move or fabricate technologies into a recent role" in rule
 
     def test_recruiter_red_team_audit_in_prompts(
         self, base_cv: BaseCV, sample_job_text: str
     ) -> None:
-        """Recruiter red-team audit is present in both CLI and chat prompt builders."""
+        """Recruiter red-team audit is present and consistently forbids summary bolding."""
         cli_prompt = _build_prompt(base_cv, sample_job_text, 2)
         chat_prompt = pipeline._build_system_prompt_for_chat(2)
 
@@ -1465,17 +1466,71 @@ class TestModernAtsAndRecruiterPromptUpgrades:
         assert "6-Second Glance" in cli_prompt
         assert "AI-Cliché Check" in cli_prompt
         assert "Defensibility" in cli_prompt
+        assert "no markdown bold in summary" in cli_prompt.lower()
 
         assert "RECRUITER RED-TEAM AUDIT" in chat_prompt
         assert "6-second glance" in chat_prompt
+        assert "no bold in summary" in chat_prompt.lower()
 
     def test_modular_terraform_style_anchor_in_prompts(
         self, base_cv: BaseCV, sample_job_text: str
     ) -> None:
-        """Both prompt templates include the non-numeric scale Terraform style anchor."""
+        """Both prompt templates include evidence-grounded Terraform anchor without unverified scopes."""
         cli_prompt = _build_prompt(base_cv, sample_job_text, 2)
         chat_prompt = pipeline._build_system_prompt_for_chat(2)
 
         assert "Engineered modular **Terraform** configurations" in cli_prompt
+        assert "BASE EVIDENCE:" in cli_prompt
         assert "Engineered modular **Terraform** configurations" in chat_prompt
+        assert "BASE EVIDENCE:" in chat_prompt
+
+        # Verify no ungrounded scopes in the style anchor example
+        anchor_block = cli_prompt[
+            cli_prompt.find("Configured Terraform") : cli_prompt.find("BULLET ORDERING")
+        ]
+        assert "multi-AZ" not in anchor_block
+        assert "EKS" not in anchor_block
+        assert "drift" not in anchor_block
+
+    def test_older_role_technology_not_migrated_rule(self) -> None:
+        """Rules explicitly forbid migrating technologies from older roles into recent roles."""
+        rule = _resolve_rule("bullet_strategy", 0)
+        assert "Do NOT move or fabricate technologies into a recent role" in rule
+
+    def test_stage_3_prompt_contains_recruiter_audit(
+        self,
+        base_cv: BaseCV,
+        expected_requirements: RequirementExtraction,
+        expected_evidence_map: EvidenceMap,
+    ) -> None:
+        """Stage 3 prompt includes recruiter red-team audit and summary plain text."""
+        captured_prompts = []
+
+        def mock_provider(prompt: str) -> str:
+            captured_prompts.append(prompt)
+            return json.dumps({
+                "contact": {"name": "Jane Smith", "email": "jane@example.com"},
+                "summary": "test",
+                "experience": [
+                    {
+                        "company": "TechCorp",
+                        "title": "Engineer",
+                        "start": "2019-03",
+                        "end": "2024-01",
+                        "bullets": ["test"],
+                        "technologies": [],
+                    }
+                ],
+                "skills": [],
+                "education": [{"institution": "U", "degree": "BSc"}],
+            })
+
+        generate_tailored_cv(
+            base_cv, expected_requirements, expected_evidence_map, mock_provider
+        )
+        assert len(captured_prompts) == 1
+        prompt = captured_prompts[0]
+        assert "RECRUITER RED-TEAM AUDIT" in prompt
+        assert "no bold in summary" in prompt.lower()
+
 
