@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import shutil
 import uuid
 from collections.abc import AsyncIterable
 from datetime import datetime, timezone
@@ -253,7 +254,7 @@ async def delete_job(job_id: str, user: dict = Depends(get_current_user)) -> Res
     db = await get_db()
     try:
         cursor = await db.execute(
-            "SELECT pdf_path FROM jobs WHERE id=? AND user_id=?",
+            "SELECT pdf_path, cv_history_json FROM jobs WHERE id=? AND user_id=?",
             (job_id, user["id"]),
         )
         row = await cursor.fetchone()
@@ -268,6 +269,21 @@ async def delete_job(job_id: str, user: dict = Depends(get_current_user)) -> Res
             tex_path = pdf_path.with_suffix(".tex")
             if tex_path.exists():
                 tex_path.unlink()
+
+        # Delete historical version files if they exist
+        if row["cv_history_json"]:
+            try:
+                history = json.loads(row["cv_history_json"])
+                for entry in history:
+                    if entry.get("pdf_path"):
+                        h_pdf = Path(entry["pdf_path"])
+                        if h_pdf.exists():
+                            h_pdf.unlink()
+                        h_tex = h_pdf.with_suffix(".tex")
+                        if h_tex.exists():
+                            h_tex.unlink()
+            except Exception as exc:
+                logger.warning("Error cleaning up history files for job %s: %s", job_id, exc)
 
         await db.execute(
             "DELETE FROM jobs WHERE id=? AND user_id=?",
@@ -393,7 +409,9 @@ async def get_pdf(job_id: str, user: dict = Depends(get_current_user)) -> Respon
 
 
 @router.get("/{job_id}/pdf/{version}")
-async def get_pdf_version(job_id: str, version: int, user: dict = Depends(get_current_user)) -> Response:
+async def get_pdf_version(
+    job_id: str, version: int, user: dict = Depends(get_current_user)
+) -> Response:
     """Return PDF for a specific CV version from history."""
     db = await get_db()
     try:
@@ -416,10 +434,24 @@ async def get_pdf_version(job_id: str, version: int, user: dict = Depends(get_cu
         raise HTTPException(status_code=404, detail=f"Version {version} not found")
 
     pdf_path = Path(entry["pdf_path"])
-    if not pdf_path.exists():
+    if pdf_path.exists():
+        pdf_bytes = pdf_path.read_bytes()
+    elif entry.get("tailored_cv"):
+        from core.models import TailoredCV
+        from core.renderer import render_latex, render_pdf
+
+        tailored = TailoredCV.model_validate(entry["tailored_cv"])
+        latex_source = render_latex(tailored)
+        pdf_bytes = await asyncio.to_thread(render_pdf, latex_source)
+        try:
+            pdf_path.parent.mkdir(parents=True, exist_ok=True)
+            pdf_path.write_bytes(pdf_bytes)
+        except Exception as exc:
+            logger.debug("Failed to cache re-rendered PDF: %s", exc)
+    else:
         raise HTTPException(status_code=404, detail="PDF file no longer available")
 
-    return Response(content=pdf_path.read_bytes(), media_type="application/pdf")
+    return Response(content=pdf_bytes, media_type="application/pdf")
 
 
 # ---------------------------------------------------------------------------
@@ -436,7 +468,9 @@ class RegenerateRequest(BaseModel):
 
 
 @router.post("/{job_id}/regenerate", response_model=JobResponse)
-async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depends(get_current_user)) -> JobResponse:
+async def regenerate_job(
+    job_id: str, body: RegenerateRequest, user: dict = Depends(get_current_user)
+) -> JobResponse:
     """Re-run CV tailoring on an existing job, preserving cover letter and metadata.
 
     Resets status to pending, clears CV output (tailored_cv, gap_diff, pdf),
@@ -476,18 +510,46 @@ async def regenerate_job(job_id: str, body: RegenerateRequest, user: dict = Depe
         )
         now = datetime.now(timezone.utc).isoformat()
 
-        # Archive current CV into history (if it exists)
+        # Archive current CV into history with a versioned snapshot of the PDF and TeX files
         history: list[dict] = []
         if row["cv_history_json"]:
             history = json.loads(row["cv_history_json"])
         if row["tailored_cv_json"]:
             version = len(history) + 1
+            archived_pdf_path = row["pdf_path"]
+            if row["pdf_path"]:
+                current_pdf = Path(row["pdf_path"])
+                versioned_pdf = current_pdf.with_name(
+                    f"{current_pdf.stem}-v{version}{current_pdf.suffix}"
+                )
+                try:
+                    if current_pdf.exists():
+                        shutil.copy2(current_pdf, versioned_pdf)
+                        archived_pdf_path = str(versioned_pdf)
+                        current_tex = current_pdf.with_suffix(".tex")
+                        if current_tex.exists():
+                            versioned_tex = current_pdf.with_name(
+                                f"{current_pdf.stem}-v{version}.tex"
+                            )
+                            shutil.copy2(current_tex, versioned_tex)
+                    else:
+                        archived_pdf_path = str(versioned_pdf)
+                except Exception as exc:
+                    logger.warning("Failed to snapshot PDF for v%d: %s", version, exc)
+
+            tailored_cv_dict = None
+            try:
+                tailored_cv_dict = json.loads(row["tailored_cv_json"])
+            except Exception as exc:
+                logger.debug("Failed to parse tailored_cv_json for history: %s", exc)
+
             history.append({
                 "version": version,
                 "model": row["model"],
                 "creativity_level": row["creativity_level"],
-                "pdf_path": row["pdf_path"],
+                "pdf_path": archived_pdf_path,
                 "created_at": row["updated_at"],
+                "tailored_cv": tailored_cv_dict,
             })
         history_json = json.dumps(history) if history else None
 

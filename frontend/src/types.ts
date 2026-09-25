@@ -110,6 +110,7 @@ export interface CvHistoryEntry {
   creativity_level: number
   pdf_path: string | null
   created_at: string
+  tailored_cv?: TailoredCV | null
 }
 
 export interface ClHistoryEntry {

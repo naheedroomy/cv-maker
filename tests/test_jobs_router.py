@@ -32,6 +32,8 @@ async def _insert_job_row(
     job_text: str = "test job text",
     status: str = "pending",
     pdf_path: str | None = None,
+    tailored_cv_json: str | None = None,
+    cv_history_json: str | None = None,
 ) -> None:
     """Insert a job row directly into the test database."""
     from datetime import datetime, timezone
@@ -43,9 +45,20 @@ async def _insert_job_row(
         now = datetime.now(timezone.utc).isoformat()
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
-            "INSERT INTO jobs (id, company_name, job_text, status, pdf_path, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (job_id, company, job_text, status, pdf_path, now, now),
+            "INSERT INTO jobs (id, company_name, job_text, status, pdf_path, tailored_cv_json, "
+            "cv_history_json, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                job_id,
+                company,
+                job_text,
+                status,
+                pdf_path,
+                tailored_cv_json,
+                cv_history_json,
+                now,
+                now,
+            ),
         )
         await db.commit()
     finally:
@@ -275,3 +288,112 @@ def test_get_pdf_returns_bytes_when_complete(tmp_path: Path):
 
     # Cleanup
     pdf_file.unlink(missing_ok=True)
+
+
+def test_regenerate_job_archives_versioned_pdf(tmp_path: Path):
+    """Regenerating a job creates a versioned copy of the existing PDF and tex,
+
+    ensuring older versions download the original content rather than the new PDF.
+    """
+    import json
+    test_db = tmp_path / "test.db"
+    job_id = str(uuid.uuid4())
+
+    pdf_file = tmp_path / f"{job_id}.pdf"
+    pdf_file.write_bytes(b"%PDF-version-1")
+    tex_file = tmp_path / f"{job_id}.tex"
+    tex_file.write_text(r"\documentclass{article} Version 1", encoding="utf-8")
+
+    cv_data = {
+        "contact": {"name": "Test Candidate", "email": "test@example.com"},
+        "summary": "V1 summary",
+        "experience": [],
+        "skills": ["Python"],
+        "education": [],
+    }
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.routers.jobs.job_worker", _noop_worker),
+        TestClient(app) as client,
+    ):
+        asyncio.run(
+            _insert_job_row(
+                test_db,
+                job_id,
+                status="complete",
+                pdf_path=str(pdf_file),
+                tailored_cv_json=json.dumps(cv_data),
+            )
+        )
+
+        # Trigger regeneration
+        regen_resp = client.post(f"/api/jobs/{job_id}/regenerate", json={})
+        assert regen_resp.status_code == 200
+        data = regen_resp.json()
+        assert data["status"] == "pending"
+        assert len(data["cv_history"]) == 1
+        assert data["cv_history"][0]["version"] == 1
+
+        # Check that versioned PDF exists on disk with V1 bytes
+        v1_pdf = tmp_path / f"{job_id}-v1.pdf"
+        assert v1_pdf.exists(), "Versioned PDF was not created on disk"
+        assert v1_pdf.read_bytes() == b"%PDF-version-1"
+
+        # Check that versioned TeX exists on disk with V1 text
+        v1_tex = tmp_path / f"{job_id}-v1.tex"
+        assert v1_tex.exists(), "Versioned TeX was not created on disk"
+        assert v1_tex.read_text(encoding="utf-8") == r"\documentclass{article} Version 1"
+
+        # Simulate the background worker completing regeneration with new V2 content
+        pdf_file.write_bytes(b"%PDF-version-2")
+
+        # GET /api/jobs/{id}/pdf/1 should return Version 1 bytes, NOT Version 2
+        v1_resp = client.get(f"/api/jobs/{job_id}/pdf/1")
+        assert v1_resp.status_code == 200
+        assert v1_resp.content == b"%PDF-version-1"
+
+
+def test_delete_job_cleans_up_historical_pdf_and_tex(tmp_path: Path):
+    """Permanently deleting a job removes the primary and all historical PDF/TeX files."""
+    import json
+    test_db = tmp_path / "test.db"
+    job_id = str(uuid.uuid4())
+
+    pdf_file = tmp_path / f"{job_id}.pdf"
+    pdf_file.write_bytes(b"%PDF-current")
+    tex_file = tmp_path / f"{job_id}.tex"
+    tex_file.write_text(r"Current tex", encoding="utf-8")
+
+    v1_pdf = tmp_path / f"{job_id}-v1.pdf"
+    v1_pdf.write_bytes(b"%PDF-v1")
+    v1_tex = tmp_path / f"{job_id}-v1.tex"
+    v1_tex.write_text(r"V1 tex", encoding="utf-8")
+
+    history = [
+        {"version": 1, "pdf_path": str(v1_pdf), "created_at": "2026-01-01T00:00:00Z"}
+    ]
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        TestClient(app) as client,
+    ):
+        asyncio.run(
+            _insert_job_row(
+                test_db,
+                job_id,
+                status="complete",
+                pdf_path=str(pdf_file),
+                cv_history_json=json.dumps(history),
+            )
+        )
+
+        del_resp = client.delete(f"/api/jobs/{job_id}/remove")
+        assert del_resp.status_code == 204
+
+    # Verify both current and historical files were deleted from disk
+    assert not pdf_file.exists()
+    assert not tex_file.exists()
+    assert not v1_pdf.exists()
+    assert not v1_tex.exists()
+
