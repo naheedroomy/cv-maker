@@ -126,11 +126,24 @@ async function handleSaveListing() {
   }
 }
 
-async function handleRegenerate(model?: string, creativityLevel?: number) {
+async function handleRegenerate(
+  model?: string,
+  creativityLevel?: number,
+  userNotes?: string,
+  modelId?: string,
+  reasoningEffort?: string,
+) {
   if (!currentJob.value) return
   regenerating.value = true
   try {
-    await store.regenerateJob(currentJob.value, model, creativityLevel)
+    await store.regenerateJob(
+      currentJob.value,
+      model,
+      creativityLevel,
+      userNotes,
+      modelId,
+      reasoningEffort,
+    )
     // Job is now pending — open SSE to track progress
     store.openSSE(jobId.value)
   } catch (err) {
@@ -264,6 +277,9 @@ async function handleRegenerate(model?: string, creativityLevel?: number) {
           <RegeneratePanel
             :current-model="currentJob.model"
             :current-creativity-level="currentJob.creativity_level"
+            :current-notes="currentJob.user_notes"
+            :current-model-id="currentJob.model_id"
+            :current-reasoning-effort="currentJob.reasoning_effort"
             :disabled="regenerating"
             @regenerate="handleRegenerate"
           />

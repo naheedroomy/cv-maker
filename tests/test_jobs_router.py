@@ -397,3 +397,102 @@ def test_delete_job_cleans_up_historical_pdf_and_tex(tmp_path: Path):
     assert not v1_pdf.exists()
     assert not v1_tex.exists()
 
+
+def test_regenerate_job_with_effort_model_and_notes(tmp_path: Path):
+    """Regenerating a job with model override, effort level, and user notes updates job row."""
+    test_db = tmp_path / "test.db"
+    job_id = str(uuid.uuid4())
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.routers.jobs.job_worker", _noop_worker),
+        TestClient(app) as client,
+    ):
+        asyncio.run(
+            _insert_job_row(
+                test_db,
+                job_id,
+                status="complete",
+            )
+        )
+
+        regen_resp = client.post(
+            f"/api/jobs/{job_id}/regenerate",
+            json={
+                "model": "claude-haiku",
+                "model_id": "claude-3-7-sonnet-20250219",
+                "reasoning_effort": "high",
+                "creativity_level": 3,
+                "user_notes": "replace GCP with AWS on HiAcuity work experience",
+            },
+        )
+        assert regen_resp.status_code == 200
+        data = regen_resp.json()
+        assert data["status"] == "pending"
+        assert data["model"] == "claude-haiku"
+        assert data["model_id"] == "claude-3-7-sonnet-20250219"
+        assert data["reasoning_effort"] == "high"
+        assert data["creativity_level"] == 3
+        assert data["user_notes"] == "replace GCP with AWS on HiAcuity work experience"
+
+
+def test_regenerate_job_legacy_creativity_clamped(tmp_path: Path):
+    """Regenerating an older job that had creativity_level=5 clamps creativity to 3."""
+    from backend.db import get_db
+
+    test_db = tmp_path / "test.db"
+    job_id = str(uuid.uuid4())
+
+    async def _insert_with_high_creativity() -> None:
+        await _insert_job_row(test_db, job_id, status="complete")
+        db = await get_db(test_db)
+        try:
+            await db.execute("UPDATE jobs SET creativity_level = 5 WHERE id = ?", (job_id,))
+            await db.commit()
+        finally:
+            await db.close()
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.routers.jobs.job_worker", _noop_worker),
+        TestClient(app) as client,
+    ):
+        asyncio.run(_insert_with_high_creativity())
+
+        regen_resp = client.post(f"/api/jobs/{job_id}/regenerate", json={})
+        assert regen_resp.status_code == 200
+        data = regen_resp.json()
+        assert data["creativity_level"] == 3
+
+
+def test_job_create_and_regenerate_creativity_validation(tmp_path: Path):
+    """Creativity level > 3 is rejected with 422 Unprocessable Entity."""
+    test_db = tmp_path / "test.db"
+    job_id = str(uuid.uuid4())
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.routers.jobs.job_worker", _noop_worker),
+        TestClient(app) as client,
+    ):
+        asyncio.run(_insert_job_row(test_db, job_id, status="complete"))
+
+        # Test job create rejects creativity_level=4
+        create_resp = client.post(
+            "/api/jobs",
+            json={
+                "company_name": "TestCo",
+                "job_text": "Requirements here...",
+                "creativity_level": 4,
+            },
+        )
+        assert create_resp.status_code == 422
+
+        # Test job regenerate rejects creativity_level=4
+        regen_resp = client.post(
+            f"/api/jobs/{job_id}/regenerate",
+            json={"creativity_level": 4},
+        )
+        assert regen_resp.status_code == 422
+
+

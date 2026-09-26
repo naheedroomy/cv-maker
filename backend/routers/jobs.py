@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
@@ -463,7 +463,7 @@ class RegenerateRequest(BaseModel):
     model: str | None = None
     model_id: str | None = None
     reasoning_effort: str | None = None
-    creativity_level: int | None = None
+    creativity_level: int | None = Field(default=None, ge=0, le=3)
     user_notes: str | None = None
 
 
@@ -498,11 +498,12 @@ async def regenerate_job(
         reasoning_effort = body.reasoning_effort if body.reasoning_effort is not None else (
             row["reasoning_effort"] if "reasoning_effort" in row.keys() else None
         )
-        creativity = (
+        raw_creativity = (
             body.creativity_level
             if body.creativity_level is not None
             else row["creativity_level"]
         )
+        creativity = max(0, min(3, raw_creativity))
         notes = (
             body.user_notes
             if body.user_notes is not None

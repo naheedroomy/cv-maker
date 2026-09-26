@@ -128,6 +128,6 @@ export interface JobCreate {
   model?: string  // "claude-haiku" (default) or "gemini-flash"
   model_id?: string
   reasoning_effort?: string
-  creativity_level?: number  // 0-6, default 2 (Moderate)
+  creativity_level?: number  // 0-3, default 2 (Balanced)
   user_notes?: string  // optional guidance for CV tailoring
 }
