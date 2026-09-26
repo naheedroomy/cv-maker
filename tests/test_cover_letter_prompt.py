@@ -144,3 +144,14 @@ class TestCoverLetterPrompts:
                 tone="enthusiastic",
             )
             assert "Story here." in result
+
+    def test_system_prompt_includes_voice_and_tone_precedence(self) -> None:
+        prompt = SYSTEM_PROMPT_TEMPLATE.format(tone_instruction="Write directly.")
+        assert "VOICE & TONE PRECEDENCE" in prompt
+        assert "strictly governs the social register" in prompt
+
+    def test_system_prompt_enforces_base_evidence_for_transferable_architecture(self) -> None:
+        prompt = SYSTEM_PROMPT_TEMPLATE.format(tone_instruction="Write directly.")
+        assert "ONLY IF the candidate has verified production experience" in prompt
+        assert "NEVER assert experience with an equivalent" in prompt
+        assert "tool not present in the base CV" in prompt
