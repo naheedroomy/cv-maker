@@ -43,7 +43,7 @@ The `core/` package is the shared, UI-free engine of cv-maker. It owns all data 
 1. **Load**: `data.py` reads `base_cv.yaml` → validates into `BaseCV` Pydantic model.
 2. **Tailor**: `pipeline.py` builds a parameterized prompt (7 creativity levels), invokes the configured AI provider, parses the JSON response into a `TailoredCV` with `gap_diff`.
 3. **Render**: `renderer.py` feeds `TailoredCV` through a Jinja2 LaTeX template (`cv.tex.jinja`), producing a PDF via `latexmk -xelatex`.
-4. **Cover Letter** (optional): `cover_letter.py` takes the `TailoredCV`, gap diff, and tone selection, generates a plain-text cover letter.
+4. **Cover Letter** (optional): `cover_letter.py` takes the `TailoredCV`, gap diff, optional custom instructions/notes, and generates a plain-text cover letter using standard peer voice.
 5. **Import**: `cv_converter.py` or `cv_parser.py` converts external CVs (plain text or PDF) into a `BaseCV`.
 
 ## Key Files & Symbols
@@ -56,7 +56,7 @@ The `core/` package is the shared, UI-free engine of cv-maker. It owns all data 
 | `data.py` | `load_base_cv()`, `ensure_base_cv_exists()`, `DEFAULT_CV_PATH` | YAML loading with Pydantic v2 validation; placeholder creation |
 | `cv_converter.py` | `convert_cv_to_yaml()`, `save_base_cv()`, `_invoke_provider()` | Plain-text CV → BaseCV via AI provider; supports Claude CLI, Claude API, Gemini, OpenAI |
 | `cv_parser.py` | `parse_pdf_to_base_cv()`, `_pdf_to_images()`, `_ocr_images()`, `_structure_text()` | Two-pass PDF CV parsing: pymupdf → page images → Gemini OCR → Gemini structuring → BaseCV |
-| `cover_letter.py` | `generate_cover_letter()`, `CoverLetterOutput`, `SYSTEM_PROMPT_TEMPLATE`, `USER_PROMPT_TEMPLATE`, `_TONE_INSTRUCTIONS` | Cover letter generation: 6 tone profiles, anti-AI writing rules, 3-step process (draft→self-critique→rewrite), provider-agnostic including Gemini Web |
+| `cover_letter.py` | `generate_cover_letter()`, `CoverLetterOutput`, `SYSTEM_PROMPT_TEMPLATE`, `USER_PROMPT_TEMPLATE`, `_TONE_INSTRUCTIONS` | Cover letter generation: standard engineering peer voice with custom instructions/writing sample calibration, anti-AI writing rules, storyteller arc, provider-agnostic including Gemini Web |
 | `cover_letter_renderer.py` | `render_cover_letter_pdf()` | Cover letter → PDF via fpdf2 (pure Python, no LaTeX dependency); latin-1 sanitization |
 
 ## Integration Points

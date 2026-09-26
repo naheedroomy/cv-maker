@@ -42,7 +42,7 @@ Pinia state management covering authentication, job sessions, and the user's bas
 - `downloadPdf(jobId, companyName, version?)`: GET PDF blob, triggers browser download. Checks `cv_filename` setting for filename
 - `openSSE(jobId)`: Opens `EventSource` at `/api/jobs/:id/events`. Listens for `status` events (partial updates) and `complete` event (full re-fetch). Falls back to 3s polling on error
 - `closeSSE()`: Closes SSE and clears polling interval
-- `generateCoverLetter(jobId, model, tone, userNotes)`: POST `/api/jobs/:id/cover-letter`, polls up to 60×3s for result
+- `generateCoverLetter(jobId, model, userNotes, modelId?, reasoningEffort?)`: POST `/api/jobs/:id/cover-letter`, polls up to 60×3s for result
 - `saveCoverLetter(jobId, text, notes)`: PUT `/api/jobs/:id/cover-letter`
 - `downloadCoverLetterPdf(jobId, companyName)`: GET PDF blob
 

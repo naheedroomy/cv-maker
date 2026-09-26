@@ -68,8 +68,8 @@ class CoverLetterRequest(BaseModel):
     model_id: str | None = None
     reasoning_effort: str | None = None
     tone: str = Field(
-        default="professional",
-        pattern="^(formal|professional|confident|direct|casual|enthusiastic)$",
+        default="standard",
+        description="Cover letter voice style. Defaults to standard.",
     )
     user_notes: str = ""
     writing_sample: str = ""
