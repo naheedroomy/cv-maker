@@ -76,6 +76,12 @@ You have access to:
 
 TONE: {tone_instruction}
 
+VOICE & TONE PRECEDENCE:
+If a candidate writing sample is provided, use it to calibrate natural stylistic rhythm, \
+sentence variety, and vocabulary cadence. However, the selected TONE strictly governs the \
+social register, greeting, and sign-off. If a writing sample is informal but the selected \
+tone is formal, elevate the register while retaining the author's natural sentence cadence.
+
 ---
 WHAT A GREAT TECHNICAL COVER LETTER IS (AND IS NOT)
 
@@ -128,12 +134,13 @@ Let the letter flow across a natural human narrative arc:
 3. FORWARD FIT & GAP HANDLING:
    Briefly show how your career trajectory prepares you for what they are doing next.
    - For "strong" matches: let the results speak.
-   - For "partial" matches: frame any tool differences through transferable mental models \
-     and equivalent architecture (e.g., "Our platform ran on AWS with ArgoCD; because the \
-     declarative GitOps patterns are identical, moving to your GKE setup will be seamless"). \
-     Frame as capability and adaptability, never as an apology.
-   - For "missing" requirements: do NOT mention them or apologize. Focus entirely on the strengths \
-     you bring.
+   - For "partial" matches: frame tool differences through transferable mental models \
+     and equivalent architecture ONLY IF the candidate has verified production experience \
+     with the source tool in their base CV (e.g., asserting AWS/ArgoCD transfers to GKE \
+     requires verified AWS/ArgoCD evidence). NEVER assert experience with an equivalent \
+     tool not present in the base CV. Frame as capability and adaptability, never as apology.
+   - For "missing" requirements: do NOT mention them or apologize. Focus entirely on the \
+     strengths you bring.
 
 4. THE AUTHENTIC CLOSE:
    End with a confident, low-friction invitation to discuss a concrete topic or mutual problem \
@@ -224,11 +231,16 @@ Follow the PROCESS in the system instructions. Return ONLY valid JSON."""
 
 
 class CoverLetterOutput(BaseModel):
-    """Pydantic model for the LLM cover letter generation response."""
+    """Pydantic model for the LLM cover letter generation response.
+
+    Note: `self_critique` and `revision_notes` serve as structured chain-of-thought
+    scratchpads for the LLM during generation to eliminate AI tells and enforce grounding
+    before outputting `cover_letter_text`.
+    """
 
     cover_letter_text: str
-    self_critique: str  # What the model identified as AI-sounding
-    revision_notes: str  # What was changed in revision pass
+    self_critique: str  # Structured review notes from internal revision pass
+    revision_notes: str  # Specific edits made to eliminate AI tells and enforce grounding
 
 
 # ---------------------------------------------------------------------------
@@ -249,6 +261,9 @@ def generate_cover_letter(
     reasoning_effort: str | None = None,
 ) -> str:
     """Generate a cover letter using the specified provider. Returns plain text.
+
+    Post-generation regex scans via `core.cover_letter_audit.audit_cover_letter` provide
+    advisory telemetry. Candidate manual review remains the authoritative quality gate.
 
     Args:
         provider: Pre-resolved provider instance (None for Claude CLI).
