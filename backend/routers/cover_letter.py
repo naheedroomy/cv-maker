@@ -28,7 +28,7 @@ async def _cover_letter_worker(
     user_id: int,
     model: str,
     user_notes: str,
-    tone: str,
+    tone: str = "standard",
     writing_sample: str = "",
     model_id: str | None = None,
     reasoning_effort: str | None = None,
@@ -44,7 +44,8 @@ async def _cover_letter_worker(
         db = await get_db()
         try:
             cursor = await db.execute(
-                "SELECT job_text, tailored_cv_json, gap_diff_json FROM jobs WHERE id=? AND user_id=?",
+                "SELECT job_text, tailored_cv_json, gap_diff_json "
+                "FROM jobs WHERE id=? AND user_id=?",
                 (job_id, user_id),
             )
             row = await cursor.fetchone()
@@ -84,7 +85,8 @@ async def _cover_letter_worker(
         try:
             await db.execute("BEGIN IMMEDIATE")
             await db.execute(
-                "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=?, cover_letter_model=?, cover_letter_tone=? WHERE id=? AND user_id=?",
+                "UPDATE jobs SET cover_letter_text=?, cover_letter_notes=?, "
+                "cover_letter_model=?, cover_letter_tone=? WHERE id=? AND user_id=?",
                 (cover_letter_text, user_notes, model, tone, job_id, user_id),
             )
             await db.commit()
@@ -126,7 +128,11 @@ async def _cover_letter_worker(
 
 
 @router.post("/{job_id}/cover-letter", status_code=202)
-async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, user: dict = Depends(get_current_user)):
+async def generate_cover_letter_endpoint(
+    job_id: str,
+    body: CoverLetterRequest,
+    user: dict = Depends(get_current_user),
+):
     """Start cover letter generation as a background task.
 
     Immediately clears old cover letter and returns 202. Frontend polls
@@ -146,7 +152,10 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, 
     if row is None:
         raise HTTPException(status_code=404, detail="Job not found")
     if row["status"] != "complete":
-        raise HTTPException(status_code=409, detail="Job must be complete before generating cover letter")
+        raise HTTPException(
+            status_code=409,
+            detail="Job must be complete before generating cover letter",
+        )
     if not row["tailored_cv_json"] or not row["gap_diff_json"]:
         raise HTTPException(status_code=409, detail="Job has no tailored CV data")
 
@@ -169,7 +178,9 @@ async def generate_cover_letter_endpoint(job_id: str, body: CoverLetterRequest, 
     db = await get_db()
     try:
         await db.execute(
-            "UPDATE jobs SET cover_letter_text='', cover_letter_notes=?, cover_letter_model=?, cover_letter_tone=?, cl_history_json=? WHERE id=? AND user_id=?",
+            "UPDATE jobs SET cover_letter_text='', cover_letter_notes=?, "
+            "cover_letter_model=?, cover_letter_tone=?, cl_history_json=? "
+            "WHERE id=? AND user_id=?",
             (body.user_notes, body.model, body.tone, cl_history_json, job_id, user["id"]),
         )
         await db.commit()
@@ -204,7 +215,11 @@ class CoverLetterSaveRequest(BaseModel):
 
 
 @router.put("/{job_id}/cover-letter", response_model=CoverLetterResponse)
-async def save_cover_letter(job_id: str, body: CoverLetterSaveRequest, user: dict = Depends(get_current_user)) -> CoverLetterResponse:
+async def save_cover_letter(
+    job_id: str,
+    body: CoverLetterSaveRequest,
+    user: dict = Depends(get_current_user),
+) -> CoverLetterResponse:
     """Save edited cover letter text back to the database."""
     db = await get_db()
     try:

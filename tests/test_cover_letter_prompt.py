@@ -62,7 +62,15 @@ class TestCoverLetterPrompts:
     """Verify prompt formatting, tone coverage, and storyteller templates."""
 
     def test_all_expected_tones_are_registered(self) -> None:
-        expected = {"professional", "casual", "confident", "direct", "enthusiastic", "formal"}
+        expected = {
+            "standard",
+            "professional",
+            "casual",
+            "confident",
+            "direct",
+            "enthusiastic",
+            "formal",
+        }
         assert set(_TONE_INSTRUCTIONS.keys()) == expected
 
     def test_system_prompt_formats_cleanly_for_all_tones(self) -> None:
@@ -141,7 +149,6 @@ class TestCoverLetterPrompts:
                 tailored_cv=tailored_cv,
                 gap_diff=gap_diff,
                 user_notes="Focus on peak sales load",
-                tone="enthusiastic",
             )
             assert "Story here." in result
 
@@ -150,8 +157,33 @@ class TestCoverLetterPrompts:
         assert "VOICE & TONE PRECEDENCE" in prompt
         assert "strictly governs the social register" in prompt
 
+    def test_system_prompt_prioritizes_custom_instructions_in_user_notes(self) -> None:
+        prompt = SYSTEM_PROMPT_TEMPLATE.format(tone_instruction="Write directly.")
+        assert "custom instructions or notes in USER NOTES" in prompt
+        assert "prioritize them while keeping all claims strictly grounded" in prompt
+
     def test_system_prompt_enforces_base_evidence_for_transferable_architecture(self) -> None:
         prompt = SYSTEM_PROMPT_TEMPLATE.format(tone_instruction="Write directly.")
         assert "ONLY IF the candidate has verified production experience" in prompt
         assert "NEVER assert experience with an equivalent" in prompt
         assert "tool not present in the base CV" in prompt
+
+    def test_cover_letter_request_schema_defaults(self) -> None:
+        from backend.schemas import CoverLetterRequest
+
+        req = CoverLetterRequest()
+        assert req.tone == "standard"
+        assert req.reasoning_effort is None
+        assert req.model_id is None
+        assert req.user_notes == ""
+
+        req_custom = CoverLetterRequest(
+            tone="standard",
+            model="gemini-flash",
+            model_id="gemini-2.5-pro",
+            reasoning_effort="high",
+            user_notes="Keep under 250 words",
+        )
+        assert req_custom.reasoning_effort == "high"
+        assert req_custom.model_id == "gemini-2.5-pro"
+        assert req_custom.user_notes == "Keep under 250 words"

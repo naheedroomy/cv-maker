@@ -212,13 +212,22 @@ export const useJobStore = defineStore('jobs', () => {
   async function generateCoverLetter(
     jobId: string,
     model: string,
-    tone: string,
     userNotes: string,
+    modelId?: string,
+    reasoningEffort?: string,
   ): Promise<string> {
+    const payload: Record<string, unknown> = {
+      model,
+      tone: 'standard',
+      user_notes: userNotes,
+    }
+    if (modelId) payload.model_id = modelId
+    if (reasoningEffort) payload.reasoning_effort = reasoningEffort
+
     const res = await apiFetch(`/api/jobs/${jobId}/cover-letter`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, tone, user_notes: userNotes }),
+      body: JSON.stringify(payload),
     })
     if (!res.ok && res.status !== 202) {
       const body = await res.json().catch(() => ({}))

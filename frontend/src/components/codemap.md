@@ -10,7 +10,7 @@ Reusable Vue components that compose into views. Each component has a single, fo
 - **Event-based communication**: `defineEmits<{}>()` for parent callbacks
 - **Store access**: some components access Pinia stores directly (`AppSidebar`, `CoverLetterSection`) for shared state
 - **Scoped styles**: all components use `<style scoped>` to prevent CSS leakage
-- **Shared CSS**: `ModelSelector`, `ToneSelector`, and `CreativitySlider` import `@/assets/selector.css` for consistent pill-group styling
+- **Shared CSS**: `ModelSelector` and `CreativitySlider` import `@/assets/selector.css` for consistent pill-group styling
 
 ---
 
@@ -86,16 +86,6 @@ Reusable Vue components that compose into views. Each component has a single, fo
 
 **Integration**: Imports `@/assets/selector.css`. Used by `JobFormView` and `RegeneratePanel`.
 
-### `ToneSelector.vue`
-**Purpose**: Pill-group selector for cover letter tone.
-
-**Props**: `modelValue: string`, `disabled: boolean`  
-**Emits**: `update:modelValue`
-
-**Options**: Formal, Professional, Confident, Direct, Casual, Enthusiastic — each with descriptive hint.
-
-**Integration**: Imports `@/assets/selector.css`. Used by `CoverLetterSection`.
-
 ### `RegeneratePanel.vue`
 **Purpose**: Expandable panel for CV regeneration with model/creativity controls.
 
@@ -166,7 +156,7 @@ Reusable Vue components that compose into views. Each component has a single, fo
 
 **States**:
 1. **No cover letter** (no text, no form open): "Generate Cover Letter" button (disabled if CV not complete)
-2. **Form open** (showForm=true): ModelSelector + ToneSelector + Generate button + optional notes textarea
+2. **Form open** (showForm=true): ModelSelector with model variant and reasoning effort details + optional custom instructions textarea + Generate button
 3. **Generating**: LoadingSpinner + text
 4. **Generated**: Editable textarea + Copy/Save&Download/Regenerate buttons + metadata badges
 5. **Version history**: Always shown at top if `clHistory` exists — allows loading past versions
@@ -178,4 +168,4 @@ Reusable Vue components that compose into views. Each component has a single, fo
 - `handleSaveAndDownload`: PUT save then GET PDF download
 - Provider availability: fetched from `/api/config` on mount
 
-**Integration**: Uses `ModelSelector`, `ToneSelector`, `LoadingSpinner`. All API calls through `jobStore` actions.
+**Integration**: Uses `ModelSelector` (`:show-model-details="true"` for model and reasoning effort selection), `LoadingSpinner`. All API calls through `jobStore` actions.

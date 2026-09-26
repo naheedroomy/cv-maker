@@ -16,39 +16,23 @@ logger = logging.getLogger(__name__)
 # Tone instructions
 # ---------------------------------------------------------------------------
 
+_STANDARD_TONE_INSTRUCTION = (
+    "Write as a respected engineering peer: balanced, credible, articulate, and collegial. "
+    "Sound like a thoughtful colleague writing an introductory note to a team they would love "
+    "to work with. Use natural professional greetings ('Hi [Name/Team],' or "
+    "'Dear [Name/Hiring Team],') and clean closings ('Best regards,' or 'Best,'). "
+    "Natural contractions, conversational rhythm, clear active verbs, and zero corporate posturing."
+)
+
 _TONE_INSTRUCTIONS: dict[str, str] = {
-    "professional": (
-        "Write as a respected engineering peer: balanced, credible, articulate, and collegial. "
-        "Sound like a thoughtful colleague writing an introductory note to a team they would love "
-        "to work with. Use natural professional greetings ('Hi [Name],' or 'Dear [Name],') "
-        "and clean closings ('Best regards,' or 'Best,')."
-    ),
-    "casual": (
-        "Write as if emailing an engineering lead or founder in your developer community. "
-        "Relaxed, authentic, and direct. Natural contractions, conversational rhythm, "
-        "and zero corporate posturing. Sound like a real person having a technical coffee chat."
-    ),
-    "confident": (
-        "Write with bold ownership and clear authority. Emphasize architectural decisions, "
-        "high-stakes trade-offs, and measurable outcomes. Assertive without boasting: "
-        "let the complexity of problems you've solved and their impact carry the conviction."
-    ),
-    "direct": (
-        "Crisp, focused, and high signal-to-noise. Eliminate warm-up preamble and get straight "
-        "to the technical reality: what they are building, the specific engineering challenges "
-        "you've solved that map to it, and how you will execute. Clean, efficient, and punchy."
-    ),
-    "enthusiastic": (
-        "Write with authentic curiosity and energy about the company's product, mission, "
-        "or technical challenge. Show genuine engagement with the problems they are solving "
-        "rather than performing flattery. Warm, motivated, and grounded in technical substance."
-    ),
-    "formal": (
-        "Write in a polished, structured, and respectful style suitable for enterprise, "
-        "finance, or traditional corporate environments. Use complete sentences, dignified "
-        "transitions, formal salutations ('Dear [Name/Hiring Team],'), and professional "
-        "sign-offs ('Sincerely,'). Dignified and articulate without being archaic."
-    ),
+    "standard": _STANDARD_TONE_INSTRUCTION,
+    # Legacy aliases mapped to the standard voice to ensure backward compatibility
+    "professional": _STANDARD_TONE_INSTRUCTION,
+    "casual": _STANDARD_TONE_INSTRUCTION,
+    "confident": _STANDARD_TONE_INSTRUCTION,
+    "direct": _STANDARD_TONE_INSTRUCTION,
+    "enthusiastic": _STANDARD_TONE_INSTRUCTION,
+    "formal": _STANDARD_TONE_INSTRUCTION,
 }
 
 # ---------------------------------------------------------------------------
@@ -71,16 +55,19 @@ You have access to:
 2. The job listing (company context, technical requirements, and challenges)
 3. The tailored CV (already optimized for this role) — this is your PRIMARY source
 4. The gap analysis (what matched, what's partial, what's missing)
-5. User notes (specific things to mention or emphasize)
+5. User notes (custom instructions, specific points to mention, constraints, or emphasis)
 6. Optional writing sample (calibrate the candidate's natural voice and cadence)
 
-TONE: {tone_instruction}
+STANDARD VOICE: {tone_instruction}
 
 VOICE & TONE PRECEDENCE:
-If a candidate writing sample is provided, use it to calibrate natural stylistic rhythm, \
-sentence variety, and vocabulary cadence. However, the selected TONE strictly governs the \
-social register, greeting, and sign-off. If a writing sample is informal but the selected \
-tone is formal, elevate the register while retaining the author's natural sentence cadence.
+- If the candidate provides custom instructions or notes in USER NOTES (e.g., constraints, \
+specific projects to emphasize, relocation context, or nuances), prioritize them while keeping \
+all claims strictly grounded in the candidate's verified background.
+- If a candidate writing sample is provided, use it to calibrate natural stylistic rhythm, \
+sentence variety, and vocabulary cadence. The standard peer voice strictly governs the \
+social register, greeting, and sign-off.
+- Otherwise, maintain the standard professional engineering peer voice throughout.
 
 ---
 WHAT A GREAT TECHNICAL COVER LETTER IS (AND IS NOT)
@@ -146,7 +133,7 @@ Let the letter flow across a natural human narrative arc:
    End with a confident, low-friction invitation to discuss a concrete topic or mutual problem \
    (e.g., "Happy to walk through how we approached caching for peak spikes if that's relevant to \
    what you're building"). Avoid cliché endings like "I look forward to hearing from you." \
-   Sign off with an appropriate closing for your tone.
+   Sign off with a clean professional closing ("Best regards," or "Best,").
 
 ---
 WRITING PRINCIPLES (AVOID AI-GENERATED TELLS)
@@ -176,7 +163,7 @@ craft and authenticity of a thoughtful human engineer:
 ---
 PROCESS (execute internally, return only the final JSON):
 
-1. DRAFT: Write a 3 to 4 paragraph cover letter using the tailored CV, job listing, and tone.
+1. DRAFT: Write a 3 to 4 paragraph cover letter using the tailored CV, job listing, and voice.
 2. REFINE: Review the draft as a discerning technical reviewer.
    - Check grounding: Is every fact, tool, and number supported by the CV or job listing?
    - Check voice: Does it sound like a human engineer, or does it sound like an AI summary?
@@ -184,7 +171,7 @@ PROCESS (execute internally, return only the final JSON):
    - Check pacing: Is the length between 220 and 350 words?
 3. OUTPUT: Return ONLY valid JSON (no markdown fences):
 {{"cover_letter_text": "<final text with paragraphs separated by blank lines>", \
-"self_critique": "<brief review of tone, grounding, and authenticity>", \
+"self_critique": "<brief review of voice, grounding, and authenticity>", \
 "revision_notes": "<polishing adjustments made>"}}"""
 
 # ---------------------------------------------------------------------------
@@ -212,7 +199,7 @@ GAP ANALYSIS (use to decide emphasis and partial-match handling):
 {gap_diff_json}
 ---
 
-USER NOTES (weave naturally if provided):
+USER NOTES / CUSTOM INSTRUCTIONS (follow guidance and weave points naturally if provided):
 ---
 {user_notes}
 ---
@@ -256,7 +243,7 @@ def generate_cover_letter(
     tailored_cv: TailoredCV,
     gap_diff: list[GapItem],
     user_notes: str = "",
-    tone: str = "professional",
+    tone: str = "standard",
     writing_sample: str = "",
     reasoning_effort: str | None = None,
 ) -> str:
@@ -272,8 +259,8 @@ def generate_cover_letter(
         job_text: The raw job listing text.
         tailored_cv: The tailored CV output (primary source for cover letter).
         gap_diff: Gap analysis items from CV tailoring.
-        user_notes: Optional free-text notes to weave into the letter.
-        tone: One of "formal", "professional", "confident", "direct", "casual", "enthusiastic".
+        user_notes: Optional free-text notes or custom instructions to guide the letter.
+        tone: Cover letter voice style (defaults to "standard"). Legacy aliases map to standard.
         writing_sample: Optional sample of the candidate's own writing for voice calibration.
             If provided, calibrate tone and rhythm to match — do NOT copy content.
         reasoning_effort: Optional reasoning effort override ("off", "low", "medium",
@@ -286,7 +273,7 @@ def generate_cover_letter(
     tailored_cv_json = tailored_cv.model_dump_json(indent=2)
     gap_diff_json = json.dumps([g.model_dump() for g in gap_diff], indent=2)
 
-    tone_instruction = _TONE_INSTRUCTIONS.get(tone, _TONE_INSTRUCTIONS["professional"])
+    tone_instruction = _TONE_INSTRUCTIONS.get(tone, _STANDARD_TONE_INSTRUCTION)
     system_prompt = SYSTEM_PROMPT_TEMPLATE.format(tone_instruction=tone_instruction)
     user_prompt = USER_PROMPT_TEMPLATE.format(
         base_cv_yaml=base_cv_yaml,

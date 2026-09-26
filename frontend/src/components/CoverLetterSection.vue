@@ -2,7 +2,6 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { ClHistoryEntry } from '@/types'
-import ToneSelector from '@/components/ToneSelector.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { apiFetch } from '@/utils/apiFetch'
@@ -23,7 +22,8 @@ const store = useJobStore()
 const { currentJob } = storeToRefs(store)
 
 const selectedModel = ref(props.currentModel)
-const tone = ref('professional')
+const selectedModelId = ref('')
+const selectedReasoningEffort = ref('auto')
 const userNotes = ref(props.existingNotes ?? '')
 const coverLetterText = ref(props.existingCoverLetter ?? '')
 const generating = ref(false)
@@ -84,8 +84,9 @@ async function handleGenerate(): Promise<void> {
     const result = await store.generateCoverLetter(
       props.jobId,
       selectedModel.value,
-      tone.value,
       userNotes.value,
+      selectedModelId.value || undefined,
+      selectedReasoningEffort.value || undefined,
     )
     coverLetterText.value = result
     showForm.value = false
@@ -142,7 +143,7 @@ function handleRegenerate(): void {
           View V{{ entry.version }}
           <span class="history-meta">
             {{ entry.model ? ({ 'claude-haiku': 'CLI', 'claude-api': 'Claude', 'gemini-flash': 'Gemini', 'openai': 'OpenAI', 'gemini-web': 'Gemini Web' }[entry.model] || entry.model) : '' }}
-            {{ entry.tone ? '· ' + entry.tone.charAt(0).toUpperCase() + entry.tone.slice(1) : '' }}
+            {{ entry.tone && entry.tone !== 'standard' ? '· ' + entry.tone.charAt(0).toUpperCase() + entry.tone.slice(1) : '' }}
             · {{ new Date(entry.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
           </span>
         </button>
@@ -162,18 +163,29 @@ function handleRegenerate(): void {
       </button>
     </div>
 
-    <!-- State 2: Form visible (model + tone + generate, then optional notes) -->
+    <!-- State 2: Form visible (model + reasoning effort + custom instructions, then generate) -->
     <div v-else-if="showForm && !coverLetterText" class="cover-letter-form">
-      <div class="form-row">
-        <ModelSelector
-          v-model="selectedModel"
-          :claude-api-available="claudeApiAvailable"
-          :gemini-available="geminiAvailable"
-          :openai-available="openaiAvailable"
-          :gemini-web-available="geminiWebAvailable"
+      <ModelSelector
+        v-model="selectedModel"
+        v-model:model-id="selectedModelId"
+        v-model:reasoning-effort="selectedReasoningEffort"
+        :claude-api-available="claudeApiAvailable"
+        :gemini-available="geminiAvailable"
+        :openai-available="openaiAvailable"
+        :gemini-web-available="geminiWebAvailable"
+        :disabled="generating"
+        :show-model-details="true"
+      />
+      <div class="form-field">
+        <label class="field-label" for="cl-notes">Custom instructions & notes (optional)</label>
+        <textarea
+          id="cl-notes"
+          v-model="userNotes"
+          class="notes-textarea"
+          placeholder="Add instructions or notes to guide the cover letter: e.g. 'highlight my K8s migration project', 'keep it under 250 words', 'mention I'm relocating to Berlin'..."
+          rows="3"
           :disabled="generating"
         />
-        <ToneSelector v-model="tone" :disabled="generating" />
       </div>
       <button
         class="btn-generate"
@@ -182,23 +194,13 @@ function handleRegenerate(): void {
       >
         Generate Cover Letter
       </button>
-      <div class="form-field">
-        <label class="field-label">Notes (optional)</label>
-        <textarea
-          v-model="userNotes"
-          class="notes-textarea"
-          placeholder="Add notes to guide the cover letter: 'mention I'm relocating to Berlin', 'highlight the K8s migration project', 'I know someone at this company'..."
-          rows="3"
-          :disabled="generating"
-        />
-      </div>
     </div>
 
     <!-- State 3: Cover letter generated — editable preview -->
     <div v-else-if="coverLetterText" class="cover-letter-preview">
-      <div v-if="existingClModel || existingClTone" class="cl-meta">
+      <div v-if="existingClModel || (existingClTone && existingClTone !== 'standard')" class="cl-meta">
         <span v-if="existingClModel" class="cl-badge">{{ { 'claude-haiku': 'Claude CLI', 'claude-api': 'Claude API', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[existingClModel] || existingClModel }}</span>
-        <span v-if="existingClTone" class="cl-badge">{{ existingClTone.charAt(0).toUpperCase() + existingClTone.slice(1) }}</span>
+        <span v-if="existingClTone && existingClTone !== 'standard'" class="cl-badge">{{ existingClTone.charAt(0).toUpperCase() + existingClTone.slice(1) }}</span>
         <span v-if="currentJob?.updated_at" class="cl-badge">{{ new Date(currentJob.updated_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</span>
       </div>
       <textarea
@@ -280,13 +282,6 @@ function handleRegenerate(): void {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.form-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-start;
 }
 
 .form-field {
