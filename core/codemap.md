@@ -41,7 +41,7 @@ The `core/` package is the shared, UI-free engine of cv-maker. It owns all data 
 ```
 
 1. **Load**: `data.py` reads `base_cv.yaml` → validates into `BaseCV` Pydantic model.
-2. **Tailor**: `pipeline.py` builds a parameterized prompt (7 creativity levels), invokes the configured AI provider, parses the JSON response into a `TailoredCV` with `gap_diff`.
+2. **Tailor**: `pipeline.py` builds a parameterized prompt (4 creativity levels: 0-3), invokes the configured AI provider, parses the JSON response into a `TailoredCV` with `gap_diff`.
 3. **Render**: `renderer.py` feeds `TailoredCV` through a Jinja2 LaTeX template (`cv.tex.jinja`), producing a PDF via `latexmk -xelatex`.
 4. **Cover Letter** (optional): `cover_letter.py` takes the `TailoredCV`, gap diff, optional custom instructions/notes, and generates a plain-text cover letter using standard peer voice.
 5. **Import**: `cv_converter.py` or `cv_parser.py` converts external CVs (plain text or PDF) into a `BaseCV`.
@@ -68,7 +68,7 @@ The `core/` package is the shared, UI-free engine of cv-maker. It owns all data 
 
 ## Operational Notes
 
-- **Creativity levels**: `pipeline.py` defines a 7-level `Creativity` IntEnum (0=STRICT through 6=CREATIVE). The `_RULES` dict maps each concern (titles, bullets, skills, summary, inference, substitution, pruning, tone, reorder, core_competencies) to per-level instructions. `_resolve_rule()` picks the instruction for the highest defined threshold ≤ the requested level.
+- **Creativity levels**: `pipeline.py` defines a 4-level `Creativity` IntEnum (0=STRICT through 3=SELECTIVE). The `_RULES` dict maps each concern (titles, bullets, skills, summary, inference, substitution, pruning, tone, reorder, core_competencies) to per-level instructions. `_resolve_rule()` picks the instruction for the highest defined threshold ≤ the requested level.
 - **Prompt architecture**: Two prompt builders: `_build_prompt()` (single combined prompt for Claude CLI) and `_build_system_prompt_for_chat()` + `_build_user_prompt()` (system/user split for chat-based providers). Both share the same `_RULES` resolution.
 - **JSON parse-retry**: `_invoke_with_retry()` retries up to 3 times. On retries, appends "Return ONLY valid JSON" to the prompt. `_extract_json()` strips markdown fences and normalizes tailoring_notes from plain strings to structured dicts.
 - **LaTeX escaping**: `escape_latex()` uses a single-pass regex substitution against all 10 LaTeX special chars simultaneously, preventing cascading (e.g., `\textbackslash{}` braces won't be re-escaped). Registered as Jinja2 filters: `|e` (plain escape), `|be` (escape + bold), `|se` (strip bold then escape).

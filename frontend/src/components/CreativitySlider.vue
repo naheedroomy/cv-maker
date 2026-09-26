@@ -13,11 +13,8 @@ const emit = defineEmits<{
 const levels = [
   { value: 0, label: '0', hint: 'Strict — reorder only, zero content changes' },
   { value: 1, label: '1', hint: 'Conservative — emphasize and reframe existing content only' },
-  { value: 2, label: '2', hint: 'Moderate — title tweaks, tech weaving, inferred experience (default)' },
+  { value: 2, label: '2', hint: 'Balanced — standard ATS tailoring, tech weaving, inferred experience (default)' },
   { value: 3, label: '3', hint: 'Selective — swap equivalent tech in one role, no new claims' },
-  { value: 4, label: '4', hint: 'Forward — aggressively expand partial matches, selective substitution' },
-  { value: 5, label: '5', hint: 'Bold — fill gaps with plausible claims, aggressive substitution' },
-  { value: 6, label: '6', hint: 'Creative — invent freely, maximize relevance at cost of accuracy' },
 ] as const
 
 function select(value: number): void {
@@ -50,10 +47,7 @@ function hintText(): string {
         {{ level.label }}
       </button>
     </div>
-    <p
-      class="field-hint"
-      :class="{ 'field-hint--warning': modelValue >= 5 }"
-    >
+    <p class="field-hint">
       {{ hintText() }}
     </p>
   </div>

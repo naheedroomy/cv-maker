@@ -13,7 +13,7 @@ class JobCreate(BaseModel):
     model: str = "claude-haiku"
     model_id: str | None = None
     reasoning_effort: str | None = None
-    creativity_level: int = Field(default=2, ge=0, le=6)
+    creativity_level: int = Field(default=2, ge=0, le=3)
     user_notes: str = ""
 
 

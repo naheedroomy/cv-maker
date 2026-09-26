@@ -39,9 +39,6 @@ class Creativity(IntEnum):
     CONSERVATIVE = 1  # Rewrite for emphasis, no new claims
     DEFAULT = 2       # Surface implicit experience via inference rules
     SELECTIVE = 3     # Limited tech substitution in one role only, no new bullets
-    FORWARD = 4       # Aggressively surface implicit connections
-    BOLD = 5          # Add plausible adjacent-tech claims (flagged)
-    CREATIVE = 6      # Fabrication allowed (user assumes responsibility)
 
 
 # ---------------------------------------------------------------------------
@@ -182,13 +179,6 @@ _RULES: dict[str, dict[int, str]] = {
         1: "Do NOT change any job titles. Use exact titles from the base CV.",
         2: "Do NOT change any job titles. Use exact titles from the base CV.",
         3: "Do NOT change any job titles. Use exact titles from the base CV.",
-        4: "Do NOT change any job titles. Use exact titles from the base CV.",
-        5: (
-            "Job titles can be adjusted significantly to align with the target role. "
-            "NEVER inflate seniority — do not add Senior/Lead/Staff/Principal. "
-            "WARNING: Title changes may be flagged as fabrication by downstream review."
-        ),
-        6: "Job titles can be rewritten to match the target role exactly.",
     },
     "bullets": {
         0: (
@@ -212,27 +202,6 @@ _RULES: dict[str, dict[int, str]] = {
             "When in doubt, keep a bullet rather than remove it — a slightly less relevant bullet "
             "is better than a gap that makes the candidate look inexperienced."
         ),
-        4: (
-            "Aggressively surface implicit connections. If the candidate's experience plausibly "
-            "includes a requirement, make that connection explicit. Frame inferred experience as "
-            "transferable or adjacent (e.g., 'Applied similar patterns in...'), not direct hands-on "
-            "experience. Add short new bullets rather than inflating existing ones.\n"
-            "NO FABRICATION: Every claim in every bullet MUST trace back to the base CV. "
-            "You may NOT invent metrics, numbers, team sizes, tools, certifications, "
-            "responsibilities, or outcomes that do not appear in the base CV. "
-            "Technology substitution rules apply (see SUBSTITUTION below)."
-        ),
-        5: (
-            "Actively fill gaps. For 'missing' requirements, you MAY add short bullets claiming "
-            "familiarity ONLY for technologies adjacent to the candidate's known stack. "
-            "Phrase as exposure, not ownership (e.g., 'Gained exposure to X through Y workflows'). "
-            "Document the evidence basis in tailoring_notes for candidate review."
-        ),
-        6: (
-            "Maximize relevance by filling all gaps. You MAY fabricate plausible experience "
-            "to address missing requirements. Keep the same concise bullet format. "
-            "WARNING: Output may contain fabricated claims — user assumes responsibility."
-        ),
     },
     "skills_injection": {
         0: "Do NOT add any technologies not already listed in the base CV.",
@@ -247,15 +216,6 @@ _RULES: dict[str, dict[int, str]] = {
             "list it in skills. List skills as plain names — no parenthetical qualifiers, "
             "no 'alternative:' or 'similar to:' annotations."
         ),
-        4: (
-            "You MAY add technologies to the skills section that are clearly implied by the "
-            "candidate's stack. Plain names only."
-        ),
-        5: (
-            "You MAY add technologies the candidate plausibly knows based on their stack. "
-            "Plain names only."
-        ),
-        6: "Add any technologies that would strengthen the application. Plain names only.",
     },
     "summary": {
         0: "Do NOT adjust the summary beyond minor word reordering.",
@@ -297,16 +257,6 @@ _RULES: dict[str, dict[int, str]] = {
             "increasing word count. Final summary: 2-4 sentences of dense, factual text. "
             "No hollow phrases like 'results-driven professional' or 'proven track record'."
         ),
-        4: (
-            "Be assertive in positioning the candidate as a strong fit for the role.\n"
-            "STRUCTURE — Follow the 3-Part High-Converting Anchor Formula (Professional Anchor, "
-            "Core Stack Matrix, and Scale/Caliber Anchor).\n"
-            "Use Chain of Density: draft, then compress — replace every filler adjective with a "
-            "specific tool, metric, or domain term. 2-4 dense sentences. If a phrase could apply "
-            "to any engineer, cut it and replace with something only THIS candidate can claim."
-        ),
-        5: "The summary should position the candidate as an excellent fit.",
-        6: "The summary should present the candidate as a perfect fit.",
     },
     "tone": {
         0: "",
@@ -468,51 +418,6 @@ _RULES: dict[str, dict[int, str]] = {
             "- Do NOT swap across categories (e.g., do not swap a database for a message queue).\n"
             "- Do NOT fabricate metrics, team sizes, or project scopes — only swap tool names."
         ),
-        4: (
-            "SELECTIVE STACK SUBSTITUTION — swap equivalent technologies in SOME roles when the "
-            "JD requires a different tool, but preserve the candidate's real stack diversity.\n"
-            "Valid swap categories:\n"
-            "- Cloud providers: AWS <-> GCP <-> Azure (EC2/Compute Engine/VM, S3/GCS/Blob Storage, "
-            "EKS/GKE/AKS, RDS/Cloud SQL/Azure SQL, Lambda/Cloud Functions/Azure Functions, "
-            "SQS/Pub-Sub/Service Bus, CloudWatch/Cloud Monitoring/Azure Monitor, "
-            "CloudFormation/Deployment Manager/ARM Templates, IAM/IAM/Entra ID)\n"
-            "- CI/CD: GitHub Actions <-> GitLab CI <-> Jenkins <-> CircleCI <-> Azure DevOps\n"
-            "- IaC: Terraform <-> Pulumi <-> CloudFormation <-> CDK <-> ARM Templates\n"
-            "- Monitoring: Datadog <-> Prometheus+Grafana <-> New Relic <-> Dynatrace\n"
-            "- Databases: PostgreSQL <-> MySQL <-> SQL Server (relational); "
-            "Redis <-> Memcached (cache); MongoDB <-> DynamoDB <-> Firestore (document)\n"
-            "- Messaging: Kafka <-> RabbitMQ <-> SQS <-> Pub/Sub\n"
-            "CRITICAL DIVERSITY RULE for Level 4:\n"
-            "- Do NOT uniformly replace the same technology across ALL roles. A candidate's "
-            "history should show realistic stack diversity — it is normal for different companies "
-            "to use different stacks.\n"
-            "- Swap the target stack into AT MOST 1-2 of the most relevant roles (ideally the "
-            "most recent or most aligned with the JD). Leave remaining roles on their ORIGINAL "
-            "stack.\n"
-            "- Example: if the candidate used AWS at 3 companies and the JD wants GCP, swap "
-            "to GCP at ONE company (the most relevant one), keep AWS at the others. The result "
-            "shows the candidate knows GCP AND has breadth across cloud providers.\n"
-            "Other rules:\n"
-            "- Swap the technology name but keep the achievement, metrics, and scope intact.\n"
-            "- You MAY add 1-2 new bullets per role using the target stack IF the candidate "
-            "has equivalent experience. Keep them concise and interview-defensible.\n"
-            "- MANDATORY: document every swap in tailoring_notes with action 'substituted' "
-            "and every added bullet with action 'soft-fabricated'. The source field MUST name "
-            "the original technology and the equivalence basis.\n"
-            "- NEVER put annotations like '(substituted)', '(soft-fabricated)', or any action "
-            "labels inside the actual bullet text. These labels belong ONLY in tailoring_notes. "
-            "The CV bullets must read as natural, clean text with no metadata visible.\n"
-            "- Do NOT swap across categories (e.g., do not swap a database for a message queue).\n"
-            "- Do NOT fabricate metrics, team sizes, or project scopes — only swap tool names."
-        ),
-        5: (
-            "AGGRESSIVE STACK SUBSTITUTION — swap equivalent technologies across ALL roles "
-            "to present a unified stack aligned with the JD. The Level 4 diversity constraint "
-            "is LIFTED — you may replace the same technology everywhere. Additionally, you MAY "
-            "make broader technology swaps even without direct equivalence, as long as the "
-            "candidate's experience demonstrates the underlying patterns and concepts."
-        ),
-        6: "Unrestricted technology substitution and fabrication.",
     },
     "keyword_policy": {
         0: (
@@ -654,7 +559,7 @@ def _build_prompt(base_cv: BaseCV, job_text: str, creativity_level: int = 2, use
     Instead of layering contradictory instructions, each concern (titles, bullets,
     skills, summary, inference) is stated exactly once at the appropriate strictness.
     """
-    level = max(0, min(6, creativity_level))
+    level = max(0, min(3, creativity_level))
     base_cv_yaml = _serialize_base_cv(base_cv)
 
     title_rule = _resolve_rule("titles", level)
@@ -878,7 +783,7 @@ def _build_system_prompt_for_chat(creativity_level: int = 2) -> str:
     The CoT preamble is prepended to the system message;
     the CV + job listing go in the user message via _build_user_prompt().
     """
-    level = max(0, min(6, creativity_level))
+    level = max(0, min(3, creativity_level))
     level_label = Creativity(level).name
 
     title_rule = _resolve_rule("titles", level)
@@ -1322,7 +1227,7 @@ def map_evidence(
     """
     base_cv_yaml = _serialize_base_cv(base_cv)
     base_cv_hash = _compute_hash(base_cv_yaml)
-    level = max(0, min(6, creativity_level))
+    level = max(0, min(3, creativity_level))
 
     req_list_yaml = yaml.dump(
         [r.model_dump() for r in requirements.requirements],
@@ -1449,7 +1354,7 @@ def generate_tailored_cv(
         creativity_level: Creativity level for bullet rewriting rules.
         user_notes: Optional user guidance.
     """
-    level = max(0, min(6, creativity_level))
+    level = max(0, min(3, creativity_level))
     level_label = Creativity(level).name
 
     base_cv_yaml = _serialize_base_cv(base_cv)

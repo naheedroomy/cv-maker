@@ -8,9 +8,8 @@ Shared CSS styles imported by multiple components. Currently a single module pro
 
 ### `selector.css` — Shared Selector Styles
 
-Provides the visual foundation for three pill-selector components:
+Provides the visual foundation for selector components:
 - `ModelSelector.vue`
-- `ToneSelector.vue`
 - `CreativitySlider.vue`
 
 **CSS classes provided**:
@@ -23,14 +22,13 @@ Provides the visual foundation for three pill-selector components:
 | `.pill-option--disabled` | Disabled state: gray text, `cursor: not-allowed` |
 | `.field-label` | Block-level label (14px, semibold) with 6px bottom margin |
 | `.field-hint` | Descriptive hint text (12px, gray) below the selector |
-| `.field-hint--warning` | Red variation for high-risk creativity levels (5+) |
+| `.field-hint--warning` | Red variation for warning/alert hint text |
 
 **Interaction**: Pill hover shows light gray background unless active or disabled. All transitions are 150ms ease.
 
 ## Integration Points
 
 - **`ModelSelector.vue`**: Imports via `import '@/assets/selector.css'`
-- **`ToneSelector.vue`**: Imports via `import '@/assets/selector.css'`
 - **`CreativitySlider.vue`**: Imports via `import '@/assets/selector.css'`
 - Each component adds its own scoped styles for component-specific layout (e.g., margin-bottom on the selector wrapper)
 

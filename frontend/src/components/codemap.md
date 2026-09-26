@@ -77,26 +77,26 @@ Reusable Vue components that compose into views. Each component has a single, fo
 **Integration**: Imports `@/assets/selector.css` for shared pill styles. Used by `JobFormView`, `RegeneratePanel`, `CoverLetterSection`, `CvConverterView`.
 
 ### `CreativitySlider.vue`
-**Purpose**: Pill-group selector for creativity level (0–6).
+**Purpose**: Pill-group selector for creativity level (0–3).
 
 **Props**: `modelValue: number`, `disabled: boolean`  
 **Emits**: `update:modelValue`
 
-**Levels**: 0 (Strict) through 6 (Creative). Levels ≥5 show warning-colored hint text. Each level has a descriptive hint.
+**Levels**: 0 (Strict) through 3 (Selective). Each level has a descriptive hint.
 
 **Integration**: Imports `@/assets/selector.css`. Used by `JobFormView` and `RegeneratePanel`.
 
 ### `RegeneratePanel.vue`
-**Purpose**: Expandable panel for CV regeneration with model/creativity controls.
+**Purpose**: Expandable panel for CV regeneration with model overrides, reasoning effort, creativity level, and custom instructions.
 
-**Props**: `currentModel: string`, `currentCreativityLevel: number`, `disabled: boolean`  
-**Emits**: `regenerate(model, creativityLevel)`
+**Props**: `currentModel: string`, `currentCreativityLevel: number`, `currentNotes?: string | null`, `currentModelId?: string | null`, `currentReasoningEffort?: string | null`, `disabled: boolean`  
+**Emits**: `regenerate(model, creativityLevel, userNotes, modelId?, reasoningEffort?)`
 
 **Behavior**:
 - Toggle button shows "Regenerate" or "Cancel" (when expanded) or "Regenerating..." (when disabled)
-- Expanded panel: `ModelSelector` + `CreativitySlider` + "Regenerate Now" button
+- Expanded panel: `ModelSelector` (with model override & reasoning effort details) + `CreativitySlider` (0–3) + Custom instructions textarea + "Regenerate Now" button
 - Provider availability fetched from `/api/config` on mount
-- Selections reset to `currentModel`/`currentCreativityLevel` when props change (job navigation)
+- Selections reset to current job props when props change (job navigation)
 
 ### `PdfDropZone.vue`
 **Purpose**: Drag-and-drop PDF upload zone with click-to-browse fallback.

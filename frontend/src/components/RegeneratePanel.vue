@@ -8,15 +8,28 @@ const props = defineProps<{
   currentModel: string
   currentCreativityLevel: number
   disabled: boolean
+  currentNotes?: string | null
+  currentModelId?: string | null
+  currentReasoningEffort?: string | null
 }>()
 
 const emit = defineEmits<{
-  (e: 'regenerate', model: string, creativityLevel: number): void
+  (
+    e: 'regenerate',
+    model: string,
+    creativityLevel: number,
+    userNotes?: string,
+    modelId?: string,
+    reasoningEffort?: string,
+  ): void
 }>()
 
 const panelOpen = ref(false)
 const selectedModel = ref(props.currentModel)
-const selectedCreativity = ref(props.currentCreativityLevel)
+const selectedModelId = ref(props.currentModelId ?? '')
+const selectedReasoningEffort = ref(props.currentReasoningEffort ?? 'auto')
+const selectedCreativity = ref(Math.min(3, props.currentCreativityLevel))
+const userNotes = ref(props.currentNotes ?? '')
 
 // Provider availability
 const claudeApiAvailable = ref(false)
@@ -42,11 +55,27 @@ watch(() => props.currentModel, (val) => {
   selectedModel.value = val
 })
 watch(() => props.currentCreativityLevel, (val) => {
-  selectedCreativity.value = val
+  selectedCreativity.value = Math.min(3, val)
+})
+watch(() => props.currentNotes, (val) => {
+  userNotes.value = val ?? ''
+})
+watch(() => props.currentModelId, (val) => {
+  selectedModelId.value = val ?? ''
+})
+watch(() => props.currentReasoningEffort, (val) => {
+  selectedReasoningEffort.value = val ?? 'auto'
 })
 
 function handleRegenerate(): void {
-  emit('regenerate', selectedModel.value, selectedCreativity.value)
+  emit(
+    'regenerate',
+    selectedModel.value,
+    selectedCreativity.value,
+    userNotes.value,
+    selectedModelId.value || undefined,
+    selectedReasoningEffort.value || undefined,
+  )
   panelOpen.value = false
 }
 </script>
@@ -66,16 +95,30 @@ function handleRegenerate(): void {
     <div v-if="panelOpen" class="regenerate-options">
       <ModelSelector
         v-model="selectedModel"
+        v-model:model-id="selectedModelId"
+        v-model:reasoning-effort="selectedReasoningEffort"
         :claude-api-available="claudeApiAvailable"
         :gemini-available="geminiAvailable"
         :openai-available="openaiAvailable"
         :gemini-web-available="geminiWebAvailable"
         :disabled="disabled"
+        :show-model-details="true"
       />
       <CreativitySlider
         v-model="selectedCreativity"
         :disabled="disabled"
       />
+      <div class="field">
+        <label class="field-label" for="regen-notes">Custom Instructions (optional)</label>
+        <textarea
+          id="regen-notes"
+          v-model="userNotes"
+          class="field-textarea field-textarea--small"
+          placeholder="e.g. replace GCP with AWS on HiAcuity work experience, emphasize platform engineering..."
+          :disabled="disabled"
+          rows="3"
+        ></textarea>
+      </div>
       <button
         class="btn-regenerate-now"
         :disabled="disabled"
@@ -136,5 +179,40 @@ function handleRegenerate(): void {
 .btn-regenerate-now:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 6px;
+}
+
+.field-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-1);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.field-textarea:disabled {
+  background: var(--color-surface-2);
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+}
+
+.field-textarea--small {
+  min-height: 72px;
 }
 </style>

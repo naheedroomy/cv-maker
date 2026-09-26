@@ -254,8 +254,8 @@ class TestResolveRule:
 
     def test_inherits_from_lower_level(self) -> None:
         """If no key for requested level, inherits from highest key below it."""
-        # Inference only defines 0, 1, 2 — level 4 should inherit from 2
-        result = _resolve_rule("inference", 4)
+        # Inference only defines 0, 1, 2 — level 3 should inherit from 2
+        result = _resolve_rule("inference", 3)
         assert "Technology adjacency" in result
 
     def test_all_rules_have_level_2(self) -> None:
@@ -294,26 +294,15 @@ class TestParameterizedPrompt:
         assert "Prefer the second most recent role" in result
         assert "Do NOT substitute technologies in the most recent/current role" in result
 
-    def test_level_4_contains_exposure_language(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """Level 5 prompt includes 'exposure, not ownership' language."""
-        result = _build_prompt(base_cv, sample_job_text, 5)
-        assert "exposure" in result.lower()
-
-    def test_level_5_contains_fabrication_warning(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """Level 6 prompt includes fabrication warning."""
-        result = _build_prompt(base_cv, sample_job_text, 6)
-        assert "fabricate" in result.lower()
-        assert "WARNING" in result
-
     def test_level_label_embedded(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """Prompt includes the level number and name."""
         result = _build_prompt(base_cv, sample_job_text, 3)
         assert "CREATIVITY LEVEL: 3 (SELECTIVE)" in result
 
     def test_all_levels_produce_distinct_prompts(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """All 7 levels produce distinct prompt text."""
-        prompts = [_build_prompt(base_cv, sample_job_text, i) for i in range(7)]
-        assert len(set(prompts)) == 7
+        """All 4 levels produce distinct prompt text."""
+        prompts = [_build_prompt(base_cv, sample_job_text, i) for i in range(4)]
+        assert len(set(prompts)) == 4
 
     def test_default_is_level_2(self, base_cv: BaseCV, sample_job_text: str) -> None:
         """Calling without creativity_level defaults to level 2."""
@@ -344,13 +333,13 @@ class TestParameterizedPrompt:
         assert "FLOORS" in result or "minimum" in result.lower()
 
     def test_level_clamped_to_range(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """Levels outside 0-6 are clamped."""
+        """Levels outside 0-3 are clamped."""
         low = _build_prompt(base_cv, sample_job_text, -1)
         zero = _build_prompt(base_cv, sample_job_text, 0)
         assert low == zero
         high = _build_prompt(base_cv, sample_job_text, 99)
-        six = _build_prompt(base_cv, sample_job_text, 6)
-        assert high == six
+        three = _build_prompt(base_cv, sample_job_text, 3)
+        assert high == three
 
 
 class TestChatPrompt:
@@ -403,12 +392,15 @@ class TestCreativityEnum:
 
     def test_values(self) -> None:
         assert Creativity.STRICT == 0
+        assert Creativity.CONSERVATIVE == 1
         assert Creativity.DEFAULT == 2
-        assert Creativity.CREATIVE == 6
+        assert Creativity.SELECTIVE == 3
 
     def test_name_lookup(self) -> None:
+        assert Creativity(0).name == "STRICT"
+        assert Creativity(1).name == "CONSERVATIVE"
+        assert Creativity(2).name == "DEFAULT"
         assert Creativity(3).name == "SELECTIVE"
-        assert Creativity(4).name == "FORWARD"
 
 
 class TestPromptHardening:
@@ -437,11 +429,11 @@ class TestPromptHardening:
         result = _build_prompt(base_cv, sample_job_text, 2)
         assert "BULLET COUNT CEILING" in result
 
-    def test_no_soft_fabrication_in_level_4(self, base_cv: BaseCV, sample_job_text: str) -> None:
-        """Level 4 prompt does NOT mention SOFT FABRICATION anymore."""
-        result = _build_prompt(base_cv, sample_job_text, 4)
+    def test_no_soft_fabrication_in_level_3(self, base_cv: BaseCV, sample_job_text: str) -> None:
+        """Level 3 prompt does NOT mention SOFT FABRICATION."""
+        result = _build_prompt(base_cv, sample_job_text, 3)
         assert "SOFT FABRICATION" not in result
-        assert "NO FABRICATION" in result
+        assert "TRUTH GUARD" in result
 
     def test_chat_prompt_has_injection_protection(self) -> None:
         """Chat system prompt includes injection protection."""
@@ -676,10 +668,10 @@ class TestKeywordPolicyInPrompt:
         prompt = _build_prompt(base_cv, sample_job_text, 2)
         assert "NATURAL KEYWORD EMBEDDING POLICY" in prompt
 
-    def test_keyword_policy_in_build_prompt_level_6(
+    def test_keyword_policy_in_build_prompt_level_3(
         self, base_cv: BaseCV, sample_job_text: str
     ) -> None:
-        prompt = _build_prompt(base_cv, sample_job_text, 6)
+        prompt = _build_prompt(base_cv, sample_job_text, 3)
         assert "NATURAL KEYWORD EMBEDDING POLICY" in prompt
 
     def test_keyword_policy_in_chat_system_prompt(self) -> None:
@@ -688,7 +680,7 @@ class TestKeywordPolicyInPrompt:
 
     def test_keyword_policy_in_chat_prompt_all_levels(self) -> None:
         """Keyword policy appears at all creativity levels in chat prompt."""
-        for level in range(7):
+        for level in range(4):
             prompt = pipeline._build_system_prompt_for_chat(level)
             assert "NATURAL KEYWORD EMBEDDING POLICY" in prompt, (
                 f"Missing at level {level}"
@@ -714,7 +706,7 @@ class TestKeywordPolicyInPrompt:
 
     def test_keyword_policy_resolved_at_all_levels(self) -> None:
         """_resolve_rule returns keyword policy at all levels."""
-        for level in range(7):
+        for level in range(4):
             rule = _resolve_rule("keyword_policy", level)
             assert "NATURAL KEYWORD EMBEDDING POLICY" in rule
             assert len(rule) > 100  # noqa: PLR2004
@@ -756,7 +748,7 @@ class TestBulletStrategyInPrompt:
         assert "IMPACT-DRIVEN BULLET STRATEGY" in prompt
 
     def test_strategy_resolved_at_all_levels(self) -> None:
-        for level in range(7):
+        for level in range(4):
             rule = _resolve_rule("bullet_strategy", level)
             assert "IMPACT-DRIVEN BULLET STRATEGY" in rule
             assert len(rule) > 200  # noqa: PLR2004

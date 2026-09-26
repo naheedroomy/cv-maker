@@ -34,7 +34,7 @@ HTTP endpoint handlers for the CV Maker API, organized by domain concern. Each r
 | `PATCH` | `/jobs/{id}/applied` | **Toggle applied status.** Flips the `applied` boolean and sets/clears `applied_at` timestamp. |
 | `GET` | `/jobs/{id}/pdf` | **Download PDF** for a completed job. Returns raw PDF bytes. 404 if job is not `complete` or PDF path is null. |
 | `GET` | `/jobs/{id}/pdf/{version}` | **Download historical PDF** from the CV version history (`cv_history_json`). |
-| `POST` | `/jobs/{id}/regenerate` | **Re-run CV pipeline** on an existing job. Archives current CV into history, resets status to `pending`, clears outputs, and kicks off the worker. Optionally changes model/creativity. Preserves cover letter data. |
+| `POST` | `/jobs/{id}/regenerate` | **Re-run CV pipeline** on an existing job. Archives current CV into history, resets status to `pending`, clears outputs, and kicks off the worker. Optionally updates model, model_id, reasoning_effort, creativity_level (0–3), and user_notes. Preserves cover letter data. |
 | `GET` | `/jobs/{id}/events` | **SSE event stream.** Subscribes to real-time status/completion events from the worker. If the job is already terminal, yields one event and closes. Uses 30-second keep-alive timeouts. |
 
 ### `cover_letter.py` — `prefix="/jobs"`, tag `"cover-letter"`
