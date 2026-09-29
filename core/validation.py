@@ -428,7 +428,15 @@ def _check_keyword_stuffing(
             )
 
     # ── Skills section keyword dumping ───────────────────────────────
-    for skill in tailored.skills:
+    individual_skills: list[str] = []
+    for s in tailored.skills:
+        if ":" in s:
+            _, rest = s.split(":", 1)
+            individual_skills.extend(item.strip() for item in rest.split(",") if item.strip())
+        elif s.strip():
+            individual_skills.append(s.strip())
+
+    for skill in individual_skills:
         skill_norm = skill.strip().lower()
         # Check if this skill appears to be a JD keyword with no base CV evidence
         is_jd_keyword = any(

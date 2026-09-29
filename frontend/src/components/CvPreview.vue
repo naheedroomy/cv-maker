@@ -1,6 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { TailoredCV } from '@/types'
-defineProps<{ cv: TailoredCV }>()
+
+const props = defineProps<{ cv: TailoredCV }>()
+
+const hasCategorizedSkills = computed(() => {
+  return props.cv?.skills?.some((s: string) => s.includes(':')) ?? false
+})
 </script>
 
 <template>
@@ -56,7 +62,18 @@ defineProps<{ cv: TailoredCV }>()
     <!-- Skills -->
     <section v-if="cv.skills && cv.skills.length > 0" class="cv-section">
       <h3 class="section-heading">Skills</h3>
-      <p class="body-text">{{ cv.skills.join(', ') }}</p>
+      <div v-if="hasCategorizedSkills" class="skills-categorized">
+        <div v-for="(skill, i) in cv.skills" :key="i" class="skill-category-row">
+          <template v-if="skill.includes(':')">
+            <span class="skill-cat-name">{{ skill.split(':')[0] }}:</span>
+            <span class="skill-cat-items">{{ skill.split(':').slice(1).join(':').trim() }}</span>
+          </template>
+          <template v-else>
+            <span>{{ skill }}</span>
+          </template>
+        </div>
+      </div>
+      <p v-else class="body-text">{{ cv.skills.join(', ') }}</p>
     </section>
 
     <!-- Highlighted Technologies -->
@@ -221,5 +238,25 @@ defineProps<{ cv: TailoredCV }>()
 }
 .bullet-list li:last-child {
   margin-bottom: 0;
+}
+
+/* Categorized Skills */
+.skills-categorized {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.skill-category-row {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+.skill-cat-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-right: 6px;
+}
+.skill-cat-items {
+  color: var(--color-text-secondary);
 }
 </style>

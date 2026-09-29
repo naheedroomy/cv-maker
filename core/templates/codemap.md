@@ -54,7 +54,7 @@ The template uses the `moderncv` LaTeX document class with `banking` style and `
 | Experience | 62–79 | Always (expected non-empty) | `\cventry` per role: date range, title, company, location; `itemize` bullets with `\|be` filter (escape + bold→`\textbf{}`) |
 | Certifications | 81–89 | Yes (if `cv.certifications` non-empty) | `itemize` list |
 | Education | 91–99 | Always (expected non-empty) | `\cventry` per entry: year, degree, institution, field |
-| Skills | 101–105 | Yes (if `cv.skills` non-empty) | Comma-separated string via `\|e` filter |
+| Skills | 101–112 | Yes (if `cv.skills` non-empty) | Categorized lines with bold headers (`\textbf{Category:}`) or comma-separated via `\|e` filter |
 | Highlighted Technologies | 107–111 | Yes (if `cv.highlighted_technologies` non-empty) | Comma-separated string via `\|e` filter |
 | Languages | 113–119 | Yes (if `cv.languages` non-empty) | `\cvitem` per language: name → level |
 | Projects | 121–135 | Yes (if `cv.projects` non-empty) | `\cvitem` per project: name → description, optional technologies in italics, optional `\href` URL |

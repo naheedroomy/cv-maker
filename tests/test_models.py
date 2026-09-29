@@ -139,3 +139,72 @@ class TestEvidenceMatchDefaults:
         data = em.model_dump()
         assert data["matches"][0]["differentiator_categories"] == ["automation"]
         assert data["matches"][0]["impact_signals"] == ["standardized_process"]
+
+
+class TestTailoredCVSkills:
+    """Tests for TailoredCV categorized skills normalization and 15-skill ceiling."""
+
+    def test_skills_from_dict_normalization(self) -> None:
+        """Dict of categories normalized to list of category strings."""
+        tcv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "test@example.com"},
+            "summary": "Summary",
+            "experience": [],
+            "skills": {
+                "Cloud & Platforms": ["AWS", "GCP", "Azure"],
+                "DevOps": ["Docker", "Kubernetes"],
+            },
+            "education": [],
+        })
+        assert tcv.skills == [
+            "Cloud & Platforms: AWS, GCP, Azure",
+            "DevOps: Docker, Kubernetes",
+        ]
+
+    def test_skills_from_list_of_dicts_normalization(self) -> None:
+        """List of category dicts normalized to category strings."""
+        tcv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "test@example.com"},
+            "summary": "Summary",
+            "experience": [],
+            "skills": [
+                {"category": "Cloud & Platforms", "skills": ["AWS", "GCP"]},
+                {"category": "Languages", "items": ["Python", "Go"]},
+            ],
+            "education": [],
+        })
+        assert tcv.skills == [
+            "Cloud & Platforms: AWS, GCP",
+            "Languages: Python, Go",
+        ]
+
+    def test_skills_deduplication_and_15_cap(self) -> None:
+        """Skills are deduplicated and capped at 15 total across all categories."""
+        # 4 categories with 5 skills each = 20 skills total
+        input_skills = [
+            "Cloud & Platforms: AWS, GCP, Azure, OpenStack, VMware",
+            "DevOps: Docker, Kubernetes, Helm, Terraform, Ansible",
+            "CI/CD: GitHub Actions, GitLab CI, ArgoCD, Jenkins, aws",  # 'aws' is duplicate
+            "Languages: Python, Go, TypeScript, Bash, Rust",
+        ]
+        tcv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "test@example.com"},
+            "summary": "Summary",
+            "experience": [],
+            "skills": input_skills,
+            "education": [],
+        })
+
+        # Count total skills across categories
+        total_skills = 0
+        for entry in tcv.skills:
+            assert ":" in entry
+            _, rest = entry.split(":", 1)
+            items = [s.strip() for s in rest.split(",") if s.strip()]
+            total_skills += len(items)
+
+        assert total_skills == 15
+        # The duplicate 'aws' should not appear in CI/CD, and total shouldn't exceed 15
+        assert "Jenkins" in tcv.skills[2]
+        # Languages should only have the remaining slots up to 15
+        assert "Languages: Python" in tcv.skills[3]
