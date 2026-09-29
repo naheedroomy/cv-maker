@@ -9,10 +9,12 @@ import ErrorBanner from '@/components/ErrorBanner.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import SkeletonSection from '@/components/SkeletonSection.vue'
 import CvPreview from '@/components/CvPreview.vue'
+import CvFormEditor from '@/components/CvFormEditor.vue'
 import GapDiffTable from '@/components/GapDiffTable.vue'
 import TailoringNotes from '@/components/TailoringNotes.vue'
 import RegeneratePanel from '@/components/RegeneratePanel.vue'
 import CoverLetterSection from '@/components/CoverLetterSection.vue'
+import type { TailoredCV } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,6 +27,9 @@ const downloading = ref(false)
 const deleting = ref(false)
 const regenerating = ref(false)
 const savingListing = ref(false)
+const isEditingCv = ref(false)
+const editableTailoredCv = ref<TailoredCV | null>(null)
+const savingCv = ref(false)
 const activeTab = ref<'cv' | 'cover-letter' | 'analysis' | 'job-listing'>('cv')
 
 const statusText: Record<string, string> = {
@@ -38,6 +43,8 @@ const statusText: Record<string, string> = {
 async function loadJob(id: string) {
   store.closeSSE()
   currentJob.value = null
+  isEditingCv.value = false
+  editableTailoredCv.value = null
   activeTab.value = 'cv'
   await store.fetchJob(id)
   // Re-read from store — fetchJob sets currentJob.value internally.
@@ -152,6 +159,31 @@ async function handleRegenerate(
     regenerating.value = false
   }
 }
+
+function startEditCv() {
+  if (!currentJob.value?.tailored_cv) return
+  editableTailoredCv.value = JSON.parse(JSON.stringify(currentJob.value.tailored_cv))
+  isEditingCv.value = true
+}
+
+function cancelEditCv() {
+  isEditingCv.value = false
+  editableTailoredCv.value = null
+}
+
+async function handleSaveEditedCv() {
+  if (!editableTailoredCv.value || !currentJob.value) return
+  savingCv.value = true
+  try {
+    await store.updateJobCv(jobId.value, editableTailoredCv.value)
+    isEditingCv.value = false
+    editableTailoredCv.value = null
+  } catch (err) {
+    store.error = err instanceof Error ? err.message : 'Failed to save CV'
+  } finally {
+    savingCv.value = false
+  }
+}
 </script>
 
 <template>
@@ -263,7 +295,7 @@ async function handleRegenerate(
       <!-- Complete/failed/cancelled state -->
       <template v-else>
         <!-- Action buttons -->
-        <div class="action-buttons">
+        <div v-if="!isEditingCv" class="action-buttons">
           <button
             v-if="currentJob.status === 'complete'"
             class="btn-primary"
@@ -272,6 +304,15 @@ async function handleRegenerate(
           >
             <LoadingSpinner v-if="downloading" class="btn-spinner" />
             {{ downloading ? 'Downloading...' : 'Download PDF' }}
+          </button>
+
+          <button
+            v-if="currentJob.status === 'complete'"
+            type="button"
+            class="btn-secondary"
+            @click="startEditCv"
+          >
+            Edit CV
           </button>
 
           <RegeneratePanel
@@ -293,9 +334,21 @@ async function handleRegenerate(
           </button>
         </div>
 
-        <!-- CV Preview -->
+        <!-- CV Form Editor (when editing) -->
+        <CvFormEditor
+          v-if="isEditingCv && editableTailoredCv"
+          v-model="editableTailoredCv"
+          title="Edit Tailored CV"
+          save-label="Save & Recompile PDF"
+          :saving="savingCv"
+          :show-cancel="true"
+          @save="handleSaveEditedCv"
+          @cancel="cancelEditCv"
+        />
+
+        <!-- CV Preview (when not editing) -->
         <CvPreview
-          v-if="currentJob.status === 'complete' && currentJob.tailored_cv"
+          v-else-if="currentJob.status === 'complete' && currentJob.tailored_cv"
           :cv="currentJob.tailored_cv"
         />
 

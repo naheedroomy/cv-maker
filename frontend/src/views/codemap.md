@@ -34,40 +34,38 @@ Top-level route-level Vue components. Each view corresponds to one route and com
 
 **Purpose**: View and manage a job session with tabs for CV, Cover Letter, Analysis, and Job Listing.
 
-**UI State**: `cancelling`, `downloading`, `deleting`, `regenerating`, `savingListing`, `activeTab` (one of `'cv' | 'cover-letter' | 'analysis' | 'job-listing'`)
+**UI State**: `cancelling`, `downloading`, `deleting`, `regenerating`, `savingListing`, `isEditingCv`, `editableTailoredCv`, `savingCv`, `activeTab` (one of `'cv' | 'cover-letter' | 'analysis' | 'job-listing'`)
 
 **Lifecycle**:
-1. Watch `route.params.id`: on change, closes existing SSE, nulls `currentJob`, fetches new job, opens SSE if non-terminal
+1. Watch `route.params.id`: on change, closes existing SSE, nulls `currentJob`, resets editing state, fetches new job, opens SSE if non-terminal
 2. `onUnmounted`: closes SSE
 
 **Tabs**:
-- **CV**: Shows generating skeleton or CV preview; action buttons for download, regenerate, delete; version history for previous CV generations
+- **CV**: Shows generating skeleton or CV preview; action buttons for download, edit CV, regenerate, delete; version history for previous CV generations. Toggling "Edit CV" switches to `<CvFormEditor>` to modify the tailored CV and recompile the PDF with version archiving.
 - **Cover Letter**: Delegates entirely to `CoverLetterSection` component
 - **Analysis**: Shows `GapDiffTable` and `TailoringNotes` if data exists
 - **Job Listing**: Editable form for job link and description with save button
 
-**Integration**: Uses `StatusBadge`, `ErrorBanner`, `LoadingSpinner`, `SkeletonSection`, `CvPreview`, `GapDiffTable`, `TailoringNotes`, `RegeneratePanel`, `CoverLetterSection`. All actions delegate to `jobStore`.
+**Integration**: Uses `StatusBadge`, `ErrorBanner`, `LoadingSpinner`, `SkeletonSection`, `CvPreview`, `CvFormEditor`, `GapDiffTable`, `TailoringNotes`, `RegeneratePanel`, `CoverLetterSection`. All actions delegate to `jobStore`.
 
 ### `BaseCvView.vue` — Route `/base-cv`
 
 **Purpose**: Edit the user's base CV (used as the starting point for tailoring).
 
-**UI State**: Reactive `collapsed` object for 8 sections, `sectionOrder` for drag-and-drop rearrangement, `draggedSection`, `downloading`
+**UI State**: `downloading`
 
 **States**:
 1. **Loading**: Spinner while fetching CV
 2. **Empty** (no CV): Shows `PdfDropZone` + "Create CV from scratch" button
-3. **Editing**: Full editor with collapsible sections (Contact, Summary, Experience, Education, Skills, Certifications, Projects, Languages)
-
-**Sections**: Contact (7 fields), Summary (textarea), Work Experience (array with company/title/dates/bullets/technologies), Education (array), Skills (tag editor), Certifications (list), Projects (array with name/url/description/technologies), Languages (language+level pairs)
+3. **Editing**: Uses shared `<CvFormEditor>` component with responsive 1040px scaling, auto-expanding textareas, drag-and-drop section reordering, and PDF download.
 
 **Features**:
-- Drag-and-drop section reordering
+- Auto-expanding bullet textareas with zero internal scrolling
 - Add/remove/reorder items within sections (↑↓ buttons)
-- Save CV, Download PDF, Remove CV actions in header
+- Save CV, Download PDF, Remove CV actions
 - Re-upload zone at top even when CV exists
 
-**Integration**: Uses `PdfDropZone`, `CvEditorSection`, `LoadingSpinner`. All data flows through `cvStore`.
+**Integration**: Uses `PdfDropZone`, `CvFormEditor`, `LoadingSpinner`. All data flows through `cvStore`.
 
 ### `CvConverterView.vue` — Route `/convert`
 

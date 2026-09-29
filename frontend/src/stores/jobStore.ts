@@ -120,6 +120,25 @@ export const useJobStore = defineStore('jobs', () => {
     return job.id
   }
 
+  async function updateJobCv(jobId: string, tailoredCv: TailoredCV): Promise<JobResponse> {
+    const res = await apiFetch(`/api/jobs/${jobId}/cv`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tailoredCv),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error((body as { detail?: string }).detail ?? `Failed to save CV: ${res.status}`)
+    }
+    const updated: JobResponse = await res.json()
+    if (currentJob.value?.id === jobId) {
+      currentJob.value = updated
+    }
+    const idx = jobs.value.findIndex((j) => j.id === jobId)
+    if (idx !== -1) jobs.value[idx] = updated
+    return updated
+  }
+
   async function downloadPdf(jobId: string, companyName: string, version?: number): Promise<void> {
     // Get cv_filename from settings for the download name
     let baseName = companyName
@@ -310,6 +329,7 @@ export const useJobStore = defineStore('jobs', () => {
     toggleApplied,
     deleteJob,
     regenerateJob,
+    updateJobCv,
     downloadPdf,
     openSSE,
     closeSSE,
