@@ -148,6 +148,38 @@ class TailoringNote(BaseModel):
     source: str = ""  # Evidence basis — base CV reference or inference rule; makes hallucination detectable
 
 
+def cap_skills(skills: list[str], max_skills: int = 15) -> list[str]:
+    """Deduplicate individual skills and enforce a ceiling across categories."""
+    total_skills = 0
+    cleaned_categories: list[str] = []
+    seen_skills: set[str] = set()
+
+    for entry in skills:
+        if total_skills >= max_skills:
+            break
+        if ":" in entry:
+            cat, rest = entry.split(":", 1)
+            items = [s.strip() for s in rest.split(",") if s.strip()]
+            kept_items: list[str] = []
+            for item in items:
+                if total_skills >= max_skills:
+                    break
+                if item.lower() not in seen_skills:
+                    seen_skills.add(item.lower())
+                    kept_items.append(item)
+                    total_skills += 1
+            if kept_items:
+                cleaned_categories.append(f"{cat.strip()}: {', '.join(kept_items)}")
+        else:
+            clean = entry.strip()
+            if clean and clean.lower() not in seen_skills:
+                seen_skills.add(clean.lower())
+                cleaned_categories.append(clean)
+                total_skills += 1
+
+    return cleaned_categories
+
+
 class TailoredCV(BaseModel):
     """Structured AI output — intermediate layer between Claude and LaTeX renderer.
 
@@ -220,35 +252,9 @@ class TailoredCV(BaseModel):
     @field_validator("skills", mode="after")
     @classmethod
     def _cap_and_clean_skills(cls, v: list[str]) -> list[str]:
-        """Deduplicate individual skills and enforce a 15-skill ceiling across categories."""
-        total_skills = 0
-        cleaned_categories: list[str] = []
-        seen_skills: set[str] = set()
+        """Deduplicate individual skills and clean formatting without dropping manual edits."""
+        return cap_skills(v, max_skills=30)
 
-        for entry in v:
-            if total_skills >= 15:
-                break
-            if ":" in entry:
-                cat, rest = entry.split(":", 1)
-                items = [s.strip() for s in rest.split(",") if s.strip()]
-                kept_items: list[str] = []
-                for item in items:
-                    if total_skills >= 15:
-                        break
-                    if item.lower() not in seen_skills:
-                        seen_skills.add(item.lower())
-                        kept_items.append(item)
-                        total_skills += 1
-                if kept_items:
-                    cleaned_categories.append(f"{cat.strip()}: {', '.join(kept_items)}")
-            else:
-                clean = entry.strip()
-                if clean and clean.lower() not in seen_skills:
-                    seen_skills.add(clean.lower())
-                    cleaned_categories.append(clean)
-                    total_skills += 1
-
-        return cleaned_categories
 
     @model_validator(mode="after")
     def _strip_annotation_leaks(self) -> "TailoredCV":
