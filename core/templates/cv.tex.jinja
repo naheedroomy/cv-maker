@@ -101,7 +101,14 @@
 \BLOCK{if cv.skills}
 \bigskip
 \section{Skills}
-\VAR{", ".join(cv.skills)|e}
+\BLOCK{for skill in cv.skills}
+\BLOCK{if ":" in skill}
+\BLOCK{set parts = skill.split(":", 1)}
+\textbf{\VAR{parts[0].strip()|e}:} \VAR{parts[1].strip()|e}\BLOCK{if not loop.last}\\[2pt]\BLOCK{endif}
+\BLOCK{else}
+\VAR{skill|e}\BLOCK{if not loop.last}, \BLOCK{endif}
+\BLOCK{endif}
+\BLOCK{endfor}
 \BLOCK{endif}
 
 \BLOCK{if cv.highlighted_technologies}

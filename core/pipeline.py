@@ -204,17 +204,49 @@ _RULES: dict[str, dict[int, str]] = {
         ),
     },
     "skills_injection": {
-        0: "Do NOT add any technologies not already listed in the base CV.",
-        1: "Do NOT add any technologies not already listed in the base CV.",
+        0: (
+            "Organize skills into 3-4 clean, logical categories formatted as "
+            "'<Category Name>: <Skill 1>, <Skill 2>, <Skill 3>' (e.g., 'Platforms & Cloud: "
+            "GCP, AWS, Azure', 'DevOps & IaC: Kubernetes, Docker, Terraform'). "
+            "Maximum 15 skills total across all categories combined (3-5 skills per category). "
+            "Do NOT add any technologies not already listed in the base CV. "
+            "Omit routine developer utilities and table-stakes workflow tools (e.g. Conventional "
+            "Commits, Git, Bash, npm, Jira, Slack, basic Linux CLI) unless explicitly central "
+            "to the JD. Plain names only — no parenthetical qualifiers."
+        ),
+        1: (
+            "Organize skills into 3-4 clean, logical categories formatted as "
+            "'<Category Name>: <Skill 1>, <Skill 2>, <Skill 3>' (e.g., 'Platforms & Cloud: "
+            "GCP, AWS, Azure', 'DevOps & IaC: Kubernetes, Docker, Terraform'). "
+            "Maximum 15 skills total across all categories combined (3-5 skills per category). "
+            "Do NOT add any technologies not already listed in the base CV. "
+            "Omit routine developer utilities and table-stakes workflow tools (e.g. Conventional "
+            "Commits, Git, Bash, npm, Jira, Slack, basic Linux CLI) unless explicitly central "
+            "to the JD. Plain names only — no parenthetical qualifiers."
+        ),
         2: (
+            "Organize skills into 3-4 clean, logical categories formatted as "
+            "'<Category Name>: <Skill 1>, <Skill 2>, <Skill 3>' (e.g., 'Platforms & Cloud: "
+            "GCP, AWS, Azure', 'DevOps & IaC: Kubernetes, Docker, Terraform'). "
+            "Maximum 15 skills total across all categories combined (3-5 skills per category). "
             "If you wove a technology into experience bullets via inference, you MAY also "
-            "list it in skills. List skills as plain names — no parenthetical qualifiers, "
-            "no 'alternative:' or 'similar to:' annotations."
+            "list it in skills under the appropriate category. "
+            "Omit routine developer utilities and table-stakes workflow tools (e.g. Conventional "
+            "Commits, Git, Bash, npm, Jira, Slack, basic Linux CLI) unless explicitly central "
+            "to the JD. Plain names only — no parenthetical qualifiers, no 'alternative:' "
+            "or 'similar to:' annotations."
         ),
         3: (
+            "Organize skills into 3-4 clean, logical categories formatted as "
+            "'<Category Name>: <Skill 1>, <Skill 2>, <Skill 3>' (e.g., 'Platforms & Cloud: "
+            "GCP, AWS, Azure', 'DevOps & IaC: Kubernetes, Docker, Terraform'). "
+            "Maximum 15 skills total across all categories combined (3-5 skills per category). "
             "If you wove a technology into experience bullets via inference, you MAY also "
-            "list it in skills. List skills as plain names — no parenthetical qualifiers, "
-            "no 'alternative:' or 'similar to:' annotations."
+            "list it in skills under the appropriate category. "
+            "Omit routine developer utilities and table-stakes workflow tools (e.g. Conventional "
+            "Commits, Git, Bash, npm, Jira, Slack, basic Linux CLI) unless explicitly central "
+            "to the JD. Plain names only — no parenthetical qualifiers, no 'alternative:' "
+            "or 'similar to:' annotations."
         ),
     },
     "summary": {
@@ -446,8 +478,9 @@ _RULES: dict[str, dict[int, str]] = {
             "- Pair semantically related keywords naturally in the same bullet (e.g., "
             "'Kubernetes + auto-scaling', 'Python + FastAPI') rather than dumping unrelated "
             "keywords into one sentence.\n"
-            "- Do NOT dump JD keywords into the skills section to inflate keyword match scores. "
-            "Skills must only list technologies the candidate demonstrably has.\n"
+            "- Do NOT dump JD keywords or routine tools into the skills section to inflate keyword "
+            "match scores. Skills must be grouped into 3-4 clean categories with at most 15 "
+            "high-impact technologies total that the candidate demonstrably has.\n"
             "- Avoid keyword stuffing: bullets that read as bare technology enumerations "
             "('Used Python, Docker, Kubernetes, Terraform') violate this policy. "
             "Rewrite to show action and impact."
@@ -670,7 +703,7 @@ IMPLICIT INFERENCE RULES:
 SUBSTITUTION:
 {substitution_rule}
 
-SKILLS: Filter and reorder to lead with the most relevant.
+SKILLS: Group into 3-4 clean categories (e.g. 'Platforms & Cloud: GCP, AWS, Azure'). Max 15 skills total.
 {skills_rule}
 
 {highlighted_tech_rule}
@@ -745,7 +778,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary) matching thi
       "technologies": ["<tech>"]
     }}
   ],
-  "skills": ["<most relevant first>"],
+  "skills": ["<Category: Skill 1, Skill 2, Skill 3> (3-4 categories, max 15 skills total)"],
   "education": [{{"institution": "<str>", "degree": "<str>",
                    "field": "<str or null>", "year": "<int or null>"}}],
   "projects": [{{"name": "<str>", "description": "<str>",
@@ -947,7 +980,7 @@ as a single JSON object matching this schema:
       "technologies": ["<tech>"]
     }}
   ],
-  "skills": ["<most relevant first>"],
+  "skills": ["<Category: Skill 1, Skill 2, Skill 3> (3-4 categories, max 15 skills total)"],
   "education": [{{"institution": "<str>", "degree": "<str>",
                    "field": "<str or null>", "year": "<int or null>"}}],
   "projects": [{{"name": "<str>", "description": "<str>",
@@ -1544,7 +1577,7 @@ Return ONLY valid JSON matching this schema:
       "technologies": ["<tech>"]
     }}
   ],
-  "skills": ["<most relevant first>"],
+  "skills": ["<Category: Skill 1, Skill 2, Skill 3> (3-4 categories, max 15 skills total)"],
   "education": [{{"institution": "<str>", "degree": "<str>",
                   "field": "<str or null>", "year": "<int or null>"}}],
   "projects": [{{"name": "<str>", "description": "<str>",

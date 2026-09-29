@@ -161,6 +161,31 @@ def test_render_latex_core_competencies_escapes_ampersand(tailored_cv_with_compe
 
 
 # ---------------------------------------------------------------------------
+# render_latex — Categorized Skills
+# ---------------------------------------------------------------------------
+
+
+def test_render_latex_categorized_skills(minimal_tailored_cv: TailoredCV) -> None:
+    """Categorized skills render with bold category header and line breaks."""
+    minimal_tailored_cv.skills = [
+        "Platforms & Cloud: GCP, AWS, Azure",
+        "DevOps & IaC: Kubernetes, Docker, Terraform",
+    ]
+    latex = render_latex(minimal_tailored_cv)
+    assert r"\section{Skills}" in latex
+    assert r"\textbf{Platforms \& Cloud:} GCP, AWS, Azure" in latex
+    assert r"\textbf{DevOps \& IaC:} Kubernetes, Docker, Terraform" in latex
+
+
+def test_render_latex_flat_skills_backwards_compatible(minimal_tailored_cv: TailoredCV) -> None:
+    """Flat skills render as comma-separated list without colons."""
+    minimal_tailored_cv.skills = ["Docker", "Kubernetes", "Python"]
+    latex = render_latex(minimal_tailored_cv)
+    assert r"\section{Skills}" in latex
+    assert "Docker, Kubernetes, Python" in latex
+
+
+# ---------------------------------------------------------------------------
 # render_pdf — latexmk-absent branch (always runs)
 # ---------------------------------------------------------------------------
 

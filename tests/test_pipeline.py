@@ -22,6 +22,8 @@ from core.models import (
 from core.pipeline import (
     Creativity,
     _build_prompt,
+    _build_system_prompt_for_chat,
+    _build_user_prompt,
     _resolve_rule,
     extract_requirements,
     generate_tailored_cv,
@@ -1524,5 +1526,36 @@ class TestModernAtsAndRecruiterPromptUpgrades:
         prompt = captured_prompts[0]
         assert "RECRUITER RED-TEAM AUDIT" in prompt
         assert "no bold in summary" in prompt.lower()
+
+
+class TestCategorizedSkillsPrompt:
+    """Tests for prompt guidance regarding categorized skills and 15-skill limit."""
+
+    def test_build_prompt_includes_categorized_skills_and_15_cap(
+        self, base_cv: BaseCV
+    ) -> None:
+        prompt = _build_prompt(base_cv, "Need Python and Kubernetes", creativity_level=2)
+        assert "SKILLS:" in prompt
+        prompt_lower = prompt.lower()
+        assert "categories" in prompt_lower or "categorized" in prompt_lower
+        assert "15" in prompt
+        assert "git" in prompt_lower
+        assert "bash" in prompt_lower
+
+    def test_build_system_prompt_includes_categorized_skills(self) -> None:
+        sys_prompt = _build_system_prompt_for_chat(creativity_level=2)
+        assert "SKILLS:" in sys_prompt
+        sys_lower = sys_prompt.lower()
+        assert "categories" in sys_lower or "categorized" in sys_lower
+        assert "15" in sys_prompt
+
+    def test_user_prompt_schema_has_categorized_skills_hint(
+        self, base_cv: BaseCV
+    ) -> None:
+        user_prompt = _build_user_prompt(base_cv, "Looking for cloud engineers")
+        assert '"skills": [' in user_prompt
+        prompt_lower = user_prompt.lower()
+        assert "category" in prompt_lower or "categories" in prompt_lower
+        assert "15" in user_prompt
 
 

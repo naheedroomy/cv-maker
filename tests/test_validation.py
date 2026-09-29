@@ -367,6 +367,38 @@ class TestKeywordStuffingValidation:
         stuffing_warnings = [w for w in warnings if "Unsubstantiated" in w or "keyword" in w.lower()]
         assert len(stuffing_warnings) > 0
 
+    def test_categorized_skill_unsubstantiated_keyword_warning(self) -> None:
+        """Categorized skill with no base CV evidence produces unsubstantiated warning."""
+        base = BaseCV.model_validate({
+            "contact": {
+                "name": "Jane Smith", "email": "jane@example.com", "github": "github.com/jane"
+            },
+            "summary": "Test.",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["Built REST APIs with Python"],
+                            "technologies": ["Python"]}],
+            "skills": ["Python"],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        tailored = TailoredCV.model_validate({
+            "contact": {
+                "name": "Jane Smith", "email": "jane@example.com", "github": "github.com/jane"
+            },
+            "summary": "Test.",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["Built REST APIs with Python"],
+                            "technologies": ["Python"]}],
+            "skills": ["CI/CD & GitOps: Python, ArgoCD"],  # ArgoCD has no base CV evidence
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        warnings = validate_tailored_cv(
+            base, tailored, jd_keywords=["Python", "ArgoCD", "GitOps"]
+        )
+        stuffing_warnings = [
+            w for w in warnings if "Unsubstantiated" in w or "argocd" in w.lower()
+        ]
+        assert len(stuffing_warnings) > 0
+
     def test_verified_skill_no_warning(self) -> None:
         """Skill with base CV evidence produces no warning."""
         base = BaseCV.model_validate({
@@ -388,6 +420,32 @@ class TestKeywordStuffingValidation:
         })
         warnings = validate_tailored_cv(base, tailored,
                                          jd_keywords=["Python"])
+        stuffing_warnings = [w for w in warnings if "Unsubstantiated" in w]
+        assert len(stuffing_warnings) == 0
+
+    def test_categorized_verified_skills_no_warning(self) -> None:
+        """Categorized skills with base CV evidence produce no unsubstantiated warning."""
+        base = BaseCV.model_validate({
+            "contact": {"name": "Jane Smith", "email": "jane@example.com"},
+            "summary": "Experienced engineer.",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["Engineered distributed services using Python and FastAPI"],
+                            "technologies": ["Python", "FastAPI"]}],
+            "skills": ["Python", "FastAPI"],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        tailored = TailoredCV.model_validate({
+            "contact": {"name": "Jane Smith", "email": "jane@example.com"},
+            "summary": "Experienced engineer.",
+            "experience": [{"company": "C", "title": "T", "start": "2020-01",
+                            "bullets": ["Engineered distributed services using Python and FastAPI"],
+                            "technologies": ["Python", "FastAPI"]}],
+            "skills": ["Languages & Frameworks: Python, FastAPI"],
+            "education": [{"institution": "U", "degree": "B"}],
+        })
+        warnings = validate_tailored_cv(
+            base, tailored, jd_keywords=["Python", "FastAPI"]
+        )
         stuffing_warnings = [w for w in warnings if "Unsubstantiated" in w]
         assert len(stuffing_warnings) == 0
 

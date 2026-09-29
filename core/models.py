@@ -179,6 +179,77 @@ class TailoredCV(BaseModel):
         re.IGNORECASE,
     )
 
+    @field_validator("skills", mode="before")
+    @classmethod
+    def _normalize_skills(cls, v: object) -> list[str]:
+        """Normalize skills from dicts or category objects into standard strings."""
+        if not v:
+            return []
+        if isinstance(v, dict):
+            return [
+                f"{cat}: {', '.join(items) if isinstance(items, list) else items}"
+                for cat, items in v.items()
+                if cat and items
+            ]
+        if isinstance(v, list):
+            res = []
+            for item in v:
+                if isinstance(item, dict):
+                    cat = item.get("category") or item.get("name") or ""
+                    skills_list = item.get("skills") or item.get("items") or []
+                    if cat:
+                        if isinstance(skills_list, list):
+                            items_str = ", ".join(
+                                str(s).strip() for s in skills_list if str(s).strip()
+                            )
+                            res.append(f"{cat}: {items_str}")
+                        else:
+                            res.append(f"{cat}: {str(skills_list).strip()}")
+                    elif skills_list:
+                        if isinstance(skills_list, list):
+                            res.extend(str(s).strip() for s in skills_list if str(s).strip())
+                        else:
+                            res.append(str(skills_list).strip())
+                elif isinstance(item, str):
+                    clean = item.strip()
+                    if clean:
+                        res.append(clean)
+            return res
+        return [str(v)]
+
+    @field_validator("skills", mode="after")
+    @classmethod
+    def _cap_and_clean_skills(cls, v: list[str]) -> list[str]:
+        """Deduplicate individual skills and enforce a 15-skill ceiling across categories."""
+        total_skills = 0
+        cleaned_categories: list[str] = []
+        seen_skills: set[str] = set()
+
+        for entry in v:
+            if total_skills >= 15:
+                break
+            if ":" in entry:
+                cat, rest = entry.split(":", 1)
+                items = [s.strip() for s in rest.split(",") if s.strip()]
+                kept_items: list[str] = []
+                for item in items:
+                    if total_skills >= 15:
+                        break
+                    if item.lower() not in seen_skills:
+                        seen_skills.add(item.lower())
+                        kept_items.append(item)
+                        total_skills += 1
+                if kept_items:
+                    cleaned_categories.append(f"{cat.strip()}: {', '.join(kept_items)}")
+            else:
+                clean = entry.strip()
+                if clean and clean.lower() not in seen_skills:
+                    seen_skills.add(clean.lower())
+                    cleaned_categories.append(clean)
+                    total_skills += 1
+
+        return cleaned_categories
+
     @model_validator(mode="after")
     def _strip_annotation_leaks(self) -> "TailoredCV":
         """Remove action labels like '(substituted)' from bullet text."""

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed, watch } from 'vue'
 import CvEditorSection from '@/components/CvEditorSection.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import type { BaseCV, TailoredCV, ExperienceItem, EducationItem, ProjectItem, LanguageItem } from '@/types'
@@ -174,14 +174,116 @@ function removeEducation(index: number) {
 
 // ── Skills ───────────────────────────────────────────────────────────────────
 
-function addSkill() {
-  if (!props.modelValue.skills) props.modelValue.skills = []
-  props.modelValue.skills.push('')
+interface SkillCategoryGroup {
+  category: string
+  skills: string[]
 }
 
-function removeSkill(index: number) {
-  props.modelValue.skills.splice(index, 1)
+function parseSkillsToGroups(rawSkills?: string[]): SkillCategoryGroup[] {
+  if (!rawSkills || rawSkills.length === 0) {
+    return [{ category: '', skills: [] }]
+  }
+  const groups: SkillCategoryGroup[] = []
+  let currentFlatGroup: SkillCategoryGroup | null = null
+
+  for (const item of rawSkills) {
+    if (item.includes(':')) {
+      if (currentFlatGroup && currentFlatGroup.skills.length > 0) {
+        groups.push(currentFlatGroup)
+        currentFlatGroup = null
+      }
+      const parts = item.split(':')
+      const cat = parts[0] ?? ''
+      const itemsStr = parts.slice(1).join(':')
+      const skillList = itemsStr
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      groups.push({
+        category: cat.trim(),
+        skills: skillList.length > 0 ? skillList : [''],
+      })
+    } else {
+      if (!currentFlatGroup) {
+        currentFlatGroup = { category: '', skills: [] }
+      }
+      if (item.trim()) {
+        currentFlatGroup.skills.push(item.trim())
+      }
+    }
+  }
+
+  if (currentFlatGroup && currentFlatGroup.skills.length > 0) {
+    groups.push(currentFlatGroup)
+  }
+
+  return groups.length > 0 ? groups : [{ category: '', skills: [] }]
 }
+
+function serializeGroups(groups: SkillCategoryGroup[]): string[] {
+  const result: string[] = []
+  for (const group of groups) {
+    const validSkills = group.skills.map((s) => s.trim()).filter(Boolean)
+    if (group.category.trim()) {
+      if (validSkills.length > 0) {
+        result.push(`${group.category.trim()}: ${validSkills.join(', ')}`)
+      }
+    } else {
+      result.push(...validSkills)
+    }
+  }
+  return result
+}
+
+const categoryGroups = ref<SkillCategoryGroup[]>(parseSkillsToGroups(props.modelValue.skills))
+
+function syncGroupsToModel() {
+  props.modelValue.skills = serializeGroups(categoryGroups.value)
+}
+
+const totalSkillsCount = computed(() => {
+  return categoryGroups.value.reduce(
+    (acc, g) => acc + g.skills.filter((s) => s.trim()).length,
+    0
+  )
+})
+
+function addSkillCategory() {
+  categoryGroups.value.push({ category: '', skills: [''] })
+  syncGroupsToModel()
+}
+
+function removeSkillCategory(index: number) {
+  categoryGroups.value.splice(index, 1)
+  syncGroupsToModel()
+}
+
+function addSkillToCategory(catIndex: number) {
+  if (totalSkillsCount.value >= 15) return
+  const group = categoryGroups.value[catIndex]
+  if (!group) return
+  group.skills.push('')
+  syncGroupsToModel()
+}
+
+function removeSkillFromCategory(catIndex: number, skillIndex: number) {
+  const group = categoryGroups.value[catIndex]
+  if (!group) return
+  group.skills.splice(skillIndex, 1)
+  syncGroupsToModel()
+}
+
+watch(
+  () => props.modelValue.skills,
+  (newSkills) => {
+    const current = (newSkills || []).join('||')
+    const internal = serializeGroups(categoryGroups.value).join('||')
+    if (current !== internal) {
+      categoryGroups.value = parseSkillsToGroups(newSkills)
+    }
+  },
+  { deep: true }
+)
 
 // ── Certifications ───────────────────────────────────────────────────────────
 
@@ -466,26 +568,72 @@ function removeLanguage(index: number) {
       <!-- Skills -->
       <CvEditorSection
         v-else-if="section === 'skills'"
-        title="Skills & Technologies"
+        :title="`Skills & Technologies (${totalSkillsCount} / 15)`"
         :collapsed="collapsed.skills"
         @toggle="collapsed.skills = !collapsed.skills"
         draggable-hint
       >
-        <div class="tag-editor">
-          <div v-for="(_, i) in modelValue.skills" :key="i" class="tag-item">
-            <input v-model="modelValue.skills[i]" class="tag-input" placeholder="Skill name" />
+        <div class="skills-category-list">
+          <div
+            v-for="(group, ci) in categoryGroups"
+            :key="ci"
+            class="skill-category-block"
+          >
+            <div class="skill-category-header">
+              <input
+                v-model="group.category"
+                class="category-name-input"
+                placeholder="Category Name (e.g. Platforms & Cloud, DevOps & IaC)"
+                @input="syncGroupsToModel"
+              />
+              <button
+                type="button"
+                class="btn-icon-danger btn-icon-small"
+                title="Remove category"
+                @click="removeSkillCategory(ci)"
+              >
+                ✕
+              </button>
+            </div>
+            <div class="tag-editor">
+              <div v-for="(_, si) in group.skills" :key="si" class="tag-item">
+                <input
+                  v-model="group.skills[si]"
+                  class="tag-input"
+                  placeholder="Skill name"
+                  @input="syncGroupsToModel"
+                />
+                <button
+                  type="button"
+                  class="btn-icon-danger btn-icon-small"
+                  title="Remove skill"
+                  @click="removeSkillFromCategory(ci, si)"
+                >
+                  ✕
+                </button>
+              </div>
+              <button
+                type="button"
+                class="btn-text"
+                :disabled="totalSkillsCount >= 15"
+                @click="addSkillToCategory(ci)"
+              >
+                + Add skill
+              </button>
+            </div>
+          </div>
+          <div class="skills-footer">
             <button
               type="button"
-              class="btn-icon-danger btn-icon-small"
-              title="Remove skill"
-              @click="removeSkill(i)"
+              class="btn-secondary btn-sm"
+              @click="addSkillCategory"
             >
-              ✕
+              + Add Category
             </button>
+            <span class="skills-hint">
+              Max 15 skills total across all categories. Omit routine tools (e.g. Git, Bash) to keep high signal.
+            </span>
           </div>
-          <button type="button" class="btn-text" @click="addSkill">
-            + Add skill
-          </button>
         </div>
       </CvEditorSection>
 
@@ -1101,5 +1249,55 @@ function removeLanguage(index: number) {
 
 .lang-input:focus {
   outline: none;
+}
+
+/* Categorized Skills Editor */
+.skills-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skill-category-block {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.skill-category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.category-name-input {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 5px 8px;
+}
+
+.category-name-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.skills-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.skills-hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
 }
 </style>
