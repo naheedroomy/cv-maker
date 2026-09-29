@@ -150,7 +150,10 @@ export const useJobStore = defineStore('jobs', () => {
       }
     } catch { /* fall back to company name */ }
 
-    const url_path = version ? `/api/jobs/${jobId}/pdf/${version}` : `/api/jobs/${jobId}/pdf`
+    const cacheBuster = `t=${Date.now()}`
+    const url_path = version
+      ? `/api/jobs/${jobId}/pdf/${version}?${cacheBuster}`
+      : `/api/jobs/${jobId}/pdf?${cacheBuster}`
     const res = await apiFetch(url_path)
     if (!res.ok) throw new Error(`PDF not available: ${res.status}`)
     const blob = await res.blob()

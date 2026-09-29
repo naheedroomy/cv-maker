@@ -401,7 +401,15 @@ async def get_pdf(job_id: str, user: dict = Depends(get_current_user)) -> Respon
         raise HTTPException(status_code=404, detail="PDF not yet available")
 
     pdf_bytes = Path(row["pdf_path"]).read_bytes()
-    return Response(content=pdf_bytes, media_type="application/pdf")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -452,7 +460,15 @@ async def get_pdf_version(
     else:
         raise HTTPException(status_code=404, detail="PDF file no longer available")
 
-    return Response(content=pdf_bytes, media_type="application/pdf")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

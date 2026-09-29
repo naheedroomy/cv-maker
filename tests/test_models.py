@@ -179,7 +179,9 @@ class TestTailoredCVSkills:
         ]
 
     def test_skills_deduplication_and_15_cap(self) -> None:
-        """Skills are deduplicated and capped at 15 total across all categories."""
+        """Skills are deduplicated and cap_skills enforces the 15-skill ceiling for AI pipeline."""
+        from core.models import cap_skills
+
         # 4 categories with 5 skills each = 20 skills total
         input_skills = [
             "Cloud & Platforms: AWS, GCP, Azure, OpenStack, VMware",
@@ -187,17 +189,11 @@ class TestTailoredCVSkills:
             "CI/CD: GitHub Actions, GitLab CI, ArgoCD, Jenkins, aws",  # 'aws' is duplicate
             "Languages: Python, Go, TypeScript, Bash, Rust",
         ]
-        tcv = TailoredCV.model_validate({
-            "contact": {"name": "Test", "email": "test@example.com"},
-            "summary": "Summary",
-            "experience": [],
-            "skills": input_skills,
-            "education": [],
-        })
+        capped = cap_skills(input_skills, max_skills=15)
 
         # Count total skills across categories
         total_skills = 0
-        for entry in tcv.skills:
+        for entry in capped:
             assert ":" in entry
             _, rest = entry.split(":", 1)
             items = [s.strip() for s in rest.split(",") if s.strip()]
@@ -205,6 +201,25 @@ class TestTailoredCVSkills:
 
         assert total_skills == 15
         # The duplicate 'aws' should not appear in CI/CD, and total shouldn't exceed 15
-        assert "Jenkins" in tcv.skills[2]
+        assert "Jenkins" in capped[2]
         # Languages should only have the remaining slots up to 15
-        assert "Languages: Python" in tcv.skills[3]
+        assert "Languages: Python" in capped[3]
+
+        # TailoredCV model_validate preserves manual edits up to 30 skills
+        # without dropping categories
+        tcv = TailoredCV.model_validate({
+            "contact": {"name": "Test", "email": "test@example.com"},
+            "summary": "Summary",
+            "experience": [],
+            "skills": input_skills,
+            "education": [],
+        })
+        tcv_skills_count = sum(
+            len([s.strip() for s in entry.split(":", 1)[1].split(",") if s.strip()])
+            for entry in tcv.skills
+            if ":" in entry
+        )
+        # All 19 unique skills preserved across all 4 categories
+        assert tcv_skills_count == 19
+        assert len(tcv.skills) == 4
+

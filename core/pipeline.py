@@ -25,6 +25,7 @@ from core.models import (
     KeywordPairingPlan,
     RequirementExtraction,
     TailoredCV,
+    cap_skills,
 )
 
 # ---------------------------------------------------------------------------
@@ -1107,6 +1108,7 @@ def run_pipeline(base_cv: BaseCV, job_text: str, creativity_level: int = 2, cli_
     """
     prompt = _build_prompt(base_cv, job_text, creativity_level, user_notes)
     result = _invoke_with_retry(prompt, TailoredCV, cli_model=cli_model)
+    result.skills = cap_skills(result.skills, max_skills=15)
 
     # Apply deterministic technology bolding before validation
     apply_tech_bolding(result)
@@ -1606,6 +1608,7 @@ Return ONLY valid JSON matching this schema:
 }}"""
 
     result = _invoke_provider_with_retry(prompt, TailoredCV, provider_fn)
+    result.skills = cap_skills(result.skills, max_skills=15)
     return result
 
 

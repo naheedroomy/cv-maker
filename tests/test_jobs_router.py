@@ -643,4 +643,84 @@ def test_update_job_cv_not_complete_returns_400(tmp_path: Path):
         assert resp.status_code == 400
 
 
+def test_update_job_cv_preserves_added_skill_category_and_skills(tmp_path: Path):
+    """PUT /api/jobs/{id}/cv preserves user-added skill category and skills even when
+    the existing CV already had 15 skills.
+    """
+    import json
+    test_db = tmp_path / "test.db"
+    job_id = str(uuid.uuid4())
+
+    pdf_file = tmp_path / f"{job_id}.pdf"
+    pdf_file.write_bytes(b"%PDF-original")
+    tex_file = tmp_path / f"{job_id}.tex"
+    tex_file.write_text(r"\documentclass{article} Original", encoding="utf-8")
+
+    # 15 skills across 3 categories
+    initial_skills = [
+        "Cloud & Platforms: AWS, GCP, Azure, Docker, Kubernetes",
+        "Languages: Python, TypeScript, JavaScript, Go, Rust",
+        "Databases: PostgreSQL, MySQL, Redis, MongoDB, Cassandra",
+    ]
+    initial_cv = {
+        "contact": {"name": "Test Candidate", "email": "test@example.com"},
+        "summary": "Original summary",
+        "experience": [],
+        "skills": initial_skills,
+        "education": [],
+    }
+
+    # User manually adds a 4th category with 2 skills (total 17 skills)
+    updated_skills = initial_skills + ["Observability: Prometheus, Grafana"]
+    updated_cv = {
+        "contact": {"name": "Test Candidate", "email": "test@example.com"},
+        "summary": "Original summary",
+        "experience": [],
+        "skills": updated_skills,
+        "education": [],
+    }
+
+    captured_latex: list[str] = []
+
+    async def _mock_render_pdf_async(latex_src: str) -> bytes:
+        captured_latex.append(latex_src)
+        return b"%PDF-recompiled-with-observability"
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.pipeline_runner.render_pdf_async", _mock_render_pdf_async),
+        TestClient(app) as client,
+    ):
+        asyncio.run(
+            _insert_job_row(
+                test_db,
+                job_id,
+                status="complete",
+                pdf_path=str(pdf_file),
+                tailored_cv_json=json.dumps(initial_cv),
+            )
+        )
+
+        resp = client.put(f"/api/jobs/{job_id}/cv", json=updated_cv)
+        assert resp.status_code == 200
+        data = resp.json()
+
+        # The new category and skills MUST be present in the response
+        categories = [s.split(":", 1)[0].strip() for s in data["tailored_cv"]["skills"] if ":" in s]
+        assert "Observability" in categories
+        assert any("Prometheus" in s for s in data["tailored_cv"]["skills"])
+
+        # The recompiled LaTeX MUST include the new category and skills
+        assert len(captured_latex) == 1
+        assert "Observability" in captured_latex[0]
+        assert "Prometheus" in captured_latex[0]
+
+        # PDF download MUST return the new PDF and disable browser caching
+        pdf_resp = client.get(f"/api/jobs/{job_id}/pdf")
+        assert pdf_resp.status_code == 200
+        assert pdf_resp.content == b"%PDF-recompiled-with-observability"
+        assert "no-cache" in pdf_resp.headers.get("Cache-Control", "")
+
+
+
 

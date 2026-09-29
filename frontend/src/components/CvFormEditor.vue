@@ -236,9 +236,21 @@ function serializeGroups(groups: SkillCategoryGroup[]): string[] {
 }
 
 const categoryGroups = ref<SkillCategoryGroup[]>(parseSkillsToGroups(props.modelValue.skills))
+let isInternalSync = false
 
 function syncGroupsToModel() {
+  isInternalSync = true
   props.modelValue.skills = serializeGroups(categoryGroups.value)
+  emit('update:modelValue', props.modelValue)
+  setTimeout(() => {
+    isInternalSync = false
+  }, 0)
+}
+
+function handleSaveClick() {
+  syncGroupsToModel()
+  emit('update:modelValue', props.modelValue)
+  emit('save')
 }
 
 const totalSkillsCount = computed(() => {
@@ -249,6 +261,7 @@ const totalSkillsCount = computed(() => {
 })
 
 function addSkillCategory() {
+  if (categoryGroups.value.length >= 10) return
   categoryGroups.value.push({ category: '', skills: [''] })
   syncGroupsToModel()
 }
@@ -259,7 +272,7 @@ function removeSkillCategory(index: number) {
 }
 
 function addSkillToCategory(catIndex: number) {
-  if (totalSkillsCount.value >= 15) return
+  if (totalSkillsCount.value >= 25) return
   const group = categoryGroups.value[catIndex]
   if (!group) return
   group.skills.push('')
@@ -276,6 +289,7 @@ function removeSkillFromCategory(catIndex: number, skillIndex: number) {
 watch(
   () => props.modelValue.skills,
   (newSkills) => {
+    if (isInternalSync) return
     const current = (newSkills || []).join('||')
     const internal = serializeGroups(categoryGroups.value).join('||')
     if (current !== internal) {
@@ -366,7 +380,7 @@ function removeLanguage(index: number) {
           type="button"
           class="btn-primary"
           :disabled="saving"
-          @click="$emit('save')"
+          @click="handleSaveClick"
         >
           <LoadingSpinner v-if="saving" class="btn-spinner" />
           {{ saving ? 'Saving & Compiling...' : saveLabel }}
@@ -568,7 +582,7 @@ function removeLanguage(index: number) {
       <!-- Skills -->
       <CvEditorSection
         v-else-if="section === 'skills'"
-        :title="`Skills & Technologies (${totalSkillsCount} / 15)`"
+        :title="`Skills & Technologies (${totalSkillsCount} skills${totalSkillsCount > 15 ? ' · recommended ≤ 15' : ''})`"
         :collapsed="collapsed.skills"
         @toggle="collapsed.skills = !collapsed.skills"
         draggable-hint
@@ -615,7 +629,7 @@ function removeLanguage(index: number) {
               <button
                 type="button"
                 class="btn-text"
-                :disabled="totalSkillsCount >= 15"
+                :disabled="totalSkillsCount >= 25"
                 @click="addSkillToCategory(ci)"
               >
                 + Add skill
@@ -631,7 +645,7 @@ function removeLanguage(index: number) {
               + Add Category
             </button>
             <span class="skills-hint">
-              Max 15 skills total across all categories. Omit routine tools (e.g. Git, Bash) to keep high signal.
+              Curate into 3–4 clean categories. Recommended max 15 skills across categories to keep high signal and avoid keyword stuffing.
             </span>
           </div>
         </div>
