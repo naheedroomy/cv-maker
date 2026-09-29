@@ -120,6 +120,17 @@ Reusable Vue components that compose into views. Each component has a single, fo
 
 **Rendering**: Header bar with drag handle (☰ icon, shown when `draggableHint` is true), title, chevron (rotates -90° when collapsed). Body shown/hidden via `v-show`. Background highlight on header hover.
 
+### `CvFormEditor.vue`
+**Purpose**: Shared, responsive CV editor with auto-expanding textareas and scalable cards. Used by `BaseCvView` and `JobDetailView`.
+
+**Props**: `modelValue: BaseCV | TailoredCV`, `title?: string`, `saveLabel?: string`, `saving?: boolean`, `showCancel?: boolean`, `showDownload?: boolean`, `downloading?: boolean`  
+**Emits**: `update:modelValue`, `save`, `cancel`, `download`
+
+**Features**:
+- Auto-growing textareas for achievement bullets, summary, and project descriptions (`field-sizing: content` + `v-auto-grow` directive) with zero internal scrolling.
+- Responsive grid and card layout up to 1040px with reorderable sections, entry move up/down, add/remove items.
+- Works seamlessly for both base CVs and tailored CVs.
+
 ### `CvPreview.vue`
 **Purpose**: Renders a `TailoredCV` object as formatted sections.
 

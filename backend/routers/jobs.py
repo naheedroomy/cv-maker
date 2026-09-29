@@ -20,6 +20,7 @@ from backend.db import get_db
 from backend.schemas import JobCreate, JobResponse
 from backend.tasks import schedule_background_task
 from backend.worker import _job_tasks, _sse_queues, job_worker
+from core.models import TailoredCV
 
 logger = logging.getLogger(__name__)
 
@@ -601,6 +602,135 @@ async def regenerate_job(
     _job_tasks[job_id] = new_task
     logger.info("Job %s regenerating with model=%s creativity=%d", job_id, model, creativity)
     return _row_to_response(updated_row)
+
+
+# ---------------------------------------------------------------------------
+# Endpoint 5c: PUT /{job_id}/cv — update tailored CV & recompile PDF
+# ---------------------------------------------------------------------------
+
+
+@router.put("/{job_id}/cv", response_model=JobResponse)
+async def update_job_cv(
+    job_id: str, body: TailoredCV, user: dict = Depends(get_current_user)
+) -> JobResponse:
+    """Update the tailored CV data for a completed job and recompile the PDF.
+
+    Archives the previous CV version into cv_history_json so it can be restored
+    or downloaded from version history.
+    """
+    import os
+    db = await get_db()
+    try:
+        user_id = user["id"]
+        cursor = await db.execute(
+            "SELECT * FROM jobs WHERE id = ? AND (user_id = ? OR user_id = 1)",
+            (job_id, user_id),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        if row["status"] != "complete":
+            raise HTTPException(
+                status_code=400,
+                detail="Only completed jobs can be edited",
+            )
+
+        now = datetime.now(timezone.utc).isoformat()
+
+        # 1. Archive current CV into history with a versioned snapshot of PDF and TeX files
+        history: list[dict] = []
+        if row["cv_history_json"]:
+            try:
+                history = json.loads(row["cv_history_json"])
+            except Exception as exc:
+                logger.warning("Failed to parse existing cv_history_json: %s", exc)
+
+        if row["tailored_cv_json"]:
+            version = len(history) + 1
+            archived_pdf_path = row["pdf_path"]
+            if row["pdf_path"]:
+                current_pdf = Path(row["pdf_path"])
+                versioned_pdf = current_pdf.with_name(
+                    f"{current_pdf.stem}-v{version}{current_pdf.suffix}"
+                )
+                try:
+                    if current_pdf.exists():
+                        shutil.copy2(current_pdf, versioned_pdf)
+                        archived_pdf_path = str(versioned_pdf)
+                        current_tex = current_pdf.with_suffix(".tex")
+                        if current_tex.exists():
+                            versioned_tex = current_pdf.with_name(
+                                f"{current_pdf.stem}-v{version}.tex"
+                            )
+                            shutil.copy2(current_tex, versioned_tex)
+                    else:
+                        archived_pdf_path = str(versioned_pdf)
+                except Exception as exc:
+                    logger.warning("Failed to snapshot PDF for v%d: %s", version, exc)
+
+            tailored_cv_dict = None
+            try:
+                tailored_cv_dict = json.loads(row["tailored_cv_json"])
+            except Exception as exc:
+                logger.debug("Failed to parse tailored_cv_json for history: %s", exc)
+
+            history.append({
+                "version": version,
+                "model": row["model"],
+                "creativity_level": row["creativity_level"],
+                "pdf_path": archived_pdf_path,
+                "created_at": row["updated_at"],
+                "tailored_cv": tailored_cv_dict,
+            })
+        history_json = json.dumps(history) if history else None
+
+        # 2. Recompile LaTeX and PDF from the updated TailoredCV
+        from backend.pipeline_runner import render_pdf_async
+        from core.renderer import render_latex
+
+        latex_source = render_latex(body)
+        pdf_bytes = await render_pdf_async(latex_source)
+
+        # 3. Determine target PDF and TeX file paths
+        if row["pdf_path"]:
+            pdf_path = Path(row["pdf_path"])
+        else:
+            from backend.settings_cache import get_setting
+
+            cv_name = (await get_setting("cv_filename")).strip()
+            short_id = job_id[:5]
+            file_stem = f"{cv_name}-{short_id}" if cv_name else job_id
+            data_dir = Path(os.environ.get("CV_MAKER_DB_PATH", "cv_maker.db")).parent
+            pdf_path = data_dir / f"{file_stem}.pdf"
+
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+        pdf_path.write_bytes(pdf_bytes)
+        tex_path = pdf_path.with_suffix(".tex")
+        tex_path.write_text(latex_source, encoding="utf-8")
+
+        # 4. Update database row
+        await db.execute("BEGIN IMMEDIATE")
+        await db.execute(
+            "UPDATE jobs SET tailored_cv_json = ?, cv_history_json = ?, pdf_path = ?, "
+            "updated_at = ? WHERE id = ?",
+            (
+                body.model_dump_json(),
+                history_json,
+                str(pdf_path),
+                now,
+                job_id,
+            ),
+        )
+        await db.commit()
+
+        # 5. Return updated response
+        cursor = await db.execute("SELECT * FROM jobs WHERE id = ?", (job_id,))
+        updated_row = await cursor.fetchone()
+        logger.info("Job %s tailored CV updated and recompiled successfully", job_id)
+        return _row_to_response(updated_row)
+    finally:
+        await db.close()
 
 
 # ---------------------------------------------------------------------------

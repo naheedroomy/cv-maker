@@ -496,3 +496,151 @@ def test_job_create_and_regenerate_creativity_validation(tmp_path: Path):
         assert regen_resp.status_code == 422
 
 
+def test_update_job_cv_success_archives_version_and_recompiles_pdf(tmp_path: Path):
+    """PUT /api/jobs/{id}/cv updates tailored CV, archives previous version, and recompiles PDF."""
+    import json
+    test_db = tmp_path / "test.db"
+    job_id = str(uuid.uuid4())
+
+    pdf_file = tmp_path / f"{job_id}.pdf"
+    pdf_file.write_bytes(b"%PDF-original")
+    tex_file = tmp_path / f"{job_id}.tex"
+    tex_file.write_text(r"\documentclass{article} Original", encoding="utf-8")
+
+    initial_cv = {
+        "contact": {"name": "Test Candidate", "email": "test@example.com"},
+        "summary": "Original summary",
+        "experience": [
+            {
+                "company": "Old Corp",
+                "title": "Engineer",
+                "start": "2020-01",
+                "end": "2022-01",
+                "bullets": ["Original bullet 1"],
+                "technologies": ["Python"],
+            }
+        ],
+        "skills": ["Python"],
+        "education": [],
+        "projects": [],
+        "certifications": [],
+        "languages": [],
+        "highlighted_technologies": [],
+        "tailoring_notes": [],
+    }
+
+    updated_cv = {
+        "contact": {"name": "Test Candidate", "email": "test@example.com"},
+        "summary": "Modified summary by user",
+        "experience": [
+            {
+                "company": "Old Corp",
+                "title": "Senior Engineer",
+                "start": "2020-01",
+                "end": "2022-01",
+                "bullets": ["Modified bullet 1", "Added bullet 2"],
+                "technologies": ["Python", "Docker"],
+            }
+        ],
+        "skills": ["Python", "Docker"],
+        "education": [],
+        "projects": [],
+        "certifications": [],
+        "languages": [],
+        "highlighted_technologies": [],
+        "tailoring_notes": [],
+    }
+
+    async def _mock_render_pdf_async(latex_src: str) -> bytes:
+        return b"%PDF-recompiled"
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.pipeline_runner.render_pdf_async", _mock_render_pdf_async),
+        TestClient(app) as client,
+    ):
+        asyncio.run(
+            _insert_job_row(
+                test_db,
+                job_id,
+                status="complete",
+                pdf_path=str(pdf_file),
+                tailored_cv_json=json.dumps(initial_cv),
+            )
+        )
+
+        resp = client.put(f"/api/jobs/{job_id}/cv", json=updated_cv)
+        assert resp.status_code == 200
+        data = resp.json()
+
+        # Tailored CV updated
+        assert data["tailored_cv"]["summary"] == "Modified summary by user"
+        assert len(data["tailored_cv"]["experience"][0]["bullets"]) == 2
+
+        # Version history archived
+        assert len(data["cv_history"]) == 1
+        assert data["cv_history"][0]["version"] == 1
+        assert data["cv_history"][0]["tailored_cv"]["summary"] == "Original summary"
+
+        # Versioned archive files exist
+        v1_pdf = tmp_path / f"{job_id}-v1.pdf"
+        assert v1_pdf.exists()
+        assert v1_pdf.read_bytes() == b"%PDF-original"
+
+        # Current PDF file updated with newly compiled bytes
+        assert pdf_file.read_bytes() == b"%PDF-recompiled"
+
+
+def test_update_job_cv_not_found(tmp_path: Path):
+    """PUT /api/jobs/{id}/cv returns 404 for unknown job."""
+    test_db = tmp_path / "test.db"
+    missing_id = str(uuid.uuid4())
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        TestClient(app) as client,
+    ):
+        resp = client.put(
+            f"/api/jobs/{missing_id}/cv",
+            json={
+                "contact": {"name": "Test", "email": "test@example.com"},
+                "summary": "Summary",
+                "experience": [],
+                "skills": [],
+                "education": [],
+            },
+        )
+        assert resp.status_code == 404
+
+
+def test_update_job_cv_not_complete_returns_400(tmp_path: Path):
+    """PUT /api/jobs/{id}/cv returns 400 if job is still pending or running."""
+    test_db = tmp_path / "test.db"
+    job_id = str(uuid.uuid4())
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        TestClient(app) as client,
+    ):
+        asyncio.run(
+            _insert_job_row(
+                test_db,
+                job_id,
+                status="running",
+            )
+        )
+
+        resp = client.put(
+            f"/api/jobs/{job_id}/cv",
+            json={
+                "contact": {"name": "Test", "email": "test@example.com"},
+                "summary": "Summary",
+                "experience": [],
+                "skills": [],
+                "education": [],
+            },
+        )
+        assert resp.status_code == 400
+
+
+
