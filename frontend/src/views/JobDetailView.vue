@@ -139,6 +139,7 @@ async function handleRegenerate(
   userNotes?: string,
   modelId?: string,
   reasoningEffort?: string,
+  baseCvId?: string,
 ) {
   if (!currentJob.value) return
   regenerating.value = true
@@ -150,6 +151,7 @@ async function handleRegenerate(
       userNotes,
       modelId,
       reasoningEffort,
+      baseCvId,
     )
     // Job is now pending — open SSE to track progress
     store.openSSE(jobId.value)
@@ -200,6 +202,7 @@ async function handleSaveEditedCv() {
     <div class="job-header">
       <h2 class="company-heading">{{ currentJob.company_name }}</h2>
       <StatusBadge :status="currentJob.status" />
+      <span v-if="currentJob.base_cv_name" class="model-badge">Base: {{ currentJob.base_cv_name }}</span>
       <span class="model-badge">{{ { 'claude-haiku': 'Claude CLI', 'claude-api': 'Claude API', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[currentJob.model] || currentJob.model }}</span>
       <span class="model-badge">Level {{ currentJob.creativity_level ?? 2 }}</span>
       <span class="model-badge">{{ new Date(currentJob.updated_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</span>
@@ -321,6 +324,7 @@ async function handleSaveEditedCv() {
             :current-notes="currentJob.user_notes"
             :current-model-id="currentJob.model_id"
             :current-reasoning-effort="currentJob.reasoning_effort"
+            :current-base-cv-id="currentJob.base_cv_id"
             :disabled="regenerating"
             @regenerate="handleRegenerate"
           />

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useJobStore } from '@/stores/jobStore'
+import { useCvStore } from '@/stores/cvStore'
 import ErrorBanner from '@/components/ErrorBanner.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
@@ -10,11 +11,13 @@ import { apiFetch } from '@/utils/apiFetch'
 
 const router = useRouter()
 const store = useJobStore()
+const cvStore = useCvStore()
 
 const companyName = ref('')
 const jobLink = ref('')
 const jobText = ref('')
 const userNotes = ref('')
+const selectedBaseCvId = ref('')
 const submitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const selectedModel = ref('gemini-flash')
@@ -30,7 +33,21 @@ const canSubmit = computed(
   () => companyName.value.trim() !== '' && jobText.value.trim() !== '' && !submitting.value,
 )
 
+watch(
+  () => cvStore.baseCvs,
+  (cvs) => {
+    if (cvs.length > 0 && (!selectedBaseCvId.value || !cvs.some((c) => c.id === selectedBaseCvId.value))) {
+      const def = cvs.find((c) => c.is_default) || cvs[0]
+      if (def) {
+        selectedBaseCvId.value = def.id
+      }
+    }
+  },
+  { immediate: true },
+)
+
 onMounted(async () => {
+  cvStore.fetchBaseCvs()
   try {
     const res = await apiFetch('/api/config')
     if (res.ok) {
@@ -64,6 +81,7 @@ async function handleSubmit(): Promise<void> {
       reasoning_effort: selectedReasoningEffort.value || undefined,
       creativity_level: selectedCreativity.value,
       user_notes: userNotes.value.trim(),
+      base_cv_id: selectedBaseCvId.value || undefined,
     })
     await router.push('/jobs/' + id)
   } catch (err) {
@@ -141,6 +159,15 @@ function handleRetry(): void {
         ></textarea>
       </div>
 
+      <div v-if="cvStore.baseCvs.length > 0" class="field">
+        <label for="base-cv-select" class="field-label">Base CV</label>
+        <select id="base-cv-select" v-model="selectedBaseCvId" class="field-select" :disabled="submitting">
+          <option v-for="cv in cvStore.baseCvs" :key="cv.id" :value="cv.id">
+            {{ cv.name }} {{ cv.is_default ? '(Default)' : '' }}
+          </option>
+        </select>
+      </div>
+
       <ModelSelector
         v-model="selectedModel"
         v-model:model-id="selectedModelId"
@@ -205,7 +232,8 @@ function handleRetry(): void {
   color: var(--color-error);
 }
 
-.field-input {
+.field-input,
+.field-select {
   display: block;
   width: 100%;
   height: 40px;
@@ -217,14 +245,17 @@ function handleRetry(): void {
   color: var(--color-text-primary);
   background: var(--color-surface-1);
   outline: none;
+  box-sizing: border-box;
   transition: border-color 150ms ease;
 }
 
-.field-input:focus {
+.field-input:focus,
+.field-select:focus {
   border-color: var(--color-accent-primary);
 }
 
-.field-input:disabled {
+.field-input:disabled,
+.field-select:disabled {
   background: var(--color-surface-2);
   color: var(--color-text-tertiary);
   cursor: not-allowed;
