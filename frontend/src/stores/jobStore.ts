@@ -94,6 +94,7 @@ export const useJobStore = defineStore('jobs', () => {
     userNotes?: string,
     modelId?: string,
     reasoningEffort?: string,
+    baseCvId?: string,
   ): Promise<string> {
     const res = await apiFetch(`/api/jobs/${job.id}/regenerate`, {
       method: 'POST',
@@ -104,6 +105,7 @@ export const useJobStore = defineStore('jobs', () => {
         reasoning_effort: reasoningEffort ?? null,
         creativity_level: creativityLevel ?? null,
         user_notes: userNotes ?? null,
+        base_cv_id: baseCvId ?? null,
       }),
     })
     if (!res.ok) {

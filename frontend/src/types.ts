@@ -24,6 +24,18 @@ export interface BaseCV {
   languages: LanguageItem[]
 }
 
+export interface BaseCvMeta {
+  id: string
+  name: string
+  is_default: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface BaseCvDetail extends BaseCvMeta {
+  cv: BaseCV
+}
+
 export interface ExperienceItem {
   company: string
   title: string
@@ -102,6 +114,8 @@ export interface JobResponse {
   cv_history: CvHistoryEntry[] | null
   cl_history: ClHistoryEntry[] | null
   user_notes: string | null
+  base_cv_id?: string | null
+  base_cv_name?: string | null
 }
 
 export interface CvHistoryEntry {
@@ -130,4 +144,5 @@ export interface JobCreate {
   reasoning_effort?: string
   creativity_level?: number  // 0-3, default 2 (Balanced)
   user_notes?: string  // optional guidance for CV tailoring
+  base_cv_id?: string | null
 }
