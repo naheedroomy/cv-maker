@@ -88,6 +88,46 @@ class CvUploadResponse(BaseModel):
     success: bool
     message: str
     cv: dict | None = None  # Parsed BaseCV as dict
+    base_cv_id: str | None = None
+    name: str | None = None
+
+
+class BaseCvMeta(BaseModel):
+    """Summary metadata for a user's Base CV."""
+
+    id: str
+    name: str
+    is_default: bool
+    created_at: str
+    updated_at: str
+
+
+class BaseCvDetail(BaseModel):
+    """Full detail of a user's Base CV including parsed CV JSON."""
+
+    id: str
+    name: str
+    is_default: bool
+    created_at: str
+    updated_at: str
+    cv: dict
+
+
+class BaseCvCreate(BaseModel):
+    """Request model for creating a new Base CV."""
+
+    name: str
+    cv: dict | None = None
+    source_id: str | None = None
+    is_default: bool = False
+
+
+class BaseCvUpdate(BaseModel):
+    """Request model for updating an existing Base CV."""
+
+    name: str | None = None
+    cv: dict | None = None
+    is_default: bool | None = None
 
 
 class CvMeResponse(BaseModel):
@@ -95,3 +135,4 @@ class CvMeResponse(BaseModel):
 
     has_cv: bool
     cv: dict | None = None  # BaseCV as dict, None if no CV saved
+
