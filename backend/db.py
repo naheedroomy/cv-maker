@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -54,8 +55,20 @@ CREATE TABLE IF NOT EXISTS jobs (
     cv_history_json  TEXT,
     cl_history_json  TEXT,
     user_notes       TEXT,
+    base_cv_id       TEXT,
+    base_cv_name     TEXT,
     created_at       TEXT NOT NULL,
     updated_at       TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS base_cvs (
+    id          TEXT PRIMARY KEY,
+    user_id     INTEGER NOT NULL REFERENCES users(id),
+    name        TEXT NOT NULL,
+    cv_yaml     TEXT NOT NULL,
+    is_default  INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS settings (
@@ -66,6 +79,7 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_jobs_user_id ON jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_base_cvs_user_id ON base_cvs(user_id);
 """
 
 
@@ -121,6 +135,10 @@ async def init_db(db_path: Path | None = None) -> None:
             await db.execute("ALTER TABLE jobs ADD COLUMN model_id TEXT")
         if "reasoning_effort" not in columns:
             await db.execute("ALTER TABLE jobs ADD COLUMN reasoning_effort TEXT")
+        if "base_cv_id" not in columns:
+            await db.execute("ALTER TABLE jobs ADD COLUMN base_cv_id TEXT")
+        if "base_cv_name" not in columns:
+            await db.execute("ALTER TABLE jobs ADD COLUMN base_cv_name TEXT")
 
         # Seed placeholder local user (idempotent)
         await db.execute(
@@ -128,6 +146,44 @@ async def init_db(db_path: Path | None = None) -> None:
             "VALUES (?, 'local', 'local@localhost', 'Local User', ?)",
             (ANONYMOUS_USER_ID, datetime.now(timezone.utc).isoformat()),
         )
+
+        # Migrate/seed base_cvs for users lacking any base_cvs records
+        user_cursor = await db.execute("PRAGMA table_info(users)")
+        user_cols = {row[1] for row in await user_cursor.fetchall()}
+        has_base_cv_yaml = "base_cv_yaml" in user_cols
+
+        cursor = await db.execute(
+            "SELECT id, base_cv_yaml FROM users"
+            if has_base_cv_yaml
+            else "SELECT id, NULL as base_cv_yaml FROM users"
+        )
+        users = await cursor.fetchall()
+        base_cv_path = Path(os.environ.get("BASE_CV_PATH", "data/base_cv.yaml"))
+        for user in users:
+            user_id = user[0]
+            user_cv_yaml = user[1]
+            cv_cursor = await db.execute(
+                "SELECT COUNT(*) FROM base_cvs WHERE user_id = ?", (user_id,)
+            )
+            cv_count_row = await cv_cursor.fetchone()
+            if cv_count_row and cv_count_row[0] > 0:
+                continue
+
+            now = datetime.now(timezone.utc).isoformat()
+            if user_cv_yaml and user_cv_yaml.strip():
+                await db.execute(
+                    "INSERT INTO base_cvs (id, user_id, name, cv_yaml, is_default, "
+                    "created_at, updated_at) VALUES (?, ?, 'Main Base CV', ?, 1, ?, ?)",
+                    (str(uuid.uuid4()), user_id, user_cv_yaml, now, now),
+                )
+            elif base_cv_path.exists():
+                content = base_cv_path.read_text(encoding="utf-8")
+                await db.execute(
+                    "INSERT INTO base_cvs (id, user_id, name, cv_yaml, is_default, "
+                    "created_at, updated_at) VALUES (?, ?, 'Main Base CV', ?, 1, ?, ?)",
+                    (str(uuid.uuid4()), user_id, content, now, now),
+                )
+
         await db.commit()
 
     logger.info("Database initialized at %s", path)
