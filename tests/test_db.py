@@ -67,6 +67,8 @@ def test_init_db_jobs_table_columns(tmp_path: Path) -> None:
         "user_notes",
         "model_id",
         "reasoning_effort",
+        "base_cv_id",
+        "base_cv_name",
     }
 
     async def get_columns() -> set[str]:
@@ -125,3 +127,117 @@ def test_init_db_idempotent(tmp_path: Path) -> None:
     asyncio.run(init_db(db_path=db_path))
     # Second call must not raise
     asyncio.run(init_db(db_path=db_path))
+
+
+async def test_base_cvs_schema_and_migration(tmp_path: Path):
+    from backend.db import get_db, init_db
+
+    test_db = tmp_path / "test.db"
+    await init_db(test_db)
+    db = await get_db(test_db)
+    try:
+        # Check base_cvs table exists
+        cursor = await db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='base_cvs'"
+        )
+        row = await cursor.fetchone()
+        assert row is not None
+
+        # Check default seeded CV for user 1
+        cursor = await db.execute("SELECT * FROM base_cvs WHERE user_id = 1")
+        cv_rows = await cursor.fetchall()
+        assert len(cv_rows) == 1
+        assert cv_rows[0]["name"] == "Main Base CV"
+        assert cv_rows[0]["is_default"] == 1
+
+        # Check jobs table columns
+        cursor = await db.execute("PRAGMA table_info(jobs)")
+        cols = {r["name"] for r in await cursor.fetchall()}
+        assert "base_cv_id" in cols
+        assert "base_cv_name" in cols
+    finally:
+        await db.close()
+
+
+async def test_base_cvs_table_created(tmp_path: Path):
+    """init_db() creates base_cvs table and adds base_cv_id, base_cv_name to jobs."""
+    from backend.db import get_db, init_db
+
+    test_db = tmp_path / "test.db"
+    await init_db(test_db)
+    db = await get_db(test_db)
+    try:
+        cursor = await db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='base_cvs'"
+        )
+        assert await cursor.fetchone() is not None
+
+        cursor = await db.execute("PRAGMA table_info(jobs)")
+        cols = {r["name"] for r in await cursor.fetchall()}
+        assert "base_cv_id" in cols
+        assert "base_cv_name" in cols
+    finally:
+        await db.close()
+
+
+async def test_base_cvs_migrates_existing_user_cv(tmp_path: Path):
+    """When a user has base_cv_yaml, init_db() creates a default entry in base_cvs."""
+    from backend.db import get_db, init_db
+
+    test_db = tmp_path / "test.db"
+    # Pre-populate database with an existing user having base_cv_yaml
+    async with aiosqlite.connect(test_db) as db:
+        await db.execute(
+            "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, google_id TEXT, "
+            "email TEXT, name TEXT, created_at TEXT, base_cv_yaml TEXT)"
+        )
+        await db.execute(
+            "CREATE TABLE jobs (id TEXT PRIMARY KEY, user_id INTEGER, company_name TEXT, "
+            "job_text TEXT, status TEXT, created_at TEXT, updated_at TEXT)"
+        )
+        user_yaml = "contact:\n  name: Existing User\n"
+        await db.execute(
+            "INSERT INTO users (id, google_id, email, name, created_at, base_cv_yaml) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (2, "user2", "user2@example.com", "User Two", "2026-01-01T00:00:00", user_yaml),
+        )
+        await db.commit()
+
+    # Run init_db to migrate
+    await init_db(test_db)
+
+    db = await get_db(test_db)
+    try:
+        cursor = await db.execute("SELECT * FROM base_cvs WHERE user_id = 2")
+        cv_rows = await cursor.fetchall()
+        assert len(cv_rows) == 1
+        assert cv_rows[0]["name"] == "Main Base CV"
+        assert cv_rows[0]["is_default"] == 1
+        assert cv_rows[0]["cv_yaml"] == "contact:\n  name: Existing User\n"
+        assert cv_rows[0]["id"] is not None
+    finally:
+        await db.close()
+
+
+async def test_base_cvs_seeds_from_yaml_if_empty(tmp_path: Path, monkeypatch):
+    """When a user has no CV, init_db() seeds from data/base_cv.yaml as 'Main Base CV'."""
+    from backend.db import get_db, init_db
+
+    test_yaml = tmp_path / "seed_cv.yaml"
+    test_yaml.write_text("contact:\n  name: Seeded User\n", encoding="utf-8")
+    monkeypatch.setenv("BASE_CV_PATH", str(test_yaml))
+
+    test_db = tmp_path / "test.db"
+    await init_db(test_db)
+
+    db = await get_db(test_db)
+    try:
+        cursor = await db.execute("SELECT * FROM base_cvs WHERE user_id = 1")
+        cv_rows = await cursor.fetchall()
+        assert len(cv_rows) == 1
+        assert cv_rows[0]["name"] == "Main Base CV"
+        assert cv_rows[0]["is_default"] == 1
+        assert cv_rows[0]["cv_yaml"] == "contact:\n  name: Seeded User\n"
+    finally:
+        await db.close()
+
