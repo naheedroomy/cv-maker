@@ -19,7 +19,6 @@ from starlette.testclient import TestClient
 
 from backend.main import app
 
-
 # ---------------------------------------------------------------------------
 # Test DB helpers
 # ---------------------------------------------------------------------------
@@ -34,6 +33,8 @@ async def _insert_job_row(
     pdf_path: str | None = None,
     tailored_cv_json: str | None = None,
     cv_history_json: str | None = None,
+    base_cv_id: str | None = None,
+    base_cv_name: str | None = None,
 ) -> None:
     """Insert a job row directly into the test database."""
     from datetime import datetime, timezone
@@ -46,8 +47,8 @@ async def _insert_job_row(
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             "INSERT INTO jobs (id, company_name, job_text, status, pdf_path, tailored_cv_json, "
-            "cv_history_json, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "cv_history_json, base_cv_id, base_cv_name, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 job_id,
                 company,
@@ -56,9 +57,48 @@ async def _insert_job_row(
                 pdf_path,
                 tailored_cv_json,
                 cv_history_json,
+                base_cv_id,
+                base_cv_name,
                 now,
                 now,
             ),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def _insert_base_cv_row(
+    db_path: Path,
+    cv_id: str,
+    user_id: int = 1,
+    name: str = "Custom Base CV",
+    cv_yaml: str | None = None,
+    is_default: int = 0,
+) -> None:
+    """Insert a base_cvs row directly into the test database."""
+    from datetime import datetime, timezone
+
+    import yaml
+
+    from backend.db import get_db
+
+    if cv_yaml is None:
+        cv_yaml = yaml.dump({
+            "contact": {"name": f"Candidate for {name}", "email": "test@example.com"},
+            "summary": f"Summary for {name}",
+            "experience": [],
+            "skills": ["Python"],
+            "education": [],
+        })
+    db = await get_db(db_path)
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute("BEGIN IMMEDIATE")
+        await db.execute(
+            "INSERT INTO base_cvs (id, user_id, name, cv_yaml, is_default, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (cv_id, user_id, name, cv_yaml, is_default, now, now),
         )
         await db.commit()
     finally:
@@ -720,6 +760,264 @@ def test_update_job_cv_preserves_added_skill_category_and_skills(tmp_path: Path)
         assert pdf_resp.status_code == 200
         assert pdf_resp.content == b"%PDF-recompiled-with-observability"
         assert "no-cache" in pdf_resp.headers.get("Cache-Control", "")
+
+
+def test_create_job_with_specific_base_cv(tmp_path: Path):
+    """POST /api/jobs with base_cv_id associates the job with that Base CV."""
+    test_db = tmp_path / "test.db"
+    cv_id = f"cv-{uuid.uuid4()}"
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.routers.jobs.job_worker", _noop_worker),
+        TestClient(app) as client,
+    ):
+        asyncio.run(
+            _insert_base_cv_row(
+                test_db,
+                cv_id=cv_id,
+                name="DevOps Base CV",
+                is_default=0,
+            )
+        )
+        response = client.post(
+            "/api/jobs",
+            json={
+                "company_name": "DevOpsCo",
+                "job_text": "Need DevOps Engineer",
+                "base_cv_id": cv_id,
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["base_cv_id"] == cv_id
+        assert data["base_cv_name"] == "DevOps Base CV"
+
+        # Also verify GET /api/jobs/{id} returns base_cv_id and base_cv_name
+        detail_resp = client.get(f"/api/jobs/{data['id']}")
+        assert detail_resp.status_code == 200
+        detail_data = detail_resp.json()
+        assert detail_data["base_cv_id"] == cv_id
+        assert detail_data["base_cv_name"] == "DevOps Base CV"
+
+
+def test_create_job_defaults_to_default_base_cv(tmp_path: Path):
+    """POST /api/jobs without base_cv_id selects the user's default Base CV."""
+    test_db = tmp_path / "test.db"
+    default_cv_id = f"cv-default-{uuid.uuid4()}"
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.routers.jobs.job_worker", _noop_worker),
+        TestClient(app) as client,
+    ):
+        # Ensure only our custom default CV is marked is_default=1
+        async def _setup_default_cv():
+            from backend.db import get_db
+
+            db = await get_db(test_db)
+            try:
+                await db.execute("UPDATE base_cvs SET is_default = 0")
+                await db.commit()
+            finally:
+                await db.close()
+            await _insert_base_cv_row(
+                test_db,
+                cv_id=default_cv_id,
+                name="Platform Default CV",
+                is_default=1,
+            )
+
+        asyncio.run(_setup_default_cv())
+
+        response = client.post(
+            "/api/jobs",
+            json={
+                "company_name": "DefaultCo",
+                "job_text": "Need Platform Engineer",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["base_cv_id"] == default_cv_id
+        assert data["base_cv_name"] == "Platform Default CV"
+
+
+def test_create_job_invalid_base_cv_returns_404(tmp_path: Path):
+    """POST /api/jobs with non-existent base_cv_id returns 404."""
+    test_db = tmp_path / "test.db"
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.routers.jobs.job_worker", _noop_worker),
+        TestClient(app) as client,
+    ):
+        response = client.post(
+            "/api/jobs",
+            json={
+                "company_name": "GhostCo",
+                "job_text": "Ghost requirements",
+                "base_cv_id": "non-existent-base-cv-id",
+            },
+        )
+
+        assert response.status_code == 404
+        assert "Base CV not found" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_worker_uses_selected_base_cv(tmp_path: Path, monkeypatch):
+    """job_worker loads the Base CV matching base_cv_id from base_cvs table."""
+    import yaml
+
+    from backend.db import init_db
+    from backend.worker import job_worker
+    from core.models import TailoredCV
+
+    test_db = tmp_path / "test.db"
+    monkeypatch.setenv("CV_MAKER_DB_PATH", str(test_db))
+    await init_db(test_db)
+
+    cv_id = "cv-special-test"
+    custom_yaml = yaml.dump({
+        "contact": {
+            "name": "YAML Specialist Candidate",
+            "email": "specialist@example.com",
+            "location": "Remote",
+        },
+        "summary": "Specialist with deep YAML experience",
+        "experience": [],
+        "skills": ["Kubernetes", "Helm"],
+        "education": [],
+    })
+    await _insert_base_cv_row(
+        test_db,
+        cv_id=cv_id,
+        name="YAML Specialist",
+        cv_yaml=custom_yaml,
+        is_default=0,
+    )
+
+    job_id = str(uuid.uuid4())
+    await _insert_job_row(
+        test_db,
+        job_id=job_id,
+        company="SpecialistCo",
+        job_text="Need specialist",
+        status="pending",
+        base_cv_id=cv_id,
+        base_cv_name="YAML Specialist",
+    )
+
+    mock_provider = AsyncMock()
+    tailored_result = TailoredCV(
+        contact={"name": "YAML Specialist Candidate", "email": "specialist@example.com"},
+        summary="Tailored specialist",
+        experience=[],
+        skills=["Kubernetes"],
+        education=[],
+    )
+    mock_run_provider = AsyncMock(return_value=(tailored_result, []))
+    mock_render_pdf = AsyncMock(return_value=b"%PDF-mock")
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.worker.get_provider", AsyncMock(return_value=mock_provider)),
+        patch("backend.worker.run_provider_async", mock_run_provider),
+        patch("backend.worker.render_latex", lambda cv: r"\documentclass{article}"),
+        patch("backend.worker.render_pdf_async", mock_render_pdf),
+    ):
+        await job_worker(
+            job_id=job_id,
+            company_name="SpecialistCo",
+            job_text="Need specialist",
+            base_cv_id=cv_id,
+        )
+
+    mock_run_provider.assert_called_once()
+    called_base_cv = mock_run_provider.call_args[0][1]
+    assert called_base_cv.contact.name == "YAML Specialist Candidate"
+    assert called_base_cv.summary == "Specialist with deep YAML experience"
+
+
+def test_regenerate_allows_switching_base_cv(tmp_path: Path):
+    """POST /api/jobs/{id}/regenerate with new base_cv_id switches Base CV."""
+    test_db = tmp_path / "test.db"
+    job_id = str(uuid.uuid4())
+    cv_id_1 = f"cv-1-{uuid.uuid4()}"
+    cv_id_2 = f"cv-2-{uuid.uuid4()}"
+
+    captured_worker_calls = []
+
+    async def _recording_worker(*args, **kwargs):
+        captured_worker_calls.append((args, kwargs))
+
+    with (
+        patch("backend.db.DB_PATH", test_db),
+        patch("backend.routers.jobs.job_worker", _recording_worker),
+        TestClient(app) as client,
+    ):
+        asyncio.run(
+            _insert_base_cv_row(
+                test_db,
+                cv_id=cv_id_1,
+                name="Base CV One",
+                is_default=1,
+            )
+        )
+        asyncio.run(
+            _insert_base_cv_row(
+                test_db,
+                cv_id=cv_id_2,
+                name="Base CV Two",
+                is_default=0,
+            )
+        )
+        asyncio.run(
+            _insert_job_row(
+                test_db,
+                job_id=job_id,
+                company="SwitchCo",
+                job_text="Requirements...",
+                status="complete",
+                base_cv_id=cv_id_1,
+                base_cv_name="Base CV One",
+            )
+        )
+
+        regen_resp = client.post(
+            f"/api/jobs/{job_id}/regenerate",
+            json={"base_cv_id": cv_id_2},
+        )
+        assert regen_resp.status_code == 200
+        data = regen_resp.json()
+        assert data["base_cv_id"] == cv_id_2
+        assert data["base_cv_name"] == "Base CV Two"
+
+        # Check in DB
+        async def _check_db():
+            from backend.db import get_db
+
+            db = await get_db(test_db)
+            try:
+                cursor = await db.execute(
+                    "SELECT base_cv_id, base_cv_name FROM jobs WHERE id=?", (job_id,)
+                )
+                return await cursor.fetchone()
+            finally:
+                await db.close()
+
+        row = asyncio.run(_check_db())
+        assert row["base_cv_id"] == cv_id_2
+        assert row["base_cv_name"] == "Base CV Two"
+
+        # Check worker received base_cv_id="cv_id_2"
+        assert len(captured_worker_calls) == 1
+        _, kwargs = captured_worker_calls[0]
+        assert kwargs.get("base_cv_id") == cv_id_2
+
 
 
 

@@ -64,11 +64,16 @@ async def _push_event(job_id: str, event_type: str, data: dict) -> None:
 
 
 async def job_worker(
-    job_id: str, company_name: str, job_text: str, model: str = "claude-haiku",
-    creativity_level: int = 2, user_id: int = 1,
+    job_id: str,
+    company_name: str,
+    job_text: str,
+    model: str = "claude-haiku",
+    creativity_level: int = 2,
+    user_id: int = 1,
     user_notes: str = "",
     model_id: str | None = None,
     reasoning_effort: str | None = None,
+    base_cv_id: str | None = None,
 ) -> None:
     """Background worker: runs pipeline, saves PDF, updates DB at each stage.
 
@@ -109,26 +114,69 @@ async def job_worker(
             )
 
             # ----------------------------------------------------------------
-            # Load base CV: DB first (per-user), then fall back to YAML file
+            # Load base CV: base_cvs table first, then users, then YAML file
             # ----------------------------------------------------------------
             t0 = time.monotonic()
             base_cv: BaseCV | None = None
             db = await get_db()
             try:
-                cursor = await db.execute(
-                    "SELECT base_cv_yaml FROM users WHERE id=?", (user_id,)
-                )
-                row = await cursor.fetchone()
-                if row and row["base_cv_yaml"]:
-                    raw = yaml.safe_load(row["base_cv_yaml"])
-                    base_cv = BaseCV.model_validate(raw)
-                    logger.info("Job %s: [1/4] Base CV loaded from DB (%.1fs)", job_id, time.monotonic() - t0)
+                # 1. Specified base_cv_id
+                if base_cv_id:
+                    cursor = await db.execute(
+                        "SELECT cv_yaml FROM base_cvs WHERE id=?", (base_cv_id,)
+                    )
+                    row = await cursor.fetchone()
+                    if row and row["cv_yaml"]:
+                        raw = yaml.safe_load(row["cv_yaml"])
+                        base_cv = BaseCV.model_validate(raw)
+                        logger.info(
+                            "Job %s: [1/4] Base CV loaded from base_cvs (%s) (%.1fs)",
+                            job_id,
+                            base_cv_id,
+                            time.monotonic() - t0,
+                        )
+
+                # 2. User's default base CV
+                if base_cv is None:
+                    cursor = await db.execute(
+                        "SELECT cv_yaml FROM base_cvs WHERE user_id=? AND is_default=1 LIMIT 1",
+                        (user_id,),
+                    )
+                    row = await cursor.fetchone()
+                    if row and row["cv_yaml"]:
+                        raw = yaml.safe_load(row["cv_yaml"])
+                        base_cv = BaseCV.model_validate(raw)
+                        logger.info(
+                            "Job %s: [1/4] Base CV loaded from default base_cvs (%.1fs)",
+                            job_id,
+                            time.monotonic() - t0,
+                        )
+
+                # 3. Legacy users.base_cv_yaml
+                if base_cv is None:
+                    cursor = await db.execute(
+                        "SELECT base_cv_yaml FROM users WHERE id=?", (user_id,)
+                    )
+                    row = await cursor.fetchone()
+                    if row and row["base_cv_yaml"]:
+                        raw = yaml.safe_load(row["base_cv_yaml"])
+                        base_cv = BaseCV.model_validate(raw)
+                        logger.info(
+                            "Job %s: [1/4] Base CV loaded from users table (%.1fs)",
+                            job_id,
+                            time.monotonic() - t0,
+                        )
             finally:
                 await db.close()
 
+            # 4. Fallback to data/base_cv.yaml
             if base_cv is None:
                 base_cv = await asyncio.to_thread(load_base_cv)
-                logger.info("Job %s: [1/4] Base CV loaded from YAML file (%.1fs)", job_id, time.monotonic() - t0)
+                logger.info(
+                    "Job %s: [1/4] Base CV loaded from YAML file (%.1fs)",
+                    job_id,
+                    time.monotonic() - t0,
+                )
 
             # ----------------------------------------------------------------
             # Run AI pipeline (provider-routed via async wrapper)

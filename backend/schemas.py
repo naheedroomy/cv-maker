@@ -15,6 +15,7 @@ class JobCreate(BaseModel):
     reasoning_effort: str | None = None
     creativity_level: int = Field(default=2, ge=0, le=3)
     user_notes: str = ""
+    base_cv_id: str | None = None
 
 
 class JobResponse(BaseModel):
@@ -43,6 +44,8 @@ class JobResponse(BaseModel):
     cv_history: list[dict] | None = None  # previous CV versions
     cl_history: list[dict] | None = None  # previous cover letter versions
     user_notes: str | None = None  # user guidance notes for tailoring
+    base_cv_id: str | None = None
+    base_cv_name: str | None = None
 
 
 class CvConvertRequest(BaseModel):

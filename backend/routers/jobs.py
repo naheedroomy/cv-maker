@@ -60,6 +60,8 @@ def _row_to_response(row) -> JobResponse:
         cv_history=json.loads(row["cv_history_json"]) if "cv_history_json" in row.keys() and row["cv_history_json"] else None,
         cl_history=json.loads(row["cl_history_json"]) if "cl_history_json" in row.keys() and row["cl_history_json"] else None,
         user_notes=row["user_notes"] if "user_notes" in row.keys() else None,
+        base_cv_id=row["base_cv_id"] if "base_cv_id" in row.keys() else None,
+        base_cv_name=row["base_cv_name"] if "base_cv_name" in row.keys() else None,
     )
 
 
@@ -93,12 +95,44 @@ async def create_job(body: JobCreate, user: dict = Depends(get_current_user)) ->
                     detail=f"A job with this link already exists: {existing['company_name']}",
                 )
 
+        # Resolve base CV
+        if body.base_cv_id:
+            cursor = await db.execute(
+                "SELECT id, name FROM base_cvs WHERE id=? AND user_id=?",
+                (body.base_cv_id, user["id"]),
+            )
+            base_cv_row = await cursor.fetchone()
+            if not base_cv_row:
+                raise HTTPException(status_code=404, detail="Base CV not found")
+            base_cv_id = base_cv_row["id"]
+            base_cv_name = base_cv_row["name"]
+        else:
+            cursor = await db.execute(
+                "SELECT id, name FROM base_cvs WHERE user_id=? AND is_default=1 LIMIT 1",
+                (user["id"],),
+            )
+            base_cv_row = await cursor.fetchone()
+            if not base_cv_row:
+                cursor = await db.execute(
+                    "SELECT id, name FROM base_cvs WHERE user_id=? "
+                    "ORDER BY updated_at DESC LIMIT 1",
+                    (user["id"],),
+                )
+                base_cv_row = await cursor.fetchone()
+            if base_cv_row:
+                base_cv_id = base_cv_row["id"]
+                base_cv_name = base_cv_row["name"]
+            else:
+                base_cv_id = None
+                base_cv_name = None
+
         await db.execute("BEGIN IMMEDIATE")
         await db.execute(
             "INSERT INTO jobs "
             "(id, user_id, company_name, job_link, job_text, model, model_id, "
-            "reasoning_effort, creativity_level, user_notes, status, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+            "reasoning_effort, creativity_level, user_notes, base_cv_id, base_cv_name, "
+            "status, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
             (
                 job_id,
                 user["id"],
@@ -110,6 +144,8 @@ async def create_job(body: JobCreate, user: dict = Depends(get_current_user)) ->
                 body.reasoning_effort,
                 body.creativity_level,
                 body.user_notes,
+                base_cv_id,
+                base_cv_name,
                 now,
                 now,
             ),
@@ -129,6 +165,7 @@ async def create_job(body: JobCreate, user: dict = Depends(get_current_user)) ->
             user_notes=body.user_notes,
             model_id=body.model_id,
             reasoning_effort=body.reasoning_effort,
+            base_cv_id=base_cv_id,
         )
     )
     _job_tasks[job_id] = task
@@ -145,10 +182,15 @@ async def create_job(body: JobCreate, user: dict = Depends(get_current_user)) ->
     return JobResponse(
         id=job_id,
         company_name=body.company_name,
+        job_link=body.job_link,
+        job_text=body.job_text,
         model=body.model,
         model_id=body.model_id,
         reasoning_effort=body.reasoning_effort,
         creativity_level=body.creativity_level,
+        user_notes=body.user_notes,
+        base_cv_id=base_cv_id,
+        base_cv_name=base_cv_name,
         status="pending",
         created_at=now,
         updated_at=now,
@@ -482,6 +524,7 @@ class RegenerateRequest(BaseModel):
     reasoning_effort: str | None = None
     creativity_level: int | None = Field(default=None, ge=0, le=3)
     user_notes: str | None = None
+    base_cv_id: str | None = None
 
 
 @router.post("/{job_id}/regenerate", response_model=JobResponse)
@@ -507,6 +550,21 @@ async def regenerate_job(
         row = await cursor.fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Job not found")
+
+        # Resolve base CV
+        if body.base_cv_id:
+            cursor = await db.execute(
+                "SELECT id, name FROM base_cvs WHERE id=? AND user_id=?",
+                (body.base_cv_id, user["id"]),
+            )
+            base_cv_row = await cursor.fetchone()
+            if not base_cv_row:
+                raise HTTPException(status_code=404, detail="Base CV not found")
+            base_cv_id = base_cv_row["id"]
+            base_cv_name = base_cv_row["name"]
+        else:
+            base_cv_id = row["base_cv_id"] if "base_cv_id" in row.keys() else None
+            base_cv_name = row["base_cv_name"] if "base_cv_name" in row.keys() else None
 
         model = body.model or row["model"]
         model_id = body.model_id if body.model_id is not None else (
@@ -577,7 +635,7 @@ async def regenerate_job(
         await db.execute(
             """UPDATE jobs SET
                 status='pending', model=?, model_id=?, reasoning_effort=?,
-                creativity_level=?, user_notes=?,
+                creativity_level=?, user_notes=?, base_cv_id=?, base_cv_name=?,
                 tailored_cv_json=NULL, gap_diff_json=NULL, pdf_path=NULL,
                 cv_history_json=?,
                 updated_at=?
@@ -588,6 +646,8 @@ async def regenerate_job(
                 reasoning_effort,
                 creativity,
                 notes,
+                base_cv_id,
+                base_cv_name,
                 history_json,
                 now,
                 job_id,
@@ -613,6 +673,7 @@ async def regenerate_job(
             user_notes=notes,
             model_id=model_id,
             reasoning_effort=reasoning_effort,
+            base_cv_id=base_cv_id,
         )
     )
     _job_tasks[job_id] = new_task
