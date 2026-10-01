@@ -11,9 +11,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
 from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse, ServerSentEvent
+from pydantic import BaseModel, Field
 
 from backend.auth import get_current_user
 from backend.db import get_db
@@ -54,11 +54,25 @@ def _row_to_response(row) -> JobResponse:
         gap_diff=json.loads(row["gap_diff_json"]) if row["gap_diff_json"] else None,
         pdf_url=f"/api/jobs/{row['id']}/pdf" if row["pdf_path"] else None,
         cover_letter_text=row["cover_letter_text"] if "cover_letter_text" in row.keys() else None,
-        cover_letter_notes=row["cover_letter_notes"] if "cover_letter_notes" in row.keys() else None,
-        cover_letter_model=row["cover_letter_model"] if "cover_letter_model" in row.keys() else None,
-        cover_letter_tone=row["cover_letter_tone"] if "cover_letter_tone" in row.keys() else None,
-        cv_history=json.loads(row["cv_history_json"]) if "cv_history_json" in row.keys() and row["cv_history_json"] else None,
-        cl_history=json.loads(row["cl_history_json"]) if "cl_history_json" in row.keys() and row["cl_history_json"] else None,
+        cover_letter_notes=(
+            row["cover_letter_notes"] if "cover_letter_notes" in row.keys() else None
+        ),
+        cover_letter_model=(
+            row["cover_letter_model"] if "cover_letter_model" in row.keys() else None
+        ),
+        cover_letter_tone=(
+            row["cover_letter_tone"] if "cover_letter_tone" in row.keys() else None
+        ),
+        cv_history=(
+            json.loads(row["cv_history_json"])
+            if "cv_history_json" in row.keys() and row["cv_history_json"]
+            else None
+        ),
+        cl_history=(
+            json.loads(row["cl_history_json"])
+            if "cl_history_json" in row.keys() and row["cl_history_json"]
+            else None
+        ),
         user_notes=row["user_notes"] if "user_notes" in row.keys() else None,
         base_cv_id=row["base_cv_id"] if "base_cv_id" in row.keys() else None,
         base_cv_name=row["base_cv_name"] if "base_cv_name" in row.keys() else None,
@@ -352,7 +366,11 @@ class JobListingUpdate(BaseModel):
 
 
 @router.patch("/{job_id}/listing", response_model=JobResponse)
-async def update_job_listing(job_id: str, body: JobListingUpdate, user: dict = Depends(get_current_user)) -> JobResponse:
+async def update_job_listing(
+    job_id: str,
+    body: JobListingUpdate,
+    user: dict = Depends(get_current_user),
+) -> JobResponse:
     """Update the job link and/or job listing text."""
     db = await get_db()
     try:
@@ -367,10 +385,16 @@ async def update_job_listing(job_id: str, body: JobListingUpdate, user: dict = D
         if updates:
             set_clause = ", ".join(f"{k}=?" for k in updates)
             values = list(updates.values()) + [job_id, user["id"]]
-            await db.execute(f"UPDATE jobs SET {set_clause} WHERE id=? AND user_id=?", values)
+            await db.execute(
+                f"UPDATE jobs SET {set_clause} WHERE id=? AND user_id=?",  # noqa: S608
+                values,
+            )
             await db.commit()
 
-        cursor = await db.execute("SELECT * FROM jobs WHERE id=? AND user_id=?", (job_id, user["id"]))
+        cursor = await db.execute(
+            "SELECT * FROM jobs WHERE id=? AND user_id=?",
+            (job_id, user["id"]),
+        )
         row = await cursor.fetchone()
     finally:
         await db.close()
@@ -816,7 +840,10 @@ async def update_job_cv(
 
 
 @router.get("/{job_id}/events", response_class=EventSourceResponse)
-async def job_events(job_id: str, user: dict = Depends(get_current_user)) -> AsyncIterable[ServerSentEvent]:
+async def job_events(
+    job_id: str,
+    user: dict = Depends(get_current_user),
+) -> AsyncIterable[ServerSentEvent]:
     """Stream real-time job status updates via Server-Sent Events.
 
     If the job is already terminal, yields one event and closes the stream.

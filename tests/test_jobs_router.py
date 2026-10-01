@@ -131,7 +131,11 @@ def test_create_job_returns_201(tmp_path: Path):
     ):
         response = client.post(
             "/api/jobs",
-            json={"company_name": "TestCo", "job_link": "https://example.com/test", "job_text": "Looking for Python dev"},
+            json={
+                "company_name": "TestCo",
+                "job_link": "https://example.com/test",
+                "job_text": "Looking for Python dev",
+            },
         )
 
     assert response.status_code == 201
@@ -172,11 +176,19 @@ def test_list_jobs_returns_array(tmp_path: Path):
         # POST two jobs
         client.post(
             "/api/jobs",
-            json={"company_name": "CompanyA", "job_link": "https://example.com/a", "job_text": "Job listing A"},
+            json={
+                "company_name": "CompanyA",
+                "job_link": "https://example.com/a",
+                "job_text": "Job listing A",
+            },
         )
         client.post(
             "/api/jobs",
-            json={"company_name": "CompanyB", "job_link": "https://example.com/b", "job_text": "Job listing B"},
+            json={
+                "company_name": "CompanyB",
+                "job_link": "https://example.com/b",
+                "job_text": "Job listing B",
+            },
         )
 
         # GET all jobs
@@ -200,7 +212,11 @@ def test_get_job_detail_returns_job(tmp_path: Path):
         # Create a job first
         create_response = client.post(
             "/api/jobs",
-            json={"company_name": "DetailCo", "job_link": "https://example.com/detail", "job_text": "Detailed job listing"},
+            json={
+                "company_name": "DetailCo",
+                "job_link": "https://example.com/detail",
+                "job_text": "Detailed job listing",
+            },
         )
         assert create_response.status_code == 201
         job_id = create_response.json()["id"]
@@ -286,7 +302,11 @@ def test_get_pdf_404_when_not_complete(tmp_path: Path):
         # Create a job — worker is mocked so it stays pending
         create_response = client.post(
             "/api/jobs",
-            json={"company_name": "PDFCo", "job_link": "https://example.com/pdf", "job_text": "PDF test job"},
+            json={
+                "company_name": "PDFCo",
+                "job_link": "https://example.com/pdf",
+                "job_text": "PDF test job",
+            },
         )
         assert create_response.status_code == 201
         job_id = create_response.json()["id"]

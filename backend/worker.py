@@ -189,7 +189,9 @@ async def job_worker(
                 reasoning_effort=reasoning_effort,
             )
             logger.info("Job %s: [2/4] Starting %s pipeline...", job_id, type(provider).__name__)
-            tailored_cv, gap_diff = await run_provider_async(provider, base_cv, job_text, creativity_level, user_notes)
+            tailored_cv, gap_diff = await run_provider_async(
+                provider, base_cv, job_text, creativity_level, user_notes
+            )
             logger.info(
                 "Job %s: [2/4] %s pipeline done (%.1fs)",
                 job_id, type(provider).__name__, time.monotonic() - t0,
