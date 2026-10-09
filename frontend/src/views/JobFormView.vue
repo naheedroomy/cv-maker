@@ -82,9 +82,7 @@ function handleRetry(): void { errorMessage.value = null }
 <template>
   <div class="job-form-view">
     <header class="page-heading">
-      <div class="overline"><span class="overline-dot" aria-hidden="true" /> THE WORKSPACE <span class="overline-number">01 / CREATE</span></div>
-      <h1 class="page-title">A better fit starts <em>here.</em></h1>
-      <p class="page-description">Add a job description. We’ll help shape your experience into a CV you can review, edit and make your own.</p>
+      <h1 class="page-title">Create a CV</h1>
     </header>
 
     <ErrorBanner v-if="errorMessage" :message="errorMessage" @retry="handleRetry" />
@@ -154,13 +152,8 @@ function handleRetry(): void { errorMessage.value = null }
 
 <style scoped>
 .job-form-view { width: 100%; }
-.page-heading { max-width: 850px; margin: 0 0 39px; }
-.overline { display: flex; align-items: center; gap: 9px; color: var(--color-text-secondary); font-size: 10px; font-weight: 800; letter-spacing: .14em; }
-.overline-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-accent-primary); }
-.overline-number { margin-left: 16px; opacity: .7; }
-.page-title { margin: 16px 0 9px; color: var(--color-text-primary); font-size: clamp(37px, 4.4vw, 66px); font-weight: 800; line-height: 1.08; letter-spacing: -.065em; }
-.page-title em { font-style: normal; text-decoration: underline; text-decoration-color: var(--color-highlight); text-decoration-thickness: .15em; text-underline-offset: -.04em; }
-.page-description { max-width: 670px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
+.page-heading { margin: 0 0 20px; }
+.page-title { color: var(--color-text-primary); font-size: 26px; font-weight: 800; line-height: 1.2; letter-spacing: -.03em; }
 .job-form { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(290px, 1fr); gap: 17px; align-items: start; }
 .author-panel, .options-panel { background: var(--color-surface-1); border: 1px solid var(--color-border); border-radius: 5px; box-shadow: 0 10px 32px rgba(24,53,53,.04); min-width: 0; overflow: hidden; }
 .panel-topline, .panel-bottomline { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; font-size: 10px; font-weight: 800; letter-spacing: .09em; color: var(--color-text-secondary); }
@@ -190,9 +183,9 @@ function handleRetry(): void { errorMessage.value = null }
 .options-panel { position: sticky; top: 24px; }
 .options-content { padding: 28px 25px 8px; }
 .options-intro { max-width: 290px; }
-.submit-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 16px; margin-top: 22px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-highlight); color: var(--color-highlight-text); text-align: left; font-size: 14px; font-weight: 800; min-height: 48px; transition: background .15s ease, transform .15s ease; }
-.submit-btn:not(:disabled):hover { background: var(--color-highlight-hover); transform: translateY(-2px); }
-.submit-btn:disabled { opacity: .55; }
+.submit-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 16px; margin-top: 22px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-accent-primary); color: var(--color-text-inverted); text-align: left; font-size: 14px; font-weight: 800; min-height: 48px; transition: background .15s ease, transform .15s ease; }
+.submit-btn:not(:disabled):hover { background: var(--color-accent-primary-hover); transform: translateY(-2px); }
+.submit-btn:disabled { background: var(--color-surface-3); color: var(--color-text-secondary); opacity: 1; }
 .submit-help, .provider-notice { min-height: 35px; margin: 10px 0 0; font-size: 11px; line-height: 1.5; color: var(--color-text-secondary); }
 .provider-notice { color: var(--color-error-text); }
 .provider-notice a { display: inline-block; font-weight: 800; }
@@ -206,5 +199,5 @@ function handleRetry(): void { errorMessage.value = null }
 .below-note span { color: var(--color-text-primary); margin-right: 6px; }
 @media (max-width: 1200px) { .job-form { grid-template-columns: minmax(0, 1.3fr) minmax(265px, 1fr); } .field-row { grid-template-columns: 1fr; gap: 0; } }
 @media (max-width: 1040px) { .job-form { grid-template-columns: 1fr; } .options-panel { position: static; } .field-row { grid-template-columns: 1fr 1fr; gap: 14px; } }
-@media (max-width: 600px) { .page-heading { margin-bottom: 27px; } .page-title { font-size: 42px; } .overline-number { margin-left: 3px; } .author-content, .options-content { padding: 23px 20px 12px; } .field-row { grid-template-columns: 1fr; gap: 0; } .panel-topline, .panel-bottomline { padding-inline: 20px; } .panel-topline-end { display: none; } .section-heading { margin-bottom: 22px; } .field-textarea { min-height: 210px; } }
+@media (max-width: 600px) { .page-heading { margin-bottom: 18px; } .page-title { font-size: 24px; } .author-content, .options-content { padding: 23px 20px 12px; } .field-row { grid-template-columns: 1fr; gap: 0; } .panel-topline, .panel-bottomline { padding-inline: 20px; } .panel-topline-end { display: none; } .section-heading { margin-bottom: 22px; } .field-textarea { min-height: 210px; } }
 </style>

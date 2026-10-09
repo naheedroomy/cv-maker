@@ -207,6 +207,7 @@ const modelList = computed<ModelOption[]>(() => {
         <select
           :value="modelId || defaultSettings[`${modelValue}_model`]"
           class="detail-select"
+          :title="modelId || defaultSettings[`${modelValue}_model`]"
           :disabled="disabled || fetchingModels"
           @change="emit('update:modelId', ($event.target as HTMLSelectElement).value)"
         >
@@ -242,7 +243,7 @@ const modelList = computed<ModelOption[]>(() => {
 
 .model-details-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   margin-top: 10px;
   padding: 12px;
@@ -252,16 +253,17 @@ const modelList = computed<ModelOption[]>(() => {
 }
 
 .model-details-grid--single {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (max-width: 540px) {
   .model-details-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .detail-field {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -297,6 +299,11 @@ const modelList = computed<ModelOption[]>(() => {
 }
 
 .detail-select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
   height: 36px;
   padding: 0 8px;
   border: 1px solid var(--color-border);

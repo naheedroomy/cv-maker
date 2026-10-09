@@ -74,7 +74,7 @@ Reusable Vue components that compose into views. Each component has a single, fo
 
 **Options**: Claude API, Gemini, OpenAI, Gemini Web — each with description hints. Unavailable options are visually disabled and show "Set your X in Settings" hint. Selected option shows its provider hint text.
 
-**Integration**: Imports `@/assets/selector.css` for shared pill styles. Used by `JobFormView`, `RegeneratePanel`, `CoverLetterSection`, `CvConverterView`.
+**Integration**: Imports `@/assets/selector.css` for shared pill styles. Used by `JobFormView`, `RegeneratePanel`, `CoverLetterSection`, `CvConverterView`. Detail-grid tracks and selects shrink within their container even with long provider/model names; the model select's title exposes the full ID. `tests/browser/workspace-layout.mjs` covers long variants across all four providers, both themes, and desktop/mobile widths.
 
 ### `CreativitySlider.vue`
 **Purpose**: Pill-group selector for creativity level (0–3).
