@@ -781,7 +781,15 @@ Analyze the job listing thoroughly. Extract ALL requirements (aim for 10-15). \
 For each, cite specific evidence from the base CV. Then produce the tailored CV \
 as a single JSON object matching this schema:
 
+For application_title, extract the hiring company's name and the advertised job title
+from the JOB LISTING only, formatted exactly as "Company Name - Job Title".
+Use the company's proper name and the role's stated seniority; remove listing IDs,
+location suffixes and recruitment boilerplate. Do not use a company or role from the
+candidate's base CV. If either is absent or ambiguous, return null rather than inventing it.
+This is application display metadata, not an instruction to alter the candidate's CV.
+
 {{
+  "application_title": "<Company Name - Job Title, or null if unknown>",
   "contact": {{"name": "<str>", "email": "<str>", "linkedin": "<str or null>",
                "github": "<str or null>", "phone": "<str or null>", "location": "<str or null>",
                "work_authorization": "<str or null — pass through unchanged>"}},

@@ -11,12 +11,11 @@ import json
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from backend.db import get_db, init_db
-
 
 # ---------------------------------------------------------------------------
 # Fake model helpers
@@ -122,7 +121,8 @@ def test_worker_semaphore_limits_concurrency():
     assert _semaphore._value == 5
 
 
-def test_worker_completes_job_successfully(tmp_path: Path):
+@pytest.mark.parametrize("application_title", [None, "cplace - DevOps Engineer"])
+def test_worker_completes_job_successfully(tmp_path: Path, application_title):
     """Worker transitions job to complete and saves PDF, tailored_cv, and gap_diff."""
     job_id = "test-job-complete-001"
     test_db = tmp_path / "test.db"
@@ -131,10 +131,23 @@ def test_worker_completes_job_successfully(tmp_path: Path):
     async def _run():
         await _init_test_db(test_db)
         await _insert_pending_job(test_db, job_id)
+        # Display labels need not be unique: another application may have the same title.
+        await _insert_pending_job(test_db, "other-job", company="cplace - DevOps Engineer")
+        db = await get_db(test_db)
+        try:
+            await db.execute("BEGIN IMMEDIATE")
+            await db.execute(
+                "UPDATE jobs SET cv_history_json=?, applied=1 WHERE id=?",
+                ('[{"version": 1}]', job_id),
+            )
+            await db.commit()
+        finally:
+            await db.close()
 
         import backend.worker as worker_module
 
         fake_tailored = _fake_tailored_cv()
+        fake_tailored.application_title = application_title
         fake_gaps = _fake_gap_items()
 
         async def fake_get_db(db_path=None):
@@ -151,6 +164,7 @@ def test_worker_completes_job_successfully(tmp_path: Path):
                 new_callable=AsyncMock,
                 return_value=(fake_tailored, fake_gaps),
             ),
+            patch("backend.worker._push_event", new_callable=AsyncMock) as push_event,
             patch(
                 "backend.worker.render_latex",
                 return_value="\\documentclass{article}\\begin{document}test\\end{document}",
@@ -168,11 +182,21 @@ def test_worker_completes_job_successfully(tmp_path: Path):
         ):
             await worker_module.job_worker(job_id, "TestCo", "test job text")
 
+        event_id, event_type, result = push_event.call_args.args
+        assert event_id == job_id
+        assert event_type == "complete"
+        assert result["company_name"] == (application_title or "TestCo")
         row = await _get_job_row(test_db, job_id)
         assert row["status"] == "complete", f"Expected 'complete', got {row['status']}"
         assert row["tailored_cv_json"] is not None
         assert row["gap_diff_json"] is not None
         assert row["pdf_path"] is not None
+        assert row["id"] == job_id
+        assert row["company_name"] == (application_title or "TestCo")
+        assert row["cv_history_json"] == '[{"version": 1}]'
+        assert row["applied"] == 1
+        assert Path(row["pdf_path"]).parent.name == job_id
+        assert (await _get_job_row(test_db, "other-job"))["status"] == "pending"
 
         # Verify the tailored_cv_json is valid JSON
         tailored = json.loads(row["tailored_cv_json"])

@@ -52,8 +52,8 @@ The FastAPI backend for CV Maker — a multi-tenant REST API that orchestrates A
 5. Run AI pipeline via `run_provider_async()` (thread pool) → produces `TailoredCV` + `list[GapItem]`.
 6. Render LaTeX via `core.renderer.render_latex()` (sync, fast).
 7. Compile PDF via `render_pdf_async()` (thread pool, runs latexmk subprocess).
-8. Save `.pdf` and `.tex` to `{data_dir}/output/{user_id}/{company_name}/`.
-9. Update DB: `running` → `complete`, storing `tailored_cv_json`, `gap_diff_json`, `pdf_path`.
+8. Save `.pdf` and `.tex` to `{data_dir}/output/{user_id}/{job_id}/`; mutable titles are not paths.
+9. Update DB: `running` → `complete`, storing `tailored_cv_json`, `gap_diff_json`, `pdf_path`, and the LLM's `application_title` in `company_name` when present. Titles use `Company Name - Job Title` extracted from the job listing; missing/invalid metadata preserves the entered label. The independent `jobs.id` primary key is unchanged.
 10. Push SSE `complete` event with full result.
 11. On `CancelledError`: set `status='cancelled'` in DB, push SSE, **re-raise**.
 12. On other exceptions: set `status='failed'`, push SSE.

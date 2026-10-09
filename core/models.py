@@ -179,6 +179,8 @@ class TailoredCV(BaseModel):
     all others default so TailoredCV.model_validate() is tolerant of minor Claude output variance.
     """
 
+    # Display metadata only; never used as the application ID or a filesystem path.
+    application_title: str | None = None
     contact: ContactInfo  # Pass-through from BaseCV
     summary: str
     experience: list[ExperienceItem]  # Rewritten by AI, reverse chronological
@@ -201,6 +203,17 @@ class TailoredCV(BaseModel):
         r"\s*\((?:substituted|soft[- ]?fabricated|added|removed|modified|reordered|unchanged)\)",
         re.IGNORECASE,
     )
+
+    @field_validator("application_title", mode="before")
+    @classmethod
+    def _normalize_application_title(cls, value: object) -> str | None:
+        if not isinstance(value, str):
+            return None
+        title = " ".join(value.split())
+        company, separator, role = title.partition(" - ")
+        if not separator or not company.strip() or not role.strip() or len(title) > 200:
+            return None
+        return f"{company.strip()} - {role.strip()}"
 
     @field_validator("skills", mode="before")
     @classmethod

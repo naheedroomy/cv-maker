@@ -68,6 +68,7 @@ export interface TailoringNote {
 }
 
 export interface TailoredCV {
+  application_title?: string | null
   contact: ContactInfo
   summary: string
   experience: ExperienceItem[]

@@ -190,7 +190,7 @@ function handleRetry(): void { errorMessage.value = null }
 .options-panel { position: sticky; top: 24px; }
 .options-content { padding: 28px 25px 8px; }
 .options-intro { max-width: 290px; }
-.submit-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 16px; margin-top: 22px; border: 1px solid #a9c331; border-radius: 4px; background: var(--color-highlight); color: var(--color-highlight-text); text-align: left; font-size: 14px; font-weight: 800; min-height: 48px; transition: background .15s ease, transform .15s ease; }
+.submit-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 16px; margin-top: 22px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-highlight); color: var(--color-highlight-text); text-align: left; font-size: 14px; font-weight: 800; min-height: 48px; transition: background .15s ease, transform .15s ease; }
 .submit-btn:not(:disabled):hover { background: var(--color-highlight-hover); transform: translateY(-2px); }
 .submit-btn:disabled { opacity: .55; }
 .submit-help, .provider-notice { min-height: 35px; margin: 10px 0 0; font-size: 11px; line-height: 1.5; color: var(--color-text-secondary); }

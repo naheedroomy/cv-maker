@@ -228,7 +228,8 @@ async def job_worker(
                 file_stem = job_id
 
             data_dir = Path(os.environ.get("CV_MAKER_DB_PATH", "cv_maker.db")).parent
-            out_dir = data_dir / "output" / str(user_id) / company_name
+            # Titles are mutable, potentially contain slashes, and are not file identifiers.
+            out_dir = data_dir / "output" / str(user_id) / job_id
             out_dir.mkdir(parents=True, exist_ok=True)
             pdf_path = out_dir / f"{file_stem}.pdf"
             pdf_path.write_bytes(pdf_bytes)
@@ -240,19 +241,21 @@ async def job_worker(
             # Transition: running -> complete; persist results
             # ----------------------------------------------------------------
             _completed_at = _now_iso()
+            display_title = tailored_cv.application_title or company_name
             db = await get_db()
             try:
                 await db.execute("BEGIN IMMEDIATE")
                 await db.execute(
                     """UPDATE jobs
                        SET status='complete', tailored_cv_json=?, gap_diff_json=?,
-                           pdf_path=?, updated_at=?
+                           pdf_path=?, updated_at=?, company_name=?
                        WHERE id=?""",
                     (
                         tailored_cv.model_dump_json(),
                         json.dumps([g.model_dump() for g in gap_diff]),
                         str(pdf_path),
                         _completed_at,
+                        display_title,
                         job_id,
                     ),
                 )
@@ -263,7 +266,7 @@ async def job_worker(
             full_result = {
                 "id": job_id,
                 "status": "complete",
-                "company_name": company_name,
+                "company_name": display_title,
                 "model": model,
                 "created_at": None,      # not in local scope; frontend self-corrects via 30s poll
                 "updated_at": _completed_at,

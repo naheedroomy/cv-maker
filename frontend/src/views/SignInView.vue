@@ -101,14 +101,14 @@ onMounted(async () => {
 <style scoped>
 .signin-container { display: grid; place-items: center; min-height: 100svh; padding: clamp(18px, 5vw, 70px); background: var(--color-background); }
 .signin-layout { width: min(1030px, 100%); min-height: 610px; display: grid; grid-template-columns: 1fr 1fr; background: var(--color-surface-1); border: 1px solid var(--color-border); box-shadow: 0 20px 65px rgba(24,53,53,.08); }
-.story-panel { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; padding: clamp(25px, 3.5vw, 46px); background: #183535; color: #f4f7f0; }
+.story-panel { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; padding: clamp(25px, 3.5vw, 46px); background: #1f2937; color: #f9fafb; --color-highlight: #bfdbfe; --color-highlight-text: #1e3a8a; }
 .story-top, .story-bottom { display: flex; align-items: center; gap: 15px; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
 .story-top .story-mark { display: grid; place-items: center; width: 35px; height: 35px; background: var(--color-highlight); color: var(--color-highlight-text); font-size: 23px; border-radius: 3px; }
 .story-body { padding: 60px 0; }
 .story-index { font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--color-highlight); }
 .story-body h1 { max-width: 410px; margin: 18px 0 22px; font-size: clamp(42px, 5vw, 69px); font-weight: 800; line-height: 1.06; letter-spacing: -.06em; }
 .story-body h1 em { color: var(--color-highlight); font-style: normal; }
-.story-body p { max-width: 340px; font-size: 15px; line-height: 1.6; color: #d3e1db; }
+.story-body p { max-width: 340px; font-size: 15px; line-height: 1.6; color: #d1d5db; }
 .story-bottom { justify-content: space-between; opacity: .85; }
 .story-bottom span:last-child { font-size: 23px; }
 .signin-card { align-self: center; min-width: 0; padding: clamp(25px, 4vw, 60px); }

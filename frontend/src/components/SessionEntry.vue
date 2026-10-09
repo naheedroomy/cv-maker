@@ -53,7 +53,7 @@ function formatDate(iso: string): string {
 }
 .session-entry--active {
   background: var(--color-surface-2);
-  border-left-color: var(--color-highlight);
+  border-left-color: var(--color-accent-primary);
 }
 .session-entry--applied {
   background-color: var(--color-success-secondary);
@@ -64,7 +64,7 @@ function formatDate(iso: string): string {
   background-color: color-mix(in srgb, var(--color-success-secondary) 80%, var(--color-surface-1) 20%);
 }
 .session-entry--active.session-entry--applied {
-  border-left-color: var(--color-highlight);
+  border-left-color: var(--color-accent-primary);
 }
 .session-top {
   display: flex;
@@ -105,7 +105,7 @@ function formatDate(iso: string): string {
   text-align: center;
   min-width: 18px;
 }
-.indicator--done { color: #eaff9d; background: #365d43; }
-.indicator--pending { color: #ffe2a9; background: #5a4d30; }
-.indicator--failed { color: #ffe0dc; background: #663733; }
+.indicator--done { color: var(--color-success-primary); background: var(--color-success-secondary); }
+.indicator--pending { color: var(--color-warning-text); background: var(--color-warning-bg); }
+.indicator--failed { color: var(--color-error-text); background: var(--color-error-bg); }
 </style>
