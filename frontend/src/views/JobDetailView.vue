@@ -200,7 +200,10 @@ async function handleSaveEditedCv() {
 
     <!-- Zone 1: HEADER (always visible) -->
     <div class="job-header">
-      <h2 class="company-heading">{{ currentJob.company_name }}</h2>
+      <div class="job-heading-block">
+        <span class="detail-overline">APPLICATION / {{ currentJob.status.toUpperCase() }}</span>
+        <h1 class="company-heading">{{ currentJob.company_name }}</h1>
+      </div>
       <StatusBadge :status="currentJob.status" />
       <span v-if="currentJob.base_cv_name" class="model-badge">Base: {{ currentJob.base_cv_name }}</span>
       <span class="model-badge">{{ { 'claude-haiku': 'Claude CLI', 'claude-api': 'Claude API', 'gemini-flash': 'Gemini', 'openai': 'OpenAI' }[currentJob.model] || currentJob.model }}</span>
@@ -229,24 +232,28 @@ async function handleSaveEditedCv() {
     />
 
     <!-- Zone 3: TAB BAR (always visible once job exists) -->
-    <div class="tab-bar">
+    <div class="tab-bar" role="group" aria-label="Application sections">
       <button
         class="tab-btn"
+        :aria-pressed="activeTab === 'cv'"
         :class="{ 'tab-btn--active': activeTab === 'cv' }"
         @click="activeTab = 'cv'"
       >CV</button>
       <button
         class="tab-btn"
+        :aria-pressed="activeTab === 'cover-letter'"
         :class="{ 'tab-btn--active': activeTab === 'cover-letter' }"
         @click="activeTab = 'cover-letter'"
       >Cover Letter</button>
       <button
         class="tab-btn"
+        :aria-pressed="activeTab === 'analysis'"
         :class="{ 'tab-btn--active': activeTab === 'analysis' }"
         @click="activeTab = 'analysis'"
       >Analysis</button>
       <button
         class="tab-btn"
+        :aria-pressed="activeTab === 'job-listing'"
         :class="{ 'tab-btn--active': activeTab === 'job-listing' }"
         @click="activeTab = 'job-listing'"
       >Job Listing</button>
@@ -356,6 +363,8 @@ async function handleSaveEditedCv() {
           :cv="currentJob.tailored_cv"
         />
 
+        <p v-if="currentJob.status === 'cancelled'" class="tab-empty-state">Generation was cancelled. Choose Regenerate to try again.</p>
+
         <!-- Failed state error -->
         <ErrorBanner
           v-if="currentJob.status === 'failed'"
@@ -406,8 +415,9 @@ async function handleSaveEditedCv() {
       <section class="analysis-section">
         <h3 class="section-heading">Job Listing</h3>
         <div class="listing-field">
-          <label class="listing-label">Job Link</label>
+          <label for="listing-link" class="listing-label">Job Link</label>
           <input
+            id="listing-link"
             v-model="currentJob.job_link"
             type="url"
             class="listing-input"
@@ -415,8 +425,9 @@ async function handleSaveEditedCv() {
           />
         </div>
         <div class="listing-field">
-          <label class="listing-label">Job Description</label>
+          <label for="listing-description" class="listing-label">Job Description</label>
           <textarea
+            id="listing-description"
             v-model="currentJob.job_text"
             class="listing-textarea"
             rows="16"
@@ -468,8 +479,11 @@ async function handleSaveEditedCv() {
   flex-wrap: wrap;
   gap: 8px 12px;
   margin-bottom: 4px;
+  padding-bottom: 17px;
 }
 
+.job-heading-block { flex-basis: 100%; margin: 0 0 6px; }
+.detail-overline { color: var(--color-text-secondary); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
 .job-link {
   display: inline-block;
   margin-bottom: 20px;
@@ -525,8 +539,11 @@ async function handleSaveEditedCv() {
 }
 
 .company-heading {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: clamp(30px, 3.2vw, 48px);
+  font-weight: 800;
+  letter-spacing: -.055em;
+  line-height: 1.1;
+  margin: 8px 0 0;
   color: var(--color-text-primary);
 }
 
@@ -555,14 +572,17 @@ async function handleSaveEditedCv() {
 .tab-bar {
   display: flex;
   gap: 0;
-  height: 44px;
+  min-height: 49px;
   border-bottom: 1px solid var(--color-border);
-  margin-bottom: 24px;
+  margin-bottom: 25px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .tab-btn {
-  height: 44px;
-  padding: 0 20px;
+  min-height: 48px;
+  padding: 0 19px;
+  white-space: nowrap;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -579,8 +599,8 @@ async function handleSaveEditedCv() {
 }
 
 .tab-btn--active {
-  color: var(--color-accent-primary);
-  border-bottom-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-highlight);
 }
 
 .tab-panel {
@@ -596,6 +616,7 @@ async function handleSaveEditedCv() {
 /* Action buttons row */
 .action-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 24px;
 }
@@ -727,11 +748,16 @@ async function handleSaveEditedCv() {
 /* Analysis section headings */
 .analysis-section {
   margin-bottom: 32px;
+  padding: 22px 24px;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
 }
 
 .section-heading {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.04em;
   color: var(--color-text-primary);
   margin-bottom: 16px;
 }
@@ -803,5 +829,16 @@ async function handleSaveEditedCv() {
   line-height: 1.6;
   max-height: 400px;
   overflow-y: auto;
+}
+
+@media (max-width: 600px) {
+  .tab-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
+  .tab-btn { padding: 0 8px; }
+  .job-header { gap: 9px; }
+  .company-heading { font-size: 36px; }
+  .action-buttons { align-items: stretch; }
+  .action-buttons > * { flex: 1 1 auto; }
+  .analysis-section { padding: 19px 17px; }
+  .listing-actions { flex-wrap: wrap; }
 }
 </style>

@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 
-const theme = ref<'light' | 'dark'>('dark')
+const theme = ref<'light' | 'dark'>('light')
 
 onMounted(() => {
   const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
   if (savedTheme) {
     theme.value = savedTheme
   } else {
-    // If no theme is saved, default to dark
-    theme.value = 'dark'
+    theme.value = 'light'
   }
   document.documentElement.setAttribute('data-theme', theme.value)
 })
@@ -34,13 +33,13 @@ const toggleTheme = () => {
 <style scoped>
 .theme-toggle {
   position: fixed;
-  bottom: 16px;
-  right: 16px;
+  top: 16px;
+  right: 18px;
   z-index: 1000;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  background-color: var(--color-surface-2);
+  border-radius: 6px;
+  background-color: var(--color-surface-1);
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-md);

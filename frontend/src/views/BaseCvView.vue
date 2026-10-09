@@ -164,6 +164,11 @@ async function handleScratchSubmit() {
 
 <template>
   <div class="cv-view">
+    <header class="page-heading">
+      <span class="page-kicker">YOUR SOURCE MATERIAL / 02</span>
+      <h1>One good CV. <em>Many possibilities.</em></h1>
+      <p>Keep your experience accurate and up to date. Choose a base CV for every new application.</p>
+    </header>
     <!-- Global Error banner -->
     <div v-if="error" class="error-banner">{{ error }}</div>
 
@@ -185,10 +190,9 @@ async function handleScratchSubmit() {
             <polyline points="10 9 9 9 8 9" />
           </svg>
         </div>
-        <h3 class="empty-title">No Base CV Profiles</h3>
+        <h2 class="empty-title">Start with your experience.</h2>
         <p class="empty-description">
-          Create your primary Base CV to start tailoring resumes for specific job descriptions.
-          You can upload an existing PDF with our vision parser or start fresh with a blank template.
+          Add a base CV to get started. Upload a PDF, import text, or fill in your details from scratch.
         </p>
         <div class="empty-actions">
           <button type="button" class="btn-primary" @click="openCreateModal('upload')">
@@ -335,7 +339,7 @@ async function handleScratchSubmit() {
       <div class="modal-card modal-card--sm">
         <div class="modal-header">
           <h3 class="modal-title">Rename Base CV</h3>
-          <button type="button" class="modal-close" @click="showRenameModal = false">✕</button>
+          <button type="button" class="modal-close" aria-label="Close rename dialog" @click="showRenameModal = false">✕</button>
         </div>
         <form @submit.prevent="handleRenameSubmit" class="modal-body">
           <div class="form-group">
@@ -378,6 +382,7 @@ async function handleScratchSubmit() {
           <button
             type="button"
             class="modal-close"
+            aria-label="Close new CV dialog"
             :disabled="uploading"
             @click="showCreateModal = false"
           >
@@ -567,11 +572,17 @@ async function handleScratchSubmit() {
 <style scoped>
 .cv-view {
   width: 100%;
-  max-width: 1040px;
+  max-width: 1160px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
+
+.page-heading { margin: 0 0 22px; }
+.page-kicker { color: var(--color-text-secondary); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.page-heading h1 { margin: 13px 0 7px; font-size: clamp(32px, 3.5vw, 52px); font-weight: 800; letter-spacing: -.055em; line-height: 1.12; }
+.page-heading h1 em { font-style: normal; text-decoration: underline; text-decoration-color: var(--color-highlight); text-decoration-thickness: .13em; }
+.page-heading p { max-width: 570px; color: var(--color-text-secondary); font-size: 14px; line-height: 1.6; }
 
 .cv-manager-layout {
   display: flex;
@@ -645,9 +656,9 @@ async function handleScratchSubmit() {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background-color: rgba(234, 179, 8, 0.15);
-  color: #eab308;
-  border: 1px solid rgba(234, 179, 8, 0.35);
+  background-color: var(--color-accent-secondary);
+  color: var(--color-accent-primary);
+  border: 1px solid var(--color-border);
   font-size: 11px;
   font-weight: 600;
   line-height: 1;
@@ -661,7 +672,7 @@ async function handleScratchSubmit() {
   align-items: center;
   gap: 6px;
   background-color: var(--color-accent-primary);
-  color: #ffffff;
+  color: var(--color-text-inverted);
   border: none;
   border-radius: 8px;
   height: 36px;
@@ -745,13 +756,13 @@ async function handleScratchSubmit() {
 }
 
 .btn-toolbar--default {
-  color: #eab308;
-  border-color: rgba(234, 179, 8, 0.4);
+  color: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
 }
 
 .btn-toolbar--default:hover:not(:disabled) {
-  background-color: rgba(234, 179, 8, 0.12);
-  color: #facc15;
+  background-color: var(--color-accent-secondary);
+  color: var(--color-accent-primary);
 }
 
 .btn-toolbar--danger {
@@ -802,7 +813,7 @@ async function handleScratchSubmit() {
   text-align: center;
   background-color: var(--color-surface-1);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 5px;
   padding: 48px 32px;
   max-width: 520px;
   width: 100%;
@@ -841,7 +852,7 @@ async function handleScratchSubmit() {
   align-items: center;
   gap: 6px;
   background-color: var(--color-accent-primary);
-  color: #ffffff;
+  color: var(--color-text-inverted);
   border: none;
   border-radius: 6px;
   height: 38px;

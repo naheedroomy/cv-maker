@@ -922,7 +922,7 @@ function removeLanguage(index: number) {
 /* Buttons */
 .btn-primary {
   background: var(--color-accent-primary);
-  color: #ffffff;
+  color: var(--color-text-inverted);
   border: none;
   border-radius: 6px;
   height: 38px;

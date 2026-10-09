@@ -96,11 +96,7 @@ async function handleConvert(): Promise<void> {
 
 <template>
   <div class="cv-converter-view">
-    <h1 class="page-title">Import Base CV</h1>
-    <p class="page-description">
-      Upload a <strong>.txt</strong> file or paste your existing CV text to generate your
-      <code>base_cv.yaml</code>. For PDFs, copy the text from your PDF viewer and paste it below.
-    </p>
+    <header class="page-heading"><span class="page-kicker">FROM TEXT TO BASE CV / 03</span><h1 class="page-title">Bring your work <em>with you.</em></h1><p class="page-description">Upload a text file or paste your CV. We’ll organize it into a base CV you can use for future applications. For a PDF, copy the text from your PDF viewer first.</p></header>
 
     <div v-if="successMessage" class="banner banner--success" role="status">
       <span class="banner-icon">&#10003;</span>
@@ -112,6 +108,9 @@ async function handleConvert(): Promise<void> {
       {{ errorMessage }}
     </div>
 
+    <section class="converter-sheet" aria-label="Import your CV">
+    <div class="sheet-topline"><span>01 — YOUR SOURCE TEXT</span><span>↗</span></div>
+    <div class="converter-fields">
     <div class="field">
       <label for="cv-file" class="field-label">Upload CV file (.txt)</label>
       <input
@@ -156,33 +155,43 @@ async function handleConvert(): Promise<void> {
       @click="handleConvert"
     >
       <span v-if="converting" class="spinner" aria-hidden="true"></span>
-      <span>{{ converting ? 'Converting...' : 'Convert to YAML' }}</span>
+      <span>{{ converting ? 'Organizing your CV…' : 'Create base CV' }}</span>
     </button>
+
+    </div>
+    </section>
 
     <!-- Parsed YAML preview -->
     <div v-if="yamlContent" class="yaml-preview">
-      <h3 class="yaml-heading">Generated base_cv.yaml</h3>
+      <h2 class="yaml-heading">Your generated base CV <span>(YAML)</span></h2>
       <pre class="yaml-content">{{ yamlContent }}</pre>
     </div>
   </div>
 </template>
 
 <style scoped>
-.cv-converter-view {
-  max-width: 640px;
-}
+.cv-converter-view { max-width: 800px; }
+.page-heading { margin-bottom: 29px; }
+.page-kicker { color: var(--color-text-secondary); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.page-title em { font-style: normal; text-decoration: underline; text-decoration-color: var(--color-highlight); text-decoration-thickness: .13em; }
+.converter-sheet, .yaml-preview { background: var(--color-surface-1); border: 1px solid var(--color-border); border-radius: 5px; overflow: hidden; }
+.sheet-topline { display: flex; justify-content: space-between; padding: 15px 26px; border-bottom: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: 10px; font-weight: 800; letter-spacing: .09em; }
+.converter-fields { padding: 27px 30px 30px; }
+@media (max-width: 600px) { .converter-fields { padding: 22px 19px; } .sheet-topline { padding-inline: 19px; } }
 
 .page-title {
-  font-size: 28px;
-  font-weight: 600;
+  margin: 13px 0 8px;
+  font-size: clamp(34px, 3.5vw, 52px);
+  font-weight: 800;
+  letter-spacing: -.055em;
+  line-height: 1.12;
   color: var(--color-text-primary);
-  margin-bottom: 8px;
 }
 
 .page-description {
   font-size: 14px;
   color: var(--color-text-secondary);
-  margin-bottom: 24px;
+  max-width: 560px;
   line-height: 1.6;
 }
 
@@ -247,11 +256,27 @@ async function handleConvert(): Promise<void> {
 
 .file-input {
   display: block;
+  max-width: 100%;
   font-size: 14px;
   font-family: inherit;
   color: var(--color-text-secondary);
   cursor: pointer;
 }
+
+.file-input::file-selector-button {
+  margin-right: 12px;
+  padding: 9px 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.file-input:focus-visible { outline: 2px solid var(--color-accent-primary); outline-offset: 3px; }
 
 .file-input:disabled {
   opacity: 0.5;
@@ -292,7 +317,7 @@ async function handleConvert(): Promise<void> {
   height: 40px;
   padding: 0 24px;
   background: var(--color-accent-primary);
-  color: #ffffff;
+  color: var(--color-text-inverted);
   font-size: 14px;
   font-weight: 600;
   border: none;
@@ -318,7 +343,7 @@ async function handleConvert(): Promise<void> {
   width: 14px;
   height: 14px;
   border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #ffffff;
+  border-top-color: var(--color-text-inverted);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
@@ -332,7 +357,8 @@ async function handleConvert(): Promise<void> {
 
 /* YAML preview */
 .yaml-preview {
-  margin-top: 32px;
+  margin-top: 25px;
+  padding: 25px 29px;
 }
 
 .yaml-heading {
@@ -341,6 +367,7 @@ async function handleConvert(): Promise<void> {
   color: var(--color-text-primary);
   margin-bottom: 12px;
 }
+.yaml-heading span { color: var(--color-text-secondary); font-size: 12px; font-weight: 500; }
 
 .yaml-content {
   font-size: 13px;
@@ -353,7 +380,7 @@ async function handleConvert(): Promise<void> {
   word-break: break-word;
   line-height: 1.6;
   max-height: 500px;
-  overflow-y: auto;
+  overflow: auto;
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 </style>

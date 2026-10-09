@@ -14,8 +14,8 @@ defineEmits<{ retry: [] }>()
 
 <style scoped>
 .error-banner {
-  background: #fee2e2;
-  border-left: 4px solid #dc2626;
+  background: var(--color-error-bg);
+  border-left: 4px solid var(--color-error-border);
   padding: 16px;
   border-radius: 0 6px 6px 0;
   display: flex;
@@ -25,19 +25,20 @@ defineEmits<{ retry: [] }>()
   margin-bottom: 16px;
 }
 .error-text {
-  color: #7f1d1d;
+  color: var(--color-error-text);
   font-size: 14px;
   margin: 0;
 }
 .retry-btn {
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--color-accent-primary);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  padding: 0;
+  min-height: 40px;
+  padding: 8px 4px;
 }
 .retry-btn:hover {
   text-decoration: underline;

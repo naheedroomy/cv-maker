@@ -218,16 +218,16 @@ const tabs = [
 
 <template>
   <div class="settings-view">
-    <h2 class="settings-title">Provider Settings</h2>
-    <p class="settings-subtitle">Configure model names, endpoints, and API keys for each provider.</p>
+    <header class="settings-heading"><span class="settings-kicker">YOUR TOOLS / 04</span><h1 class="settings-title">Make it <em>yours.</em></h1><p class="settings-subtitle">Connect a provider and choose how your CVs are made. Your preferences are saved here.</p></header>
 
     <!-- Tabs -->
-    <div class="tabs">
+    <div class="tabs" role="group" aria-label="Settings sections">
       <button
         v-for="tab in tabs"
         :key="tab.key"
         class="tab"
         :class="{ 'tab--active': activeTab === tab.key }"
+        :aria-pressed="activeTab === tab.key"
         @click="selectTab(tab.key)"
       >{{ tab.label }}</button>
     </div>
@@ -235,17 +235,17 @@ const tabs = [
     <!-- General -->
     <div v-if="activeTab === 'general'" class="tab-content">
       <div class="field">
-        <label class="field-label">CV Filename</label>
-        <input v-model="settings.cv_filename" class="field-input" placeholder="e.g. Naheed-Roomy-CV" />
-        <p class="field-hint">Name for generated PDF and LaTeX files. A short ID is appended automatically (e.g. <code>Naheed-Roomy-CV-3b062.pdf</code>). Leave empty to use the job ID as filename.</p>
+        <label for="cv-filename" class="field-label">CV filename</label>
+        <input id="cv-filename" v-model="settings.cv_filename" class="field-input" placeholder="e.g. Alex-Morgan-CV" />
+        <p class="field-hint">Name for generated PDF and LaTeX files. A short ID is appended automatically (e.g. <code>Alex-Morgan-CV-3b062.pdf</code>). Leave empty to use the job ID as filename.</p>
       </div>
     </div>
 
     <!-- Claude CLI -->
     <div v-if="activeTab === 'claude-cli'" class="tab-content">
       <div class="field">
-        <label class="field-label">Model</label>
-        <select v-model="settings.claude_cli_model" class="field-input field-select">
+        <label for="cli-model" class="field-label">Model</label>
+        <select id="cli-model" v-model="settings.claude_cli_model" class="field-input field-select">
           <option v-for="m in getProviderOptions('claude-cli')" :key="m.id" :value="m.id">
             {{ m.label }} ({{ m.id }})
           </option>
@@ -253,7 +253,7 @@ const tabs = [
         <p class="field-hint">Passed to <code>claude -p --model &lt;value&gt;</code>.</p>
       </div>
       <div class="field">
-        <label class="field-label">Authentication</label>
+        <p class="field-label">Authentication</p>
         <p class="field-hint">Uses your Claude Code CLI subscription. No API key needed.</p>
       </div>
     </div>
@@ -262,7 +262,7 @@ const tabs = [
     <div v-if="activeTab === 'claude-api'" class="tab-content">
       <div class="field">
         <div class="field-header-row">
-          <label class="field-label">Model</label>
+          <label for="claude-model" class="field-label">Model</label>
           <button
             type="button"
             class="btn-refresh-inline"
@@ -272,7 +272,7 @@ const tabs = [
             {{ fetchingModels['claude-api'] ? 'Refreshing...' : '↻ Refresh Models' }}
           </button>
         </div>
-        <select v-model="settings.claude_api_model" class="field-input field-select">
+        <select id="claude-model" v-model="settings.claude_api_model" class="field-input field-select">
           <option v-for="m in getProviderOptions('claude-api')" :key="m.id" :value="m.id">
             {{ m.label }} ({{ m.id }})
           </option>
@@ -283,8 +283,8 @@ const tabs = [
         <p class="field-hint">Models discovered from Anthropic API. Click Refresh to reload with your API key.</p>
       </div>
       <div class="field">
-        <label class="field-label">Reasoning / Thinking Effort</label>
-        <select v-model="settings.claude_reasoning_effort" class="field-input field-select">
+        <label for="claude-effort" class="field-label">Reasoning / thinking effort</label>
+        <select id="claude-effort" v-model="settings.claude_reasoning_effort" class="field-input field-select">
           <option v-for="opt in reasoningOptions" :key="opt.value" :value="opt.value">
             {{ opt.label }}
           </option>
@@ -292,8 +292,8 @@ const tabs = [
         <p class="field-hint">Controls extended or adaptive thinking for Claude 3.7+ and Claude 5 models.</p>
       </div>
       <div class="field">
-        <label class="field-label">API Key</label>
-        <input v-model="settings.anthropic_api_key" type="password" class="field-input" placeholder="sk-ant-..." />
+        <label for="anthropic-key" class="field-label">API key</label>
+        <input id="anthropic-key" v-model="settings.anthropic_api_key" type="password" class="field-input" placeholder="sk-ant-..." />
         <p class="field-hint">Anthropic API key. Overrides <code>.env</code> value if set. Masked after save.</p>
       </div>
     </div>
@@ -302,7 +302,7 @@ const tabs = [
     <div v-if="activeTab === 'gemini'" class="tab-content">
       <div class="field">
         <div class="field-header-row">
-          <label class="field-label">Model</label>
+          <label for="gemini-model" class="field-label">Model</label>
           <button
             type="button"
             class="btn-refresh-inline"
@@ -312,7 +312,7 @@ const tabs = [
             {{ fetchingModels['gemini'] ? 'Refreshing...' : '↻ Refresh Models' }}
           </button>
         </div>
-        <select v-model="settings.gemini_model" class="field-input field-select">
+        <select id="gemini-model" v-model="settings.gemini_model" class="field-input field-select">
           <option v-for="m in getProviderOptions('gemini')" :key="m.id" :value="m.id">
             {{ m.label }} ({{ m.id }})
           </option>
@@ -323,8 +323,8 @@ const tabs = [
         <p class="field-hint">Models discovered from Google AI Studio. Click Refresh to reload with your API key.</p>
       </div>
       <div class="field">
-        <label class="field-label">Reasoning / Thinking Effort</label>
-        <select v-model="settings.gemini_reasoning_effort" class="field-input field-select">
+        <label for="gemini-effort" class="field-label">Reasoning / thinking effort</label>
+        <select id="gemini-effort" v-model="settings.gemini_reasoning_effort" class="field-input field-select">
           <option v-for="opt in reasoningOptions" :key="opt.value" :value="opt.value">
             {{ opt.label }}
           </option>
@@ -332,8 +332,8 @@ const tabs = [
         <p class="field-hint">Controls thinking level (Low, Medium, High) or disables thinking for Gemini 2.5+ models.</p>
       </div>
       <div class="field">
-        <label class="field-label">API Key</label>
-        <input v-model="settings.gemini_api_key" type="password" class="field-input" placeholder="AIza..." />
+        <label for="gemini-key" class="field-label">API key</label>
+        <input id="gemini-key" v-model="settings.gemini_api_key" type="password" class="field-input" placeholder="AIza..." />
         <p class="field-hint">Google AI API key. Overrides <code>.env</code> value if set. Masked after save.</p>
       </div>
     </div>
@@ -342,7 +342,7 @@ const tabs = [
     <div v-if="activeTab === 'openai'" class="tab-content">
       <div class="field">
         <div class="field-header-row">
-          <label class="field-label">Model</label>
+          <label for="openai-model" class="field-label">Model</label>
           <button
             type="button"
             class="btn-refresh-inline"
@@ -352,7 +352,7 @@ const tabs = [
             {{ fetchingModels['openai'] ? 'Refreshing...' : '↻ Refresh Models' }}
           </button>
         </div>
-        <select v-model="settings.openai_model" class="field-input field-select">
+        <select id="openai-model" v-model="settings.openai_model" class="field-input field-select">
           <option v-for="m in getProviderOptions('openai')" :key="m.id" :value="m.id">
             {{ m.label }} ({{ m.id }})
           </option>
@@ -363,8 +363,8 @@ const tabs = [
         <p class="field-hint">Models discovered from OpenAI. Click Refresh to reload with your API key.</p>
       </div>
       <div class="field">
-        <label class="field-label">Reasoning / Thinking Effort</label>
-        <select v-model="settings.openai_reasoning_effort" class="field-input field-select">
+        <label for="openai-effort" class="field-label">Reasoning / thinking effort</label>
+        <select id="openai-effort" v-model="settings.openai_reasoning_effort" class="field-input field-select">
           <option v-for="opt in reasoningOptions" :key="opt.value" :value="opt.value">
             {{ opt.label }}
           </option>
@@ -372,13 +372,13 @@ const tabs = [
         <p class="field-hint">Reasoning effort for reasoning models (o1, o3, o4, gpt-5+). Automatically omitted for standard models.</p>
       </div>
       <div class="field">
-        <label class="field-label">Base URL</label>
-        <input v-model="settings.openai_base_url" class="field-input" placeholder="https://api.openai.com/v1 (default)" />
+        <label for="openai-url" class="field-label">Base URL</label>
+        <input id="openai-url" v-model="settings.openai_base_url" class="field-input" placeholder="https://api.openai.com/v1 (default)" />
         <p class="field-hint">Override for OpenAI-compatible APIs (Groq, Together AI, Ollama, etc.). Leave empty for default OpenAI.</p>
       </div>
       <div class="field">
-        <label class="field-label">API Key</label>
-        <input v-model="settings.openai_api_key" type="password" class="field-input" placeholder="sk-..." />
+        <label for="openai-key" class="field-label">API key</label>
+        <input id="openai-key" v-model="settings.openai_api_key" type="password" class="field-input" placeholder="sk-..." />
         <p class="field-hint">OpenAI API key. Overrides <code>.env</code> value if set. Masked after save.</p>
       </div>
     </div>
@@ -386,8 +386,9 @@ const tabs = [
     <!-- Gemini Web -->
     <div v-if="activeTab === 'gemini-web'" class="tab-content">
       <div class="field">
-        <label class="field-label">Browser Cookie (__Secure-1PSID)</label>
+        <label for="gemini-cookie" class="field-label">Browser cookie (__Secure-1PSID)</label>
         <textarea
+          id="gemini-cookie"
           v-model="settings.gemini_web_psid"
           class="field-input field-textarea"
           rows="3"
@@ -401,8 +402,8 @@ const tabs = [
         </p>
       </div>
       <div class="field">
-        <label class="field-label">Model</label>
-        <select v-model="settings.gemini_web_model" class="field-input field-select">
+        <label for="gemini-web-model" class="field-label">Model</label>
+        <select id="gemini-web-model" v-model="settings.gemini_web_model" class="field-input field-select">
           <option v-for="m in getProviderOptions('gemini-web')" :key="m.id" :value="m.id">
             {{ m.label }} ({{ m.id }})
           </option>
@@ -410,7 +411,7 @@ const tabs = [
         <p class="field-hint">Gemini web model name.</p>
       </div>
       <div class="field">
-        <label class="field-label">Check Cookie</label>
+        <p class="field-label">Check cookie</p>
         <div class="cookie-check-row">
           <button
             class="btn-check"
@@ -429,7 +430,7 @@ const tabs = [
         </p>
       </div>
       <div class="field">
-        <label class="field-label">About</label>
+        <p class="field-label">About</p>
         <p class="field-hint">
           Gemini Web uses your browser session cookie to access the Gemini web app directly.
           No API key needed — uses your existing Gemini subscription.
@@ -451,23 +452,27 @@ const tabs = [
 </template>
 
 <style scoped>
-.settings-view {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 24px;
-}
+.settings-view { max-width: 790px; margin: 0; }
+.settings-heading { margin-bottom: 32px; }
+.settings-kicker { color: var(--color-text-secondary); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.settings-title em { font-style: normal; text-decoration: underline; text-decoration-color: var(--color-highlight); text-decoration-thickness: .13em; }
+.settings-view .tab-content, .settings-view .save-row { max-width: 720px; }
+@media (max-width: 600px) { .settings-heading { margin-bottom: 23px; } .settings-view .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .settings-view .tab { padding: 0 6px; font-size: 12px; } }
 
 .settings-title {
-  font-size: 22px;
-  font-weight: 700;
+  margin: 13px 0 7px;
+  font-size: clamp(34px, 3.5vw, 52px);
+  font-weight: 800;
+  letter-spacing: -.055em;
+  line-height: 1.12;
   color: var(--color-text-primary);
-  margin-bottom: 4px;
 }
 
 .settings-subtitle {
   font-size: 14px;
   color: var(--color-text-secondary);
-  margin-bottom: 24px;
+  max-width: 530px;
+  line-height: 1.6;
 }
 
 .tabs {
@@ -475,15 +480,18 @@ const tabs = [
   gap: 4px;
   padding: 4px;
   background: var(--color-surface-2);
-  border-radius: 8px;
-  margin-bottom: 24px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .tab {
-  flex: 1;
-  height: 36px;
+  flex: 1 0 auto;
+  min-height: 40px;
+  padding: 0 14px;
   border: none;
-  border-radius: 6px;
+  border-radius: 3px;
   background: transparent;
   color: var(--color-text-secondary);
   font-size: 13px;
@@ -505,8 +513,13 @@ const tabs = [
 .tab-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 21px;
+  padding: 28px 30px;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
 }
+@media (max-width: 600px) { .tab-content { padding: 22px 19px; } }
 
 .field {
   display: flex;
@@ -521,7 +534,9 @@ const tabs = [
 }
 
 .field-input {
-  height: 40px;
+  min-height: 44px;
+  min-width: 0;
+  width: 100%;
   padding: 0 12px;
   border: 1px solid var(--color-border);
   border-radius: 6px;
@@ -545,7 +560,7 @@ const tabs = [
 .field-input:focus {
   outline: none;
   border-color: var(--color-accent-primary);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15); /* Assuming --color-accent-primary is #3B82F6 */
+  box-shadow: 0 0 0 2px var(--color-accent-secondary);
 }
 
 .field-hint {
@@ -565,7 +580,8 @@ const tabs = [
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 28px;
+  margin-top: 18px;
+  flex-wrap: wrap;
 }
 
 .btn-save {
@@ -574,7 +590,7 @@ const tabs = [
   border-radius: 6px;
   background: var(--color-accent-primary);
   border: none;
-  color: #ffffff;
+  color: var(--color-text-inverted);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;

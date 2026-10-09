@@ -198,7 +198,7 @@ function handleRegenerate(): void {
   border-radius: 6px;
   background: var(--color-accent-primary);
   border: none;
-  color: #ffffff;
+  color: var(--color-text-inverted);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;

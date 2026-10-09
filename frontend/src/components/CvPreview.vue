@@ -111,21 +111,22 @@ const hasCategorizedSkills = computed(() => {
 .cv-preview {
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 20px;
 }
 
 .cv-section {
   background: var(--color-surface-1);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 24px;
+  border-radius: 5px;
+  padding: clamp(20px, 3vw, 28px);
 }
 
 .section-heading {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -.04em;
   color: var(--color-text-primary);
-  margin-bottom: 16px;
+  margin-bottom: 15px;
 }
 
 .body-text {

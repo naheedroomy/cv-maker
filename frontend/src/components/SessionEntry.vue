@@ -24,13 +24,13 @@ function formatDate(iso: string): string {
       <span class="created-date">{{ formatDate(job.updated_at) }}</span>
       <div class="status-indicators">
         <!-- CV status -->
-        <span v-if="job.status === 'complete'" class="indicator indicator--done" title="CV ready">CV</span>
-        <span v-else-if="job.status === 'pending' || job.status === 'running'" class="indicator indicator--pending" title="CV generating">CV</span>
-        <span v-else-if="job.status === 'failed'" class="indicator indicator--failed" title="CV failed">CV</span>
+        <span v-if="job.status === 'complete'" class="indicator indicator--done" aria-label="CV ready" title="CV ready">CV</span>
+        <span v-else-if="job.status === 'pending' || job.status === 'running'" class="indicator indicator--pending" aria-label="CV generating" title="CV generating">CV</span>
+        <span v-else-if="job.status === 'failed'" class="indicator indicator--failed" aria-label="CV failed" title="CV failed">CV</span>
 
         <!-- Cover letter status -->
-        <span v-if="job.cover_letter_text && job.cover_letter_text.length > 0" class="indicator indicator--done" title="Cover letter ready">L</span>
-        <span v-else-if="job.cover_letter_text === ''" class="indicator indicator--pending" title="Cover letter generating">L</span>
+        <span v-if="job.cover_letter_text && job.cover_letter_text.length > 0" class="indicator indicator--done" aria-label="Cover letter ready" title="Cover letter ready">L</span>
+        <span v-else-if="job.cover_letter_text === ''" class="indicator indicator--pending" aria-label="Cover letter generating" title="Cover letter generating">L</span>
       </div>
     </div>
   </router-link>
@@ -39,8 +39,9 @@ function formatDate(iso: string): string {
 <style scoped>
 .session-entry {
   display: block;
-  padding: 10px 16px;
+  padding: 11px 22px;
   border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--color-border);
   min-height: 48px;
   text-decoration: none;
   color: var(--color-text-primary);
@@ -52,7 +53,7 @@ function formatDate(iso: string): string {
 }
 .session-entry--active {
   background: var(--color-surface-2);
-  border-left-color: var(--color-accent-primary);
+  border-left-color: var(--color-highlight);
 }
 .session-entry--applied {
   background-color: var(--color-success-secondary);
@@ -63,7 +64,7 @@ function formatDate(iso: string): string {
   background-color: color-mix(in srgb, var(--color-success-secondary) 80%, var(--color-surface-1) 20%);
 }
 .session-entry--active.session-entry--applied {
-  border-left-color: var(--color-accent-primary);
+  border-left-color: var(--color-highlight);
 }
 .session-top {
   display: flex;
@@ -73,8 +74,8 @@ function formatDate(iso: string): string {
   margin-bottom: 3px;
 }
 .company-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -104,24 +105,7 @@ function formatDate(iso: string): string {
   text-align: center;
   min-width: 18px;
 }
-.indicator--done {
-  color: var(--color-success-primary);
-  background: color-mix(in srgb, var(--color-success-primary) 20%, transparent);
-}
-.indicator--pending {
-  color: #d97706; /* Amber 600 */
-  background: #fef3c7; /* Amber 100 */
-}
-[data-theme='dark'] .indicator--pending {
-  color: #f59e0b; /* Amber 400 */
-  background: #78350f; /* Amber 900 */
-}
-.indicator--failed {
-  color: #dc2626; /* Red 600 */
-  background: #fee2e2; /* Red 100 */
-}
-[data-theme='dark'] .indicator--failed {
-  color: #f87171; /* Red 400 */
-  background: #7f1d1d; /* Red 900 */
-}
+.indicator--done { color: #eaff9d; background: #365d43; }
+.indicator--pending { color: #ffe2a9; background: #5a4d30; }
+.indicator--failed { color: #ffe0dc; background: #663733; }
 </style>
