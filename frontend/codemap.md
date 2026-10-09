@@ -26,7 +26,6 @@ This is the **CV Maker Single-Page Application** — a Vue 3 + TypeScript fronte
 
 ```
 index.html (HTML entry point)
-  ├── Loads Google GSI client script (async, deferred)
   └── <script type="module" src="/src/main.ts">
         ├── createApp(App)
         ├── app.use(createPinia())        // Initialize state management
@@ -36,8 +35,8 @@ index.html (HTML entry point)
 
 ### Authentication Flow
 
-1. `index.html` loads `https://accounts.google.com/gsi/client` (Google Identity Services).
-2. `SignInView.vue` renders the Google One Tap / sign-in button and handles the credential callback.
+1. `SignInView.vue` fetches the public configuration, then loads `https://accounts.google.com/gsi/client` on demand and waits for its `load` event (or uses the already-loaded SDK). Script failures/timeouts and configuration failures offer an in-page retry.
+2. Only after the SDK is ready, `SignInView.vue` initializes and renders the Google sign-in button and handles the credential callback. `tests/browser/google-signin.mjs` exercises delayed/failed/cached script loading, configuration retry, and the token exchange with mocked Google/API responses.
 3. On successful sign-in, `authStore` updates its reactive `isAuthenticated` state.
 4. The `beforeEach` router guard checks `authStore.isAuthenticated` on every navigation:
    - Public routes (`meta.public: true`) pass through regardless (currently only `/signin`).
@@ -77,7 +76,7 @@ All `/api/*` requests are proxied through the Vite dev server to `http://localho
 
 | File                      | Role                                                  |
 |---------------------------|-------------------------------------------------------|
-| `index.html`              | HTML entry point; loads Google GSI; mounts Vue app    |
+| `index.html`              | HTML entry point; mounts Vue app    |
 | `package.json`            | Dependencies, scripts (`dev`, `build`, `type-check`)  |
 | `vite.config.ts`          | Vite config: Vue plugin, `@` alias, API proxy, build  |
 | `tsconfig.json`           | Project references to `tsconfig.app.json` and `tsconfig.node.json` |

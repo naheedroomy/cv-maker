@@ -89,7 +89,7 @@ Top-level route-level Vue components. Each view corresponds to one route and com
 **UI State**: `activeTab` (6 tabs), `settings` reactive object, `saving`, `saved`, `error`, `cookieChecking`, `cookieStatus`
 
 **Tabs**:
-- **General**: CV filename prefix for generated PDFs
+- **General**: CV filename prefix for generated PDFs and per-user AI application-label rewriting toggle
 - **Claude CLI**: Model name (uses local Claude Code subscription, no API key)
 - **Claude API**: Model name + Anthropic API key
 - **Gemini**: Model name + Google AI API key
@@ -106,8 +106,8 @@ Top-level route-level Vue components. Each view corresponds to one route and com
 
 **Flow**:
 1. On mount: fetches `/api/config` for `google_client_id`
-2. Initializes Google Identity Services with the client ID and callback
-3. Renders the Google sign-in button
+2. Loads Google Identity Services on demand, waiting for SDK readiness before initialization. Already-loaded SDKs are reused; failed scripts are removed so retries can reload them; a 15-second script timeout prevents a stuck loading state.
+3. Initializes with the client ID/callback and renders the Google sign-in button. Initialization/configuration failures show a retry button, without requiring a page refresh. Late completions do not render after the view unmounts.
 4. On credential response: POSTs `id_token` to `/api/auth` (raw fetch, no JWT yet)
 5. On success: `authStore.login(jwt, user)`, router push to `/`
 6. On error: displays error message
