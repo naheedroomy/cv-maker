@@ -241,7 +241,9 @@ async def job_worker(
             # Transition: running -> complete; persist results
             # ----------------------------------------------------------------
             _completed_at = _now_iso()
-            display_title = tailored_cv.application_title or company_name
+            display_title = company_name
+            if await get_setting("ai_application_titles", user_id) == "true":
+                display_title = tailored_cv.application_title or company_name
             db = await get_db()
             try:
                 await db.execute("BEGIN IMMEDIATE")

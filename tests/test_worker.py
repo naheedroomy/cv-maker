@@ -122,7 +122,8 @@ def test_worker_semaphore_limits_concurrency():
 
 
 @pytest.mark.parametrize("application_title", [None, "cplace - DevOps Engineer"])
-def test_worker_completes_job_successfully(tmp_path: Path, application_title):
+@pytest.mark.parametrize("rewrite_title", [True, False])
+def test_worker_completes_job_successfully(tmp_path: Path, application_title, rewrite_title):
     """Worker transitions job to complete and saves PDF, tailored_cv, and gap_diff."""
     job_id = "test-job-complete-001"
     test_db = tmp_path / "test.db"
@@ -136,6 +137,10 @@ def test_worker_completes_job_successfully(tmp_path: Path, application_title):
         db = await get_db(test_db)
         try:
             await db.execute("BEGIN IMMEDIATE")
+            await db.execute(
+                "INSERT INTO settings (user_id, key, value) VALUES (1, ?, ?)",
+                ("ai_application_titles", "true" if rewrite_title else "false"),
+            )
             await db.execute(
                 "UPDATE jobs SET cv_history_json=?, applied=1 WHERE id=?",
                 ('[{"version": 1}]', job_id),
@@ -154,6 +159,7 @@ def test_worker_completes_job_successfully(tmp_path: Path, application_title):
             return await get_db(test_db)
 
         with (
+            patch("backend.db.DB_PATH", test_db),
             patch("backend.worker.get_db", side_effect=fake_get_db),
             patch(
                 "backend.worker.load_base_cv",
@@ -185,14 +191,15 @@ def test_worker_completes_job_successfully(tmp_path: Path, application_title):
         event_id, event_type, result = push_event.call_args.args
         assert event_id == job_id
         assert event_type == "complete"
-        assert result["company_name"] == (application_title or "TestCo")
+        expected_title = (application_title or "TestCo") if rewrite_title else "TestCo"
+        assert result["company_name"] == expected_title
         row = await _get_job_row(test_db, job_id)
         assert row["status"] == "complete", f"Expected 'complete', got {row['status']}"
         assert row["tailored_cv_json"] is not None
         assert row["gap_diff_json"] is not None
         assert row["pdf_path"] is not None
         assert row["id"] == job_id
-        assert row["company_name"] == (application_title or "TestCo")
+        assert row["company_name"] == expected_title
         assert row["cv_history_json"] == '[{"version": 1}]'
         assert row["applied"] == 1
         assert Path(row["pdf_path"]).parent.name == job_id

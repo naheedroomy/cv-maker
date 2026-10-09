@@ -51,7 +51,7 @@ HTTP endpoint handlers for the CV Maker API, organized by domain concern. Each r
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/settings` | **Get all settings** for the authenticated user, merged with defaults. API keys are masked (shows `***` + last 4 chars). |
-| `PUT` | `/settings` | **Update settings.** Accepts a partial payload; only provided fields are upserted into the `settings` table via `INSERT ... ON CONFLICT DO UPDATE`. |
+| `PUT` | `/settings` | **Update settings.** Accepts a partial payload; only provided fields are upserted into the `settings` table via `INSERT ... ON CONFLICT DO UPDATE`. `ai_application_titles` is a per-user boolean (default true), stored as `"true"`/`"false"`; disabling it preserves entered labels on future generation/regeneration and does not rename existing jobs. |
 | `POST` | `/settings/check-gemini-web` | **Test Gemini Web connectivity.** Reads the user's `gemini_web_psid` setting, initializes a `GeminiClient`, sends a test prompt, and reports success or error. |
 
 ### `cv.py` — `prefix="/cv"`, tag `"cv"`

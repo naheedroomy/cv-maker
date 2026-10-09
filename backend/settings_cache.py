@@ -20,6 +20,7 @@ _DEFAULTS = {
     "openai_reasoning_effort": "auto",
     "openai_base_url": "",
     "cv_filename": "",
+    "ai_application_titles": "true",
     "anthropic_api_key": "",
     "gemini_api_key": "",
     "openai_api_key": "",

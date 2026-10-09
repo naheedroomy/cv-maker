@@ -23,6 +23,7 @@ class SettingsResponse(BaseModel):
     openai_reasoning_effort: str
     openai_base_url: str
     cv_filename: str
+    ai_application_titles: bool
     anthropic_api_key: str
     gemini_api_key: str
     openai_api_key: str
@@ -40,6 +41,7 @@ class SettingsUpdate(BaseModel):
     openai_reasoning_effort: str | None = None
     openai_base_url: str | None = None
     cv_filename: str | None = None
+    ai_application_titles: bool | None = None
     anthropic_api_key: str | None = None
     gemini_api_key: str | None = None
     openai_api_key: str | None = None
@@ -87,6 +89,9 @@ async def get_settings(user: dict = Depends(get_current_user)) -> SettingsRespon
         ),
         openai_base_url=stored.get("openai_base_url", _DEFAULTS["openai_base_url"]),
         cv_filename=stored.get("cv_filename", _DEFAULTS["cv_filename"]),
+        ai_application_titles=(
+            stored.get("ai_application_titles", _DEFAULTS["ai_application_titles"]) == "true"
+        ),
         anthropic_api_key=_mask_key(
             stored.get("anthropic_api_key", _DEFAULTS["anthropic_api_key"])
         ),
@@ -143,7 +148,10 @@ async def update_settings(
     db = await get_db()
     try:
         updates = body.model_dump(exclude_none=True)
+        await db.execute("BEGIN IMMEDIATE")
         for key, value in updates.items():
+            if isinstance(value, bool):
+                value = "true" if value else "false"
             await db.execute(
                 "INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?) "
                 "ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value",

@@ -12,6 +12,7 @@ interface Settings {
   openai_reasoning_effort: string
   openai_base_url: string
   cv_filename: string
+  ai_application_titles: boolean
   anthropic_api_key: string
   gemini_api_key: string
   openai_api_key: string
@@ -35,6 +36,7 @@ const settings = ref<Settings>({
   openai_reasoning_effort: 'auto',
   openai_base_url: '',
   cv_filename: '',
+  ai_application_titles: true,
   anthropic_api_key: '',
   gemini_api_key: '',
   openai_api_key: '',
@@ -234,6 +236,19 @@ const tabs = [
 
     <!-- General -->
     <div v-if="activeTab === 'general'" class="tab-content">
+      <div class="field">
+        <label class="title-setting" for="ai-application-titles">
+          <span class="field-label">Let AI name applications</span>
+          <input
+            id="ai-application-titles"
+            v-model="settings.ai_application_titles"
+            type="checkbox"
+            role="switch"
+            aria-describedby="ai-title-hint"
+          />
+        </label>
+        <p id="ai-title-hint" class="field-hint">After generation, use Company Name - Job Title from the listing. Turn off to keep your entered labels. Applies to future generations and regenerations; existing labels stay unchanged.</p>
+      </div>
       <div class="field">
         <label for="cv-filename" class="field-label">CV filename</label>
         <input id="cv-filename" v-model="settings.cv_filename" class="field-input" placeholder="e.g. Alex-Morgan-CV" />
@@ -453,6 +468,9 @@ const tabs = [
 
 <style scoped>
 .settings-view { max-width: 790px; margin: 0; }
+.title-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; cursor: pointer; }
+.title-setting .field-label { margin: 0; }
+.title-setting input { width: 22px; height: 22px; flex-shrink: 0; accent-color: var(--color-accent-primary); cursor: pointer; }
 .settings-heading { margin-bottom: 32px; }
 .settings-kicker { color: var(--color-text-secondary); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
 .settings-title em { font-style: normal; text-decoration: underline; text-decoration-color: var(--color-highlight); text-decoration-thickness: .13em; }
