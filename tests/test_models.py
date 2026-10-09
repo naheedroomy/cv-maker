@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from core.data import load_base_cv
-from core.models import BaseCV, EvidenceMap, EvidenceMatch, JobRequirements, TailoredCV
+from core.models import BaseCV, JobRequirements, TailoredCV
 
 MINIMAL_CV = {
     "contact": {"name": "Test User", "email": "test@example.com"},
@@ -92,53 +92,8 @@ def test_load_base_cv_invalid_yaml_raises_runtime_error(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Differentiator fields on EvidenceMatch (Tasks 5.1, 5.2, 5.3)
+# Categorized skills
 # ---------------------------------------------------------------------------
-
-
-class TestEvidenceMatchDefaults:
-    """Tests for optional differentiator/impact fields on EvidenceMatch."""
-
-    def test_new_fields_default_to_empty_lists(self) -> None:
-        """EvidenceMatch without new fields has empty lists, not None."""
-        match = EvidenceMatch.model_validate({
-            "requirement_phrase": "Python",
-            "match_level": "strong",
-            "evidence_text": "test",
-        })
-        assert match.differentiator_categories == []
-        assert match.impact_signals == []
-
-    def test_new_fields_preserved_in_output(self) -> None:
-        """EvidenceMatch with new fields preserves them."""
-        match = EvidenceMatch.model_validate({
-            "requirement_phrase": "Kubernetes",
-            "match_level": "strong",
-            "evidence_text": "Managed clusters",
-            "differentiator_categories": ["automation", "reliability"],
-            "impact_signals": ["improved_consistency"],
-        })
-        assert match.differentiator_categories == ["automation", "reliability"]
-        assert match.impact_signals == ["improved_consistency"]
-
-    def test_evidence_map_with_differentiator_fields_serializes(self) -> None:
-        """EvidenceMap with matches containing new fields serializes correctly."""
-        em = EvidenceMap.model_validate({
-            "matches": [{
-                "requirement_phrase": "Python",
-                "match_level": "strong",
-                "evidence_text": "test",
-                "allowed_keywords": ["Python"],
-                "differentiator_categories": ["automation"],
-                "impact_signals": ["standardized_process"],
-            }],
-            "pairing_plan": {"pairs": []},
-            "coverage_summary": {"total_requirements": 1, "strong_matches": 1,
-                                 "partial_matches": 0, "missing": 0},
-        })
-        data = em.model_dump()
-        assert data["matches"][0]["differentiator_categories"] == ["automation"]
-        assert data["matches"][0]["impact_signals"] == ["standardized_process"]
 
 
 class TestTailoredCVSkills:

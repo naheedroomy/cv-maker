@@ -12,7 +12,6 @@ from core.pipeline import (
     _build_system_prompt_for_chat,
     _build_user_prompt,
     _extract_json,
-    run_pipeline_staged,
 )
 from core.providers.base import BaseProvider
 from core.validation import check_tailored_cv
@@ -95,41 +94,4 @@ class ClaudeAPIProvider(BaseProvider):
                 logger.warning("Claude API attempt %d failed: %s", attempt + 1, exc)
         raise RuntimeError(
             f"Claude API failed to return valid TailoredCV after 3 attempts. Last: {last_exc}"
-        )
-
-    def run_staged(
-        self,
-        base_cv: BaseCV,
-        job_text: str,
-        creativity_level: int = 2,
-        user_notes: str = "",
-    ) -> tuple[TailoredCV, list[GapItem]]:
-        """Run the multi-stage pipeline using Claude API for each stage.
-
-        Wraps the Claude Messages API as a provider_fn callable and delegates
-        to run_pipeline_staged() in core/pipeline.py.
-        """
-        thinking = self._build_thinking_param()
-
-        def _call(prompt: str) -> str:
-            """Provider function: send prompt to Claude API, return raw text."""
-            kwargs: dict = {
-                "model": self._model,
-                "max_tokens": 16000,
-                "system": (
-                    "You are a precise CV engineering assistant. "
-                    "Return ONLY valid JSON, no commentary."
-                ),
-                "messages": [{"role": "user", "content": prompt}],
-            }
-            if thinking:
-                kwargs["thinking"] = thinking
-            response = self._client.messages.create(**kwargs)
-            return next(
-                (b.text for b in response.content if b.type == "text"), ""
-            )
-
-        return run_pipeline_staged(
-            base_cv, job_text, _call,
-            creativity_level=creativity_level, user_notes=user_notes,
         )

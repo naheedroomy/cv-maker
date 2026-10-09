@@ -4,11 +4,9 @@
 # Source: Pydantic v2 docs — https://docs.pydantic.dev/latest/concepts/models/
 from __future__ import annotations
 
-import hashlib
 import re
-from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 # ---------------------------------------------------------------------------
 # Sub-models
@@ -113,13 +111,6 @@ class JobRequirements(BaseModel):
     """
 
     raw_text: str
-
-
-class TailoredSection(BaseModel):
-    """One rewritten CV section returned by Claude Code CLI."""
-
-    section_name: str
-    content: str | list[str]  # str for summary; list[str] for bullets
 
 
 class GapItem(BaseModel):
@@ -262,126 +253,3 @@ class TailoredCV(BaseModel):
         for exp in self.experience:
             exp.bullets = [self._ANNOTATION_RE.sub("", b) for b in exp.bullets]
         return self
-
-
-# ---------------------------------------------------------------------------
-# AI Pipeline models (Phase 3) — kept for backwards compatibility
-# ---------------------------------------------------------------------------
-
-
-class JobAnalysis(BaseModel):
-    """Structured output from Claude step 1 (legacy — kept for test compatibility)."""
-
-    role_title: str
-    key_requirements: list[str]
-    required_technologies: list[str]
-    gap_diff: list[GapItem]
-
-
-# ---------------------------------------------------------------------------
-# Multi-stage pipeline intermediate models
-# ---------------------------------------------------------------------------
-
-# Valid categories for JD requirement classification
-_JD_CATEGORIES = Literal["technology", "methodology", "domain", "responsibility", "soft_skill"]
-# Valid match levels for evidence mapping
-_MATCH_LEVELS = Literal["strong", "partial", "missing"]
-
-
-class JDRequirement(BaseModel):
-    """A single structured requirement extracted from a job description.
-
-    Produced by Stage 1 (Requirement Extraction) of the multi-stage pipeline.
-    """
-
-    phrase: str  # The keyword or requirement phrase (e.g. "Kubernetes", "CI/CD pipelines")
-    category: _JD_CATEGORIES = "technology"
-    tier: int = 2  # 1=core tech stack, 2=core responsibilities, 3=nice-to-have
-    related_phrases: list[str] = Field(default_factory=list)  # Semantically linked terms
-    description: str = ""  # Full sentence/clause from which this requirement was extracted
-
-    @field_validator("tier")
-    @classmethod
-    def _validate_tier(cls, v: int) -> int:
-        if v not in (1, 2, 3):
-            raise ValueError(f"tier must be 1, 2, or 3; got {v}")
-        return v
-
-
-class EvidenceMatch(BaseModel):
-    """Maps a single JD requirement to concrete evidence in the base CV.
-
-    Produced by Stage 2 (Evidence Mapping) of the multi-stage pipeline.
-    """
-
-    requirement_phrase: str  # The JD keyword this matches (from JDRequirement.phrase)
-    match_level: _MATCH_LEVELS
-    source_company: str | None = None
-    source_role: str | None = None
-    source_bullet_index: int | None = None  # 0-based index into the role's bullets list
-    source_field: str | None = None  # Base CV field name providing evidence (e.g. "skills")
-    evidence_text: str = ""  # Quoted or paraphrased evidence from base CV
-    allowed_keywords: list[str] = Field(default_factory=list)  # JD keywords this evidence substantiates
-    inference_rule: str | None = None  # Inference rule name if match_level is "partial"
-    # Recruiter-valued differentiator categories this evidence supports.
-    # Valid values: cost_optimization, security, mentorship, platform_engineering,
-    #   incident_response, automation, observability, governance, developer_experience,
-    #   reliability, scalability, migration, standardization.
-    differentiator_categories: list[str] = Field(default_factory=list)
-    # Qualitative impact tags for evidence that shows impact without numeric metrics.
-    # Valid values: reduced_latency, improved_consistency, standardized_process,
-    #   automated_workflow, reduced_manual_effort, enabled_self_service,
-    #   improved_reliability, reduced_onboarding_time, increased_velocity,
-    #   reduced_cost, improved_security_posture, increased_coverage, simplified_operations.
-    impact_signals: list[str] = Field(default_factory=list)
-    # Keyword placement guidance: where this keyword can be defensibly placed.
-    # "experience" = can embed in an experience bullet, "skills" = skills section
-    # only, "omit" = no defensible placement — omit entirely.
-    placement: str = "experience"
-    # Reason for the placement decision (e.g., "Only in base CV skills, no bullet evidence").
-    placement_reason: str = ""
-
-
-class KeywordPair(BaseModel):
-    """A natural pairing of 2-3 keywords that belong together in a bullet.
-
-    Part of the KeywordPairingPlan produced during evidence mapping.
-    """
-
-    keywords: list[str]  # 2-3 keywords that pair naturally
-    rationale: str = ""  # Why these keywords go together
-    evidence_source: str = ""  # Which base CV role/evidence substantiates this pair
-    suggested_bullet_count: int = 1  # 1-2 bullets recommended for this pair
-
-
-class KeywordPairingPlan(BaseModel):
-    """Plan for embedding keywords in experience bullets as natural pairs.
-
-    Produced during Stage 2 (Evidence Mapping) to guide Stage 3 (CV Generation).
-    """
-
-    pairs: list[KeywordPair] = Field(default_factory=list)
-
-
-class RequirementExtraction(BaseModel):
-    """Complete output of Stage 1: structured requirements extracted from a JD.
-
-    Contains the full list of JDRequirement items plus traceability metadata.
-    """
-
-    requirements: list[JDRequirement]
-    raw_jd_hash: str = ""  # SHA-256 of the input JD text for traceability
-    model_metadata: dict = Field(default_factory=dict)  # Provider/model info for debugging
-
-
-class EvidenceMap(BaseModel):
-    """Complete output of Stage 2: evidence mapping for all JD requirements.
-
-    Maps every requirement to base-CV evidence (or marks it missing), and
-    provides a keyword pairing plan to guide natural keyword embedding in Stage 3.
-    """
-
-    matches: list[EvidenceMatch]  # One match per JD requirement
-    pairing_plan: KeywordPairingPlan = Field(default_factory=KeywordPairingPlan)
-    coverage_summary: dict = Field(default_factory=dict)  # e.g. {"total_requirements": 10, ...}
-    base_cv_hash: str = ""  # SHA-256 of the serialized base CV for traceability

@@ -12,7 +12,7 @@ The `core/` package is the shared, UI-free engine of cv-maker. It owns all data 
 | **Strategy (providers)** | `providers/base.py` → `BaseProvider` | Abstract `run()` interface; 5 concrete providers with per-user key resolution |
 | **Template Method** | `renderer.py` | Jinja2 rendering: TailoredCV → LaTeX string (`render_latex`) → PDF bytes (`render_pdf`) |
 | **Factory (async)** | `providers/__init__.py` → `get_provider()` | Async factory: resolves per-user settings from DB, constructs correct provider |
-| **Two-pass pipeline** | `cv_parser.py` → `parse_pdf_to_base_cv()` | PDF: pymupdf (image extraction) → Gemini (OCR) → Gemini (structuring) |
+| **Vision parsing** | `cv_parser.py` → `parse_pdf_to_base_cv()` | PDF: pymupdf (page images and native text) → Gemini or OpenAI vision (structuring) |
 | **Chain of Responsibility** | `pipeline.py` → `_extract_json()` | Extracts JSON from LLM output; handles markdown fences, normalizes tailoring_notes |
 
 ## Data & Control Flow
@@ -50,12 +50,12 @@ The `core/` package is the shared, UI-free engine of cv-maker. It owns all data 
 
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| `models.py` | `BaseCV`, `TailoredCV`, `ContactInfo`, `ExperienceItem`, `GapItem`, `TailoringNote`, `EducationItem`, `ProjectItem`, `LanguageItem`, `JobRequirements`, `JobAnalysis` | Canonical Pydantic v2 data models for the entire pipeline |
+| `models.py` | `BaseCV`, `TailoredCV`, `ContactInfo`, `ExperienceItem`, `GapItem`, `TailoringNote`, `EducationItem`, `ProjectItem`, `LanguageItem`, `JobRequirements` | Canonical Pydantic v2 data models for the entire pipeline |
 | `pipeline.py` | `run_pipeline()`, `Creativity` (IntEnum), `_build_prompt()`, `_build_system_prompt_for_chat()`, `_build_user_prompt()`, `_extract_json()`, `_invoke_with_retry()`, `_serialize_base_cv()`, `_RULES` dict | AI tailoring engine: prompt construction, creativity level rule resolution, JSON parse-retry, Claude CLI orchestration |
 | `renderer.py` | `render_latex()`, `render_pdf()`, `escape_latex()`, `escape_latex_with_bold()`, `escape_latex_strip_bold()`, `_find_latexmk()` | LaTeX rendering: Jinja2 template rendering, LaTeX special-char escaping (single-pass regex), bold→`\textbf{}` conversion, `latexmk` binary discovery |
 | `data.py` | `load_base_cv()`, `ensure_base_cv_exists()`, `DEFAULT_CV_PATH` | YAML loading with Pydantic v2 validation; placeholder creation |
 | `cv_converter.py` | `convert_cv_to_yaml()`, `save_base_cv()`, `_invoke_provider()` | Plain-text CV → BaseCV via AI provider; supports Claude CLI, Claude API, Gemini, OpenAI |
-| `cv_parser.py` | `parse_pdf_to_base_cv()`, `_pdf_to_images()`, `_ocr_images()`, `_structure_text()` | Two-pass PDF CV parsing: pymupdf → page images → Gemini OCR → Gemini structuring → BaseCV |
+| `cv_parser.py` | `parse_pdf_to_base_cv()`, `_extract_pdf_pages()`, `_parse_gemini_vision()`, `_parse_openai_vision()` | PDF parsing: pymupdf page images + native text → Gemini or OpenAI vision → BaseCV |
 | `cover_letter.py` | `generate_cover_letter()`, `CoverLetterOutput`, `SYSTEM_PROMPT_TEMPLATE`, `USER_PROMPT_TEMPLATE`, `_TONE_INSTRUCTIONS` | Cover letter generation: standard engineering peer voice with custom instructions/writing sample calibration, anti-AI writing rules, storyteller arc, provider-agnostic including Gemini Web |
 | `cover_letter_renderer.py` | `render_cover_letter_pdf()` | Cover letter → PDF via fpdf2 (pure Python, no LaTeX dependency); latin-1 sanitization |
 
@@ -69,7 +69,7 @@ The `core/` package is the shared, UI-free engine of cv-maker. It owns all data 
 ## Operational Notes
 
 - **Creativity levels**: `pipeline.py` defines a 4-level `Creativity` IntEnum (0=STRICT through 3=SELECTIVE). The `_RULES` dict maps each concern (titles, bullets, skills, summary, inference, substitution, pruning, tone, reorder, core_competencies) to per-level instructions. `_resolve_rule()` picks the instruction for the highest defined threshold ≤ the requested level.
-- **Prompt architecture**: Two prompt builders: `_build_prompt()` (single combined prompt for Claude CLI) and `_build_system_prompt_for_chat()` + `_build_user_prompt()` (system/user split for chat-based providers). Both share the same `_RULES` resolution.
+- **Prompt architecture**: Two prompt builders: `_build_prompt()` (single combined prompt for Claude CLI) and `_build_system_prompt_for_chat()` + `_build_user_prompt()` (system/user split for chat-based providers). Both use `_build_shared_prompt()` for the same instructions and `_build_user_prompt()` for the CV, job listing, and notes.
 - **JSON parse-retry**: `_invoke_with_retry()` retries up to 3 times. On retries, appends "Return ONLY valid JSON" to the prompt. `_extract_json()` strips markdown fences and normalizes tailoring_notes from plain strings to structured dicts.
 - **LaTeX escaping**: `escape_latex()` uses a single-pass regex substitution against all 10 LaTeX special chars simultaneously, preventing cascading (e.g., `\textbackslash{}` braces won't be re-escaped). Registered as Jinja2 filters: `|e` (plain escape), `|be` (escape + bold), `|se` (strip bold then escape).
 - **TailoredCV._strip_annotation_leaks()**: A `@model_validator(mode="after")` that strips action labels like `(substituted)` or `(soft-fabricated)` from bullet text that LLMs sometimes leak.

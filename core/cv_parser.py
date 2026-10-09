@@ -21,12 +21,6 @@ from core.pipeline import _extract_json
 
 logger = logging.getLogger(__name__)
 
-_OCR_SYSTEM_INSTRUCTION = (
-    "You are an OCR engine. Extract ALL text from this CV/resume image. "
-    "Preserve the structure (headings, bullet points, dates, contact info). "
-    "Return the extracted text faithfully — do not summarize, rephrase, or omit anything."
-)
-
 _STRUCTURE_SYSTEM_INSTRUCTION = (
     "You are a CV/resume parser. Extract structured data from the provided CV document "
     "(rendered images and verbatim extracted text stream). "
@@ -143,11 +137,6 @@ def _extract_pdf_pages(pdf_bytes: bytes, dpi: int = 300) -> list[dict]:
     finally:
         if doc is not None:
             doc.close()
-
-
-def _pdf_to_images(pdf_bytes: bytes, dpi: int = 300) -> list[bytes]:
-    """Convert each page of a PDF to a PNG byte array (legacy helper)."""
-    return [p["image"] for p in _extract_pdf_pages(pdf_bytes, dpi=dpi)]
 
 
 def _build_vision_prompt(pages: list[dict]) -> str:
@@ -294,55 +283,6 @@ async def _parse_openai_vision(
         except Exception as exc:  # noqa: BLE001
             last_exc = exc
             logger.warning("OpenAI vision pass attempt %d failed: %s", attempt + 1, exc)
-
-    raise RuntimeError(
-        f"CV structuring failed after 3 attempts. Last error: {last_exc}"
-    )
-
-
-def _ocr_images(images: list[bytes], client: genai.Client, model: str) -> str:
-    """Pass 1 (legacy): Extract text from page images via Gemini OCR."""
-    parts: list[genai_types.Part] = []
-    for image_bytes in images:
-        parts.append(
-            genai_types.Part.from_bytes(
-                data=image_bytes,
-                mime_type="image/png",
-            )
-        )
-    response = client.models.generate_content(
-        model=model,
-        contents=parts,
-        config=genai_types.GenerateContentConfig(
-            system_instruction=_OCR_SYSTEM_INSTRUCTION,
-        ),
-    )
-    return response.text or ""
-
-
-def _structure_text(ocr_text: str, client: genai.Client, model: str) -> BaseCV:
-    """Pass 2 (legacy): Convert OCR text into a validated BaseCV using Gemini."""
-    user_prompt = _STRUCTURE_PROMPT.format(extracted_text=ocr_text)
-    last_exc: Exception | None = None
-
-    for attempt in range(3):
-        effective_prompt = user_prompt
-        if attempt > 0:
-            effective_prompt += "\n\nReturn ONLY valid JSON, no markdown fences, no commentary."
-
-        try:
-            response = client.models.generate_content(
-                model=model,
-                contents=effective_prompt,
-                config=genai_types.GenerateContentConfig(
-                    system_instruction=_STRUCTURE_SYSTEM_INSTRUCTION,
-                ),
-            )
-            raw_text = response.text or ""
-            data = _extract_json(raw_text)
-            return BaseCV.model_validate(data)
-        except Exception as exc:  # noqa: BLE001
-            last_exc = exc
 
     raise RuntimeError(
         f"CV structuring failed after 3 attempts. Last error: {last_exc}"
